@@ -1,2 +1,6 @@
 *.md
 *.txt
+
+migration-docs/
+
+DEPLOYMENT.md
