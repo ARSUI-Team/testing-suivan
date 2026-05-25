@@ -1,41 +1,38 @@
 /// Module: protocol_vault
 /// Individual protocol vault for Archa yield strategy
-/// Each vault represents a DeFi protocol (Scallop, NAVI, Cetus, etc.)
-/// For hackathon: simulated yield per protocol
+/// Real yield only — total_assets always equals actual balance (C-02 fix)
+#[allow(unused_field)]
 module archa::protocol_vault {
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use sui::event;
     use sui::table::{Self, Table};
-    use std::string::{Self, String};
+    use std::string::String;
 
     use archa::test_usdc::TEST_USDC;
 
-    // ====== Constants ======
     const E_INSUFFICIENT_SHARES: u64 = 300;
     const E_NOT_OWNER: u64 = 301;
-    const E_INVALID_APY: u64 = 302;
 
-    // ====== Structs ======
+    const MIN_SHARES_OFFSET: u64 = 1000;
 
-    /// ProtocolVault — one per DeFi protocol
+    fun mul_div(a: u64, b: u64, c: u64): u64 {
+        (((a as u128) * (b as u128) / (c as u128)) as u64)
+    }
+
     public struct ProtocolVault has key {
         id: UID,
         owner: address,
         protocol_name: String,
-        apy: u64,                  // Basis points (e.g. 500 = 5%)
-        total_assets: u64,         // Simulated total assets (including yield)
+        total_assets: u64,
         total_shares: u64,
         shares: Table<address, u64>,
         funds: Balance<TEST_USDC>,
     }
 
-    // ====== Events ======
-
     public struct VaultCreated has copy, drop {
         vault_id: ID,
         protocol_name: String,
-        apy: u64,
     }
 
     public struct VaultDeposit has copy, drop {
@@ -52,28 +49,18 @@ module archa::protocol_vault {
         amount: u64,
     }
 
-    public struct VaultYieldSimulated has copy, drop {
-        vault_id: ID,
-        yield_amount: u64,
-        new_total_assets: u64,
-    }
-
     // ====== Functions ======
 
     /// Create a new protocol vault — called by deployer or admin
     public fun create_vault(
         protocol_name: String,
-        apy: u64,
         ctx: &mut TxContext,
     ) {
-        assert!(apy <= 5000, E_INVALID_APY);
-
         let vault_id = object::new(ctx);
         let vault = ProtocolVault {
             id: vault_id,
             owner: ctx.sender(),
             protocol_name,
-            apy,
             total_assets: 0,
             total_shares: 0,
             shares: table::new(ctx),
@@ -83,7 +70,6 @@ module archa::protocol_vault {
         event::emit(VaultCreated {
             vault_id: object::id(&vault),
             protocol_name: vault.protocol_name,
-            apy,
         });
 
         transfer::share_object(vault);
@@ -99,9 +85,9 @@ module archa::protocol_vault {
         let depositor = ctx.sender();
 
         let shares_to_mint = if (vault.total_shares == 0) {
-            amount
+            amount + MIN_SHARES_OFFSET
         } else {
-            amount * vault.total_shares / vault.total_assets
+            mul_div(amount, vault.total_shares, vault.total_assets)
         };
 
         assert!(shares_to_mint > 0, E_INSUFFICIENT_SHARES);
@@ -139,7 +125,7 @@ module archa::protocol_vault {
         assert!(*my_shares >= share_amount, E_INSUFFICIENT_SHARES);
 
         let amount = if (vault.total_shares > 0) {
-            share_amount * vault.total_assets / vault.total_shares
+            mul_div(share_amount, vault.total_assets, vault.total_shares)
         } else {
             0
         };
@@ -161,37 +147,10 @@ module archa::protocol_vault {
         withdrawn
     }
 
-    /// Simulate yield — increases total_assets without adding actual coins
-    /// Only owner can call
-    public fun simulate_yield(
-        vault: &mut ProtocolVault,
-        ctx: &mut TxContext,
-    ) {
-        assert!(ctx.sender() == vault.owner, E_NOT_OWNER);
-
-        if (vault.total_assets == 0) { return };
-
-        // Monthly yield: total_assets * apy / 10000 / 12
-        let yield_amount = vault.total_assets * vault.apy / 10000 / 12;
-        if (yield_amount == 0) { return };
-
-        vault.total_assets = vault.total_assets + yield_amount;
-
-        event::emit(VaultYieldSimulated {
-            vault_id: object::id(vault),
-            yield_amount,
-            new_total_assets: vault.total_assets,
-        });
-    }
-
     // ====== View Functions ======
 
     public fun get_protocol_name(vault: &ProtocolVault): String {
         vault.protocol_name
-    }
-
-    public fun get_apy(vault: &ProtocolVault): u64 {
-        vault.apy
     }
 
     public fun get_total_assets(vault: &ProtocolVault): u64 {
@@ -213,12 +172,11 @@ module archa::protocol_vault {
     // ====== TEST HELPERS ======
 
     #[test_only]
-    public fun test_create_vault(apy: u64, ctx: &mut TxContext): ProtocolVault {
+    public fun test_create_vault(ctx: &mut TxContext): ProtocolVault {
         ProtocolVault {
             id: object::new(ctx),
             owner: ctx.sender(),
-            protocol_name: string::utf8(b"Test Protocol"),
-            apy,
+            protocol_name: std::string::utf8(b"Test Protocol"),
             total_assets: 0,
             total_shares: 0,
             shares: table::new(ctx),
@@ -229,7 +187,7 @@ module archa::protocol_vault {
     #[test_only]
     public fun test_cleanup_vault(vault: ProtocolVault, _ctx: &mut TxContext) {
         let ProtocolVault {
-            id, owner: _, protocol_name: _, apy: _,
+            id, owner: _, protocol_name: _,
             total_assets: _, total_shares: _,
             shares, funds
         } = vault;

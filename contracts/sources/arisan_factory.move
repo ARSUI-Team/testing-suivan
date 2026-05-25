@@ -10,7 +10,6 @@ module archa::arisan_factory {
     use archa::arisan_pool;
 
     // ====== Constants ======
-    const E_NOT_OWNER: u64 = 100;
     const E_INVALID_TEMPLATE: u64 = 101;
     const E_TEMPLATE_INACTIVE: u64 = 102;
 
@@ -30,6 +29,8 @@ module archa::arisan_factory {
     public struct FactoryAdminCap has key, store { id: UID }
 
     /// The shared factory object — one per deployment
+    /// NOTE: all_pools and user_pools are tracked via events for now.
+    /// On-chain tracking requires architectural change (create_pool must return ID).
     public struct ArisanFactory has key {
         id: UID,
         owner: address,
@@ -142,11 +143,10 @@ module archa::arisan_factory {
 
     /// Set ai_optimizer address — only owner
     public fun set_ai_optimizer(
+        _cap: &FactoryAdminCap,
         factory: &mut ArisanFactory,
         new_optimizer: address,
-        ctx: &mut TxContext,
     ) {
-        assert!(ctx.sender() == factory.owner, E_NOT_OWNER);
         factory.ai_optimizer = new_optimizer;
     }
 
@@ -175,6 +175,7 @@ module archa::arisan_factory {
             template.max_participants,
             template.cycle_duration_ms,
             template.collateral_multiplier,
+            string::utf8(b""),
             ctx,
         );
 
@@ -204,6 +205,7 @@ module archa::arisan_factory {
             max_participants,
             cycle_duration_ms,
             collateral_multiplier,
+            string::utf8(b""),
             ctx,
         );
 

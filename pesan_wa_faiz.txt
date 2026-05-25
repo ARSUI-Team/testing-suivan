@@ -1,0 +1,250 @@
+🔒 *AUDIT & SARAN SMART CONTRACT ARCHA — DARI REVIEW PROFESIONAL SUI DEV*
+
+Bro Faiz, aku udah deep-dive review SC Archa yang ada di local + baca handbook Sui Overflow 2026 + pelajarin semua teknologi sponsor. Ini summary critical + roadmap integrasi buat lo.
+
+━━━━━━━━━━━━━━━━━━━━
+
+🚨 *FINDING CRITICAL — WAJIB FIX SEBELUM SUBMIT*
+
+1️⃣ *SEC-AC-1: AdminCap DIBIKIN tapi TIDAK DIPAKAI* (S1 CRITICAL)
+Lo udah define AdminCap di arisan_pool.move:792 tapi di select_winner() dan slash_collateral() lo masih pakai pattern Solidity-style:
+assert!(sender == pool.creator || sender == pool.ai_optimizer, E_NOT_OWNER);
+
+Ini S1 karena:
+- Front-running: attacker bisa liat tx di mempool, submit lebih cepat
+- Relay attack: kalau creator address compromised, semua pool jatuh
+- Di Sui, auth HARUS pakai Capability Object pattern
+
+*FIX:*
+public fun select_winner(
+    _cap: &AdminCap,  // ← INI yang jadi auth
+    pool: &mut ArisanPool,
+    clock: &sui::clock::Clock,
+    ctx: &mut TxContext,
+) {
+    // Gak usah cek sender — having AdminCap IS the auth
+}
+
+2️⃣ *SEC-AR-1: Pseudo-Random Bias* (S1 CRITICAL)
+Di select_winner line 598:
+let winner_index = seed % eligible_count;
+
+seed % eligible_count itu punya integer truncation bias — beberapa index punya probabilitas lebih tinggi. Di pool kecil (5-10 orang), ini bisa di-exploit.
+
+*FIX OPTIONS:*
+- Rejection sampling (simple fix)
+- Commit-reveal pattern (proper fix — pakai Seal)
+- Switchboard VRF (production grade)
+
+3️⃣ *SEC-AR-3: Precision Loss di Yield Strategy* (S2 HIGH)
+Di yield_strategy.move:144:
+shares_to_mint = amount * total_shares / total_deposits
+
+Floor division = dust lost setiap deposit/withdraw. Tumpuk bisa jadi puluhan dolar.
+
+*FIX:*
+fun mul_div(a: u64, b: u64, c: u64): u64 {
+    let result = (a as u128) * (b as u128) / (c as u128);
+    (result as u64)
+}
+const MIN_SHARES_OFFSET: u64 = 1000;
+
+━━━━━━━━━━━━━━━━━━━━
+
+🏗️ *DESIGN ISSUES — FIX SEBELUM MAINNET*
+
+4️⃣ *DES-FN-1: public_transfer Internal = Breaks PTB*
+Lo pakai transfer::public_transfer() di dalam select_winner() dan end_pool(). Ini break PTB composability — caller GAK BISA compose operation setelah payout (misal swap via DeepBook, deposit ke vault).
+
+*FIX:* Return Coin ke caller:
+public fun select_winner(...): Coin<TEST_USDC> {
+    let payout_coin = coin::from_balance(payout_balance, ctx);
+    payout_coin  // ← return, jangan transfer internal
+}
+
+5️⃣ *DES-OM-1: Unbounded participant_list*
+participant_list: vector<address> + loop while(i < len) = O(n) gas. Kalau max_participants besar, tx bisa timeout.
+
+*FIX:* Tambah cap:
+const MAX_POOL_SIZE: u64 = 50;
+
+6️⃣ *PAT-CP-1: Solidity-style Auth*
+ctx.sender() == pool.creator itu pattern EVM. Di Sui, capability object (AdminCap, FactoryAdminCap) adalah native auth mechanism. Lo udah bikin tapi belum dipakai semuanya.
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 *INTEGRASI SPONSOR — YANG BIKIN ARCHA MENANG*
+
+Sui Overflow 2026 ada $1M+ prize. Ini teknologi sponsor yang HARUS di-integrate:
+
+━━━━━━━━━━━━━━━━━━━━
+
+📊 *1. DeepBook V3 ($70K Track Prize)*
+DeepBook = CLOB native di Sui.
+
+*Integrasi utama: Flash Loan untuk Yield Arbitrage*
+Flow:
+1. Pool funds idle antara cycles
+2. Flash borrow USDC dari DeepBook pool
+3. Execute arbitrage (swap via DeepBook CLOB)
+4. Repay flash loan + keep profit
+5. Profit → yield_balance di arisan pool
+
+Flash Loan itu HOT POTATO pattern — harus repay dalam 1 PTB, atomic!
+
+Lo perlu bikin module baru:
+module archa::deepbook_yield {
+    // Borrow flash loan
+    // Execute strategy via PTB
+    // Repay + deposit profit ke pool
+}
+
+Bonus: Lo bisa submit ke DeepBook Track ($70K) + DeFi & Payments Track ($62.5K)
+
+━━━━━━━━━━━━━━━━━━━━
+
+🐟 *2. Walrus ($70K Track Prize)*
+Walrus = decentralized blob storage.
+
+3 Use Case buat Archa:
+
+A) Pool History & Audit Trail
+Simpan cycle history, winner log, yield report ke Walrus. On-chain cuma simpan blob_id reference.
+
+B) AI Model Storage
+AI yield optimizer model disimpan di Walrus:
+public struct AIModelRef has store, copy, drop {
+    walrus_blob_id: String,
+    version: u64,
+    uploaded_at_ms: u64,
+}
+
+C) Verifiable Participant Data
+KYC/identity proofs di Walrus (encrypted via Seal) = privacy-preserving
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔐 *3. Seal (MystenLabs — Decentralized Secrets)*
+Seal = threshold encryption + access control on-chain.
+
+*Integrasi utama: Fair Winner Selection*
+Ganti pseudo-random dengan commit-reveal pattern:
+1. Commit phase: setiap peserta submit hash(secret + address)
+2. Reveal phase: setelah cycle selesai, semua reveal secret
+3. Combined secrets → deterministic winner seed
+4. NO BIAS, NO FRONT-RUNNING
+
+*Bonus: Encrypted pool data*
+Data sensitif di-encrypt dengan Seal, disimpan di Walrus. Hanya pool participants yang bisa decrypt.
+
+━━━━━━━━━━━━━━━━━━━━
+
+💳 *4. Sui Payment Kit (Payments & Wallets Track)*
+Payment Kit = standardized payment processing + duplicate prevention.
+
+*Integrasi: Recurring Deposit + Duplicate Prevention*
+process_registry_payment<TEST_USDC>(
+    registry,
+    nonce,         // "cycle-1-0xParticipant" — unique per cycle
+    deposit_amount,
+    deposit_coin,
+    pool_address,
+    clock,
+    ctx,
+)
+
+Payment Kit handle:
+✅ Amount validation
+✅ Duplicate prevention (same nonce = rejected!)
+✅ Receipt generation (proof of payment)
+✅ Event emission
+
+*PLUS: Payment URI = QR Code buat arisan offline!*
+sui:pay?receiver=0xPOOL&amount=10000000
+&coinType=USDC&nonce=cycle-1-0xADDR
+&label=Archa+Arisan&registry=0xREG
+
+Orang scan QR → auto-pay. Masuk akal banget buat arisan offline.
+
+━━━━━━━━━━━━━━━━━━━━
+
+🌉 *5. Wormhole (Explorations Track)*
+Cross-chain arisan — peserta dari Ethereum/Solana/Base bisa ikut.
+
+Flow:
+1. User di Ethereum lock USDC di Wormhole
+2. Wormhole relay VAA ke Sui
+3. Archa verify VAA → mint wrapped USDC
+4. User join pool dengan wrapped USDC
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔮 *6. Pyth Network (Pengganti Chainlink)*
+Chainlink BELUM deploy di Sui. Ganti dengan:
+
+Price Oracle → Pyth Network ✅ (udah live di Sui)
+VRF Randomness → Seal commit-reveal ✅
+Cross-chain → Wormhole ✅
+Off-chain compute → Nautilus (TEE) ✅
+
+━━━━━━━━━━━━━━━━━━━━
+
+🤖 *7. LI.FI (Frontend Only)*
+BISA dipakai tapi ⚠️ belum support Sui secara native (cek status terbaru). Kalau belum → pakai Wormhole SDK. Implementasinya di frontend, bukan SC.
+
+━━━━━━━━━━━━━━━━━━━━
+
+📋 *PRIORITY ROADMAP BUAT FAIZ*
+
+🔴 PHASE 1: FIX CRITICAL (1-2 hari)
+□ Fix AdminCap — pakai di semua fungsi admin
+□ Fix pseudo-random — minimal rejection sampling
+□ Fix precision loss — u128 intermediate + MIN_SHARES offset
+□ Fix public_transfer internal — return Coin ke caller
+
+🟡 PHASE 2: CORE INTEGRATION (3-5 hari)
+□ DeepBook V3 flash loan yield module
+□ Walrus blob storage (pool history + AI model)
+□ Sui Payment Kit integration
+□ Seal commit-reveal winner selection
+
+🟢 PHASE 3: BONUS INTEGRATION (2-3 hari)
+□ Wormhole cross-chain receiver
+□ Pyth Network price oracle
+□ EVE payment rails (kalau sempat)
+
+━━━━━━━━━━━━━━━━━━━━
+
+🎯 *TRACK SUBMISSION STRATEGY*
+
+Primary: DeFi & Payments ($30K 1st place)
+
+Secondary (bonus prize pools):
+- Walrus Track ($70K pool)
+- DeepBook Track ($70K pool)
+- EVE Track ($50K pool)
+- ONE Track ($70K pool)
+- University Award ($2.5K × 10) — kalau ada yang masih kuliah
+
+Total potential: $220K+ kalau multi-track winner 🏆
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *TIPS PENTING*
+
+1. Sui Object Model itu differentiator terbesar lo — highlight di demo:
+   Shared Object, Owned Object, Capability-based auth, No approve pattern, Table<T>, Balance<T>
+
+2. PTB Composability — pastikan semua fungsi return object, jangan transfer internal.
+
+3. Test coverage — tambahin test buat slash_collateral, pool ending, precision loss, front-running resistance.
+
+4. Gunakan sui-pilot plugin (https://github.com/contract-hero/sui-pilot) buat Claude Code — bundle 747 docs Sui/Move/Walrus/Seal yang up-to-date. Skill /move-code-review yang aku pakai buat audit ini berasal dari sana.
+
+━━━━━━━━━━━━━━━━━━━━
+
+Bro, konsep Archa itu KUAT. Arisan on-chain + yield optimization itu genuinely unique di Sui ecosystem. Tapi execution-nya perlu level up — fix critical issues + integrate sponsor tech. Itu yang bedain winner dari participant.
+
+Kalau mau diskusi detail per module, hit me up. Aku siap bantu implementasiin specific integration.
+
+Semangat buat Overflow! 🚀

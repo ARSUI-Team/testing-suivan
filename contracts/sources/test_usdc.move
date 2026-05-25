@@ -5,9 +5,17 @@
 module archa::test_usdc {
     use sui::coin::{Self, TreasuryCap};
     use sui::coin_registry;
+    use sui::event;
 
     // ====== One-Time Witness ======
     public struct TEST_USDC has drop {}
+
+    // ====== Events ======
+
+    public struct FaucetMinted has copy, drop {
+        recipient: address,
+        amount: u64,
+    }
 
     /// Create the USDC coin type — called once during publish
     fun init(otw: TEST_USDC, ctx: &mut TxContext) {
@@ -38,6 +46,7 @@ module archa::test_usdc {
         ctx: &mut TxContext,
     ) {
         let coin = coin::mint(cap, amount, ctx);
+        event::emit(FaucetMinted { recipient, amount });
         transfer::public_transfer(coin, recipient);
     }
 
@@ -47,7 +56,9 @@ module archa::test_usdc {
         cap: &mut TreasuryCap<TEST_USDC>,
         ctx: &mut TxContext,
     ) {
-        let coin = coin::mint(cap, 10_000_000_000, ctx); // 10,000 USDC (6 decimals)
+        let amount = 10_000_000_000; // 10,000 USDC (6 decimals)
+        let coin = coin::mint(cap, amount, ctx);
+        event::emit(FaucetMinted { recipient: ctx.sender(), amount });
         transfer::public_transfer(coin, ctx.sender());
     }
 }
