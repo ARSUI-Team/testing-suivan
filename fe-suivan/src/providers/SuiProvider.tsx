@@ -3,7 +3,7 @@
 import "@mysten/dapp-kit/dist/index.css";
 
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
-import { SuiClient } from "@mysten/sui/client";
+import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 import { networkConfig } from "@/config/networkConfig";
@@ -16,7 +16,7 @@ export function SuiProvider({ children }: { children: ReactNode }) {
       <SuiClientProvider
         networks={networkConfig}
         defaultNetwork={(process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") || "testnet"}
-        createClient={(_, config) => new SuiClient(config)}
+        createClient={(_, config) => new SuiJsonRpcClient(config)}
       >
         <WalletProvider
           autoConnect
