@@ -30,8 +30,6 @@ module archa::yield_strategy {
         total_deposits: u64,
         total_shares: u64,
         shares: Table<address, u64>,
-        active_vault_id: Option<ID>,
-        registered_vaults: vector<ID>,
         funds: Balance<TEST_USDC>,
     }
 
@@ -69,8 +67,6 @@ module archa::yield_strategy {
             total_deposits: 0,
             total_shares: 0,
             shares: table::new(ctx),
-            active_vault_id: option::none(),
-            registered_vaults: vector[],
             funds: balance::zero(),
         };
 
@@ -234,8 +230,6 @@ module archa::yield_strategy {
             total_deposits: 0,
             total_shares: 0,
             shares: table::new(ctx),
-            active_vault_id: option::none(),
-            registered_vaults: vector[],
             funds: balance::zero(),
         };
         let cap = StrategyAdminCap { id: object::new(ctx) };
@@ -247,12 +241,9 @@ module archa::yield_strategy {
         let YieldStrategy {
             id, owner: _, ai_optimizer: _,
             total_deposits: _, total_shares: _,
-            shares, active_vault_id,
-            registered_vaults, funds
+            shares, funds
         } = strategy;
         table::drop(shares);
-        option::destroy_none(active_vault_id);
-        vector::destroy_empty(registered_vaults);
         balance::destroy_for_testing(funds);
         object::delete(id);
 

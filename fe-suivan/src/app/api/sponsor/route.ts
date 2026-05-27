@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
+import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
 import { fromHex } from "@mysten/sui/utils";
 
-let client: SuiJsonRpcClient | null = null;
+let client: SuiClient | null = null;
 function getClient() {
   if (!client) {
-    client = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl("testnet"), network: "testnet" });
+    client = new SuiClient({ url: getFullnodeUrl("testnet") });
   }
   return client;
 }

@@ -29,8 +29,7 @@ module archa::arisan_factory {
     public struct FactoryAdminCap has key, store { id: UID }
 
     /// The shared factory object — one per deployment
-    /// NOTE: all_pools and user_pools are tracked via events for now.
-    /// On-chain tracking requires architectural change (create_pool must return ID).
+    /// Tracks all pools and per-user pools on-chain.
     public struct ArisanFactory has key {
         id: UID,
         owner: address,
@@ -59,6 +58,7 @@ module archa::arisan_factory {
         factory_id: ID,
         creator: address,
         template_id: u64,
+        pool_id: ID,
     }
 
     public struct PoolCreatedCustom has copy, drop {
@@ -66,6 +66,7 @@ module archa::arisan_factory {
         creator: address,
         deposit_amount: u64,
         max_participants: u64,
+        pool_id: ID,
     }
 
     // ====== Init ======
@@ -169,7 +170,7 @@ module archa::arisan_factory {
         let creator = ctx.sender();
 
         // Delegate to arisan_pool::create_pool
-        arisan_pool::create_pool(
+        let pool_id = arisan_pool::create_pool(
             collateral,
             template.deposit_amount,
             template.max_participants,
@@ -179,10 +180,22 @@ module archa::arisan_factory {
             ctx,
         );
 
+        // Track pool on-chain
+        vector::push_back(&mut factory.all_pools, pool_id);
+        if (table::contains(&factory.user_pools, creator)) {
+            let user_pools = table::borrow_mut(&mut factory.user_pools, creator);
+            vector::push_back(user_pools, pool_id);
+        } else {
+            let mut new_list = vector[];
+            vector::push_back(&mut new_list, pool_id);
+            table::add(&mut factory.user_pools, creator, new_list);
+        };
+
         event::emit(PoolCreatedFromTemplate {
             factory_id,
             creator,
             template_id,
+            pool_id,
         });
     }
 
@@ -199,7 +212,7 @@ module archa::arisan_factory {
         let factory_id = object::id(factory);
         let creator = ctx.sender();
 
-        arisan_pool::create_pool(
+        let pool_id = arisan_pool::create_pool(
             collateral,
             deposit_amount,
             max_participants,
@@ -209,11 +222,23 @@ module archa::arisan_factory {
             ctx,
         );
 
+        // Track pool on-chain
+        vector::push_back(&mut factory.all_pools, pool_id);
+        if (table::contains(&factory.user_pools, creator)) {
+            let user_pools = table::borrow_mut(&mut factory.user_pools, creator);
+            vector::push_back(user_pools, pool_id);
+        } else {
+            let mut new_list = vector[];
+            vector::push_back(&mut new_list, pool_id);
+            table::add(&mut factory.user_pools, creator, new_list);
+        };
+
         event::emit(PoolCreatedCustom {
             factory_id,
             creator,
             deposit_amount,
             max_participants,
+            pool_id,
         });
     }
 

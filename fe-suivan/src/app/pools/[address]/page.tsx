@@ -214,17 +214,6 @@ export default function PoolDetailPage() {
 
       <section className="px-5 py-8 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-6 rounded-[1.5rem] border-2 border-slate-950 bg-white p-5 shadow-[5px_5px_0_#06111f]">
-            <p className="protocol-font text-xs font-black uppercase tracking-[0.2em] text-sky-700">
-              Pool detail boundary
-            </p>
-            <p className="mt-2 max-w-4xl text-sm font-semibold leading-6 text-slate-500">
-              Detail data, member state, deposits, yield signals, and settlement status are
-              isolated here so the frontend can connect cleanly to Suivan&apos;s upcoming Sui API
-              and contract modules.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Left Column - Pool Info */}
             <div className="lg:col-span-2 space-y-6">

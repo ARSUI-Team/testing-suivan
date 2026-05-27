@@ -41,6 +41,7 @@ module archa::arisan_pool {
     const E_WRONG_RECEIPT: u64 = 21;
     const E_DEPOSITS_INCOMPLETE: u64 = 22;
     const E_STRATEGY_ACTIVE: u64 = 23;
+    const E_NO_SEAL_SEED: u64 = 24;
 
     // DES-OM-1 fix: maximum pool size cap to prevent gas timeout
     const MAX_POOL_SIZE: u64 = 50;
@@ -162,7 +163,6 @@ module archa::arisan_pool {
         cycle: u64,
     }
 
-    const SEED_SOURCE_LEGACY: u8 = 0;
     const SEED_SOURCE_SEAL: u8 = 1;
 
     public struct WinnerSelected has copy, drop {
@@ -449,7 +449,7 @@ module archa::arisan_pool {
         collateral_multiplier: u64,
         metadata_blob_id: String,
         ctx: &mut TxContext,
-    ) {
+    ): ID {
         assert!(deposit_amount > 0, E_WRONG_DEPOSIT_AMOUNT);
         assert!(cycle_duration_ms > 0, E_WRONG_DEPOSIT_AMOUNT);
         assert!(collateral_multiplier >= 100, E_COLLATERAL_TOO_LOW);
@@ -532,6 +532,8 @@ module archa::arisan_pool {
             pool_id,
         };
         transfer::public_transfer(admin_cap, sender);
+
+        pool_id
     }
 
     /// Join an existing pool by providing collateral
@@ -697,32 +699,21 @@ module archa::arisan_pool {
         let eligible_count = vector::length(&eligible);
         assert!(eligible_count > 0, E_NO_WINNERS_LEFT);
 
-        // Pseudo-random selection with rejection sampling (SEC-AR-1 fix)
-        // If Seal randomness seed is available, use it; otherwise fall back to
-        // legacy tx digest + timestamp entropy (backward compatible)
-        let (seed, seed_source) = if (pool.seal_seed.is_some()) {
-            let seal_bytes = option::borrow(&pool.seal_seed);
-            let mut s = pool.current_cycle;
-            let mut j = 0;
-            let seal_len = vector::length(seal_bytes);
-            while (j < seal_len) {
-                let byte = (*vector::borrow(seal_bytes, j) as u64);
-                s = (s << 5) ^ s ^ byte;
-                j = j + 1;
-            };
-            (s, SEED_SOURCE_SEAL)
-        } else {
-            let tx_hash: &vector<u8> = sui::tx_context::digest(ctx);
-            let mut s = pool.current_cycle;
-            let mut i = 0;
-            let hash_len = vector::length(tx_hash);
-            while (i < hash_len) {
-                let byte = (*vector::borrow(tx_hash, i) as u64);
-                s = (s << 5) ^ s ^ byte;
-                i = i + 1;
-            };
-            (s ^ current_time, SEED_SOURCE_LEGACY)
+        // Verifiable randomness via Seal threshold encryption (SEC-AR-1 fix)
+        // Seal seed MUST be set before select_winner — enforced by abort
+        // This prevents validator-influenced tx_context::digest() attacks
+        assert!(pool.seal_seed.is_some(), E_NO_SEAL_SEED);
+        let seal_bytes = option::borrow(&pool.seal_seed);
+        let mut s = pool.current_cycle;
+        let mut j = 0;
+        let seal_len = vector::length(seal_bytes);
+        while (j < seal_len) {
+            let byte = (*vector::borrow(seal_bytes, j) as u64);
+            s = (s << 5) ^ s ^ byte;
+            j = j + 1;
         };
+        let seed = s;
+        let seed_source = SEED_SOURCE_SEAL;
 
         // Rejection sampling to eliminate modulo bias
         // Find smallest power of 2 >= eligible_count, then reject
@@ -1035,7 +1026,8 @@ module archa::arisan_pool {
         (coin::take(&mut pool.pool_funds_balance, amount, ctx), receipt)
     }
 
-    /// Return pool funds after yield operation (deposit back to pool_funds_balance)
+    /// Return pool funds after yield operation
+    /// Splits principal → pool_funds_balance, profit → yield_balance
     /// Consumes YieldWithdrawalReceipt (hot potato) — enforces return in same PTB
     /// public(package) — only callable within archa package (S1-2/H-03 fix)
     public(package) fun return_pool_funds_from_yield(
@@ -1049,7 +1041,13 @@ module archa::arisan_pool {
         assert!(!pool.is_ended, E_POOL_ENDED);
         assert!(coin::value(&coin) >= receipt.amount, E_INSUFFICIENT_FUNDS);
         let profit = coin::value(&coin) - receipt.amount;
-        balance::join(&mut pool.pool_funds_balance, coin::into_balance(coin));
+        let principal = coin::split(&mut coin, receipt.amount);
+        balance::join(&mut pool.pool_funds_balance, coin::into_balance(principal));
+        if (profit > 0) {
+            balance::join(&mut pool.yield_balance, coin::into_balance(coin));
+        } else {
+            coin::destroy_zero(coin);
+        };
         event::emit(PoolFundsReturned {
             pool_id: object::id(pool),
             amount: receipt.amount,

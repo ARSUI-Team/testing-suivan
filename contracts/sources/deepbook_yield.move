@@ -71,11 +71,13 @@ module archa::deepbook_yield {
     /// 4. Return exact borrowed amount → consume FlashLoan
     /// 5. Return all remaining coins to caller (profit + leftovers)
     ///
+    /// min_profit: minimum profit expected — tx aborts if profit < min_profit (slippage protection)
     /// Caller composes PTB: flash_arbitrage_borrow_base → deposit_yield_profit_usdc
     public fun flash_arbitrage_borrow_base<BaseAsset, QuoteAsset>(
         archa_pool_id: ID,
         deepbook_pool: &mut DeepBookPool<BaseAsset, QuoteAsset>,
         borrow_amount: u64,
+        min_profit: u64,
         deep_coin: Coin<DEEP>,
         clock: &Clock,
         ctx: &mut TxContext,
@@ -104,6 +106,9 @@ module archa::deepbook_yield {
         let base_value = coin::value(&base_back);
         assert!(base_value >= borrow_amount, E_INSUFFICIENT_PROFIT);
 
+        let profit = base_value - borrow_amount;
+        assert!(profit >= min_profit, E_INSUFFICIENT_PROFIT);
+
         let return_coin = coin::split(&mut base_back, borrow_amount, ctx);
         deepbook_pool::return_flashloan_base(deepbook_pool, return_coin, flash_loan);
 
@@ -112,7 +117,7 @@ module archa::deepbook_yield {
             deepbook_pool_id: object::id(deepbook_pool),
             borrowed_amount: borrow_amount,
             returned_amount: borrow_amount,
-            profit: coin::value(&base_back),
+            profit,
             is_base: true,
         });
 
@@ -123,11 +128,13 @@ module archa::deepbook_yield {
 
     /// Execute flash loan arbitrage borrowing quote asset from DeepBook
     ///
+    /// min_profit: minimum profit expected — tx aborts if profit < min_profit (slippage protection)
     /// Returns: (base_remaining, quote_profit, deep_remaining)
     public fun flash_arbitrage_borrow_quote<BaseAsset, QuoteAsset>(
         archa_pool_id: ID,
         deepbook_pool: &mut DeepBookPool<BaseAsset, QuoteAsset>,
         borrow_amount: u64,
+        min_profit: u64,
         deep_coin: Coin<DEEP>,
         clock: &Clock,
         ctx: &mut TxContext,
@@ -156,6 +163,9 @@ module archa::deepbook_yield {
         let quote_value = coin::value(&quote_back);
         assert!(quote_value >= borrow_amount, E_INSUFFICIENT_PROFIT);
 
+        let profit = quote_value - borrow_amount;
+        assert!(profit >= min_profit, E_INSUFFICIENT_PROFIT);
+
         let return_coin = coin::split(&mut quote_back, borrow_amount, ctx);
         deepbook_pool::return_flashloan_quote(deepbook_pool, return_coin, flash_loan);
 
@@ -164,7 +174,7 @@ module archa::deepbook_yield {
             deepbook_pool_id: object::id(deepbook_pool),
             borrowed_amount: borrow_amount,
             returned_amount: borrow_amount,
-            profit: coin::value(&quote_back),
+            profit,
             is_base: false,
         });
 

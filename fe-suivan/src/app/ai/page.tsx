@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
@@ -32,12 +32,28 @@ interface YieldData {
   };
 }
 
+interface YieldRecommendation {
+  bestSingleProtocol: { name: string; apy: number; tvl: number } | null;
+  aiAdvantage: { expectedApy: number; riskReduction: string };
+}
+
 export default function YieldSignalsPage() {
   const [data, setData] = useState<YieldData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recommendation, setRecommendation] = useState<YieldRecommendation | null>(null);
+  const [loadingRec, setLoadingRec] = useState(false);
   const gsapRef = useGsapEntrance([data]);
   const { t } = useLanguage();
+
+  const generateStrategy = useCallback(async () => {
+    setLoadingRec(true);
+    try {
+      const res = await fetch("/api/yields/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ riskTolerance: "moderate" }) });
+      const json = await res.json();
+      if (json.success) setRecommendation(json.data);
+    } catch { /* ignore */ } finally { setLoadingRec(false); }
+  }, []);
 
   useEffect(() => {
     fetch("/api/yields")
@@ -167,12 +183,24 @@ export default function YieldSignalsPage() {
                   <p className="mt-4 text-lg font-black text-slate-950">
                     {t("ai.topProtocol")}: {data.protocols[0]?.name || "N/A"} — {data.protocols[0]?.apy.toFixed(2) || "0"}%
                   </p>
-                  <Link
-                    href="/api/yields/recommend"
-                    className="protocol-font mt-4 inline-flex rounded-full border-2 border-slate-950 bg-sky-400 px-4 py-2 text-xs font-black text-slate-950 shadow-[3px_3px_0_#06111f] transition hover:-translate-y-0.5"
-                  >
-                    {t("ai.generateStrategy")}
-                  </Link>
+                  {recommendation ? (
+                    <div className="mt-4 space-y-2">
+                      <p className="protocol-font text-sm font-black text-teal-800">
+                        {t("ai.recommendedProtocol")}: {recommendation.bestSingleProtocol?.name} ({recommendation.bestSingleProtocol?.apy.toFixed(2)}%)
+                      </p>
+                      <p className="protocol-font text-xs font-black text-teal-600">
+                        {t("ai.expectedApy")}: {recommendation.aiAdvantage.expectedApy.toFixed(2)}% | {t("ai.riskReduction")}: {recommendation.aiAdvantage.riskReduction}
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={generateStrategy}
+                      disabled={loadingRec}
+                      className="protocol-font mt-4 inline-flex rounded-full border-2 border-slate-950 bg-sky-400 px-4 py-2 text-xs font-black text-slate-950 shadow-[3px_3px_0_#06111f] transition hover:-translate-y-0.5 disabled:opacity-50"
+                    >
+                      {loadingRec ? t("ai.loading") : t("ai.generateStrategy")}
+                    </button>
+                  )}
                 </div>
               </div>
             </>
