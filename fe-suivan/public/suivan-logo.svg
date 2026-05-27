@@ -1,0 +1,19 @@
+<svg width="600" height="200" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g clip-path="url(#clip0)">
+    <path d="M200 40C228 84 276 128 276 178C276 218 242 250 200 250C158 250 124 218 124 178C124 128 172 84 200 40Z" fill="url(#paint0_linear)"/>
+    <path d="M161 182C175 200 225 200 239 182" stroke="#F7F0DF" stroke-width="14" stroke-linecap="round"/>
+    <path d="M172 156H228" stroke="#05111F" stroke-width="12" stroke-linecap="round"/>
+    <text x="310" y="165" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="80" font-weight="700" fill="#F7F0DF" letter-spacing="-2">Suivan</text>
+    <text x="314" y="190" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="500" fill="#14B8A6" letter-spacing="4">ROSCA PROTOCOL</text>
+  </g>
+  <defs>
+    <linearGradient id="paint0_linear" x1="124" y1="52" x2="283" y2="243" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#61D7FF"/>
+      <stop offset="0.52" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+    <clipPath id="clip0">
+      <rect width="600" height="200" fill="none"/>
+    </clipPath>
+  </defs>
+</svg>
