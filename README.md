@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="fe-suivan/public/suivan-logo.png" alt="Suivan Logo" width="400">
+</p>
+
 # Suivan
 
 **ROSCA Protocol — Native on Sui**
