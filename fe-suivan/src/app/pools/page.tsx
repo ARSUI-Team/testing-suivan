@@ -166,6 +166,13 @@ export default function PoolsPage() {
             </div>
           )}
 
+          {/* Faucet */}
+          {isConnected && (
+            <div className="gsap-up mb-4">
+              <FaucetButton userAddress={account!.address} refetchPools={refetchPools} />
+            </div>
+          )}
+
           {/* Filters & Create */}
           <div className="gsap-up mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <div className="w-full overflow-x-auto scrollbar-hide md:w-auto">
@@ -535,5 +542,59 @@ export default function PoolsPage() {
 
       <Footer />
     </main>
+  );
+}
+
+function FaucetButton({ userAddress, refetchPools }: { userAddress: string; refetchPools: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+
+  const handleFaucet = async () => {
+    setLoading(true);
+    setStatus("idle");
+    try {
+      const res = await fetch("/api/sponsor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "mint_faucet", userAddress }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus("success");
+        successToast("10,000 TEST_USDC minted to your wallet!");
+        setTimeout(() => refetchPools(), 2000);
+      } else {
+        setStatus("error");
+        errorToast(data.error || "Faucet failed");
+      }
+    } catch (e) {
+      setStatus("error");
+      errorToast(e instanceof Error ? e.message : "Faucet error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleFaucet}
+      disabled={loading}
+      className={`protocol-font inline-flex items-center gap-2 rounded-full border-2 border-slate-950 px-4 py-2 text-xs font-black shadow-[3px_3px_0_#06111f] transition hover:-translate-y-0.5 disabled:opacity-50 ${
+        status === "success" ? "bg-[#d9f8df] text-green-800" : "bg-[#fff1c7] text-yellow-800"
+      }`}
+    >
+      {loading ? (
+        <>
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-yellow-800 border-b-transparent" />
+          Minting...
+        </>
+      ) : status === "success" ? (
+        "10,000 USDC Minted!"
+      ) : (
+        "Get Test USDC"
+      )}
+    </button>
   );
 }
