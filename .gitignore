@@ -1,6 +1,9 @@
 *.md
+!README.md
 *.txt
 
 migration-docs/
 
 DEPLOYMENT.md
+node_modules/
+/public/
