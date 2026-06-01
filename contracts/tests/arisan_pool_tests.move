@@ -12,6 +12,7 @@ module archa::arisan_pool_tests {
     use archa::test_usdc::TEST_USDC;
     use std::string;
 
+
     const DEPOSIT_AMOUNT: u64 = 10_000_000;
     const MAX_PARTICIPANTS: u64 = 5;
     const CYCLE_DURATION_MS: u64 = 2_592_000_000;
@@ -25,8 +26,8 @@ module archa::arisan_pool_tests {
         )
     }
 
-    fun create_test_pool(scenario: &mut test_scenario::Scenario): (ArisanPool, PoolAdminCap) {
-        arisan_pool::test_create_pool_for_unit_test(
+    fun create_test_pool(scenario: &mut test_scenario::Scenario): (ArisanPool<TEST_USDC>, PoolAdminCap) {
+        arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT,
             MAX_PARTICIPANTS,
             CYCLE_DURATION_MS,
@@ -35,8 +36,8 @@ module archa::arisan_pool_tests {
         )
     }
 
-    fun cleanup_empty(pool: ArisanPool, cap: PoolAdminCap, scenario: &mut test_scenario::Scenario) {
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+    fun cleanup_empty(pool: ArisanPool<TEST_USDC>, cap: PoolAdminCap, scenario: &mut test_scenario::Scenario) {
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
     }
 
     // =========================================================================
@@ -64,7 +65,7 @@ module archa::arisan_pool_tests {
     #[test]
     fun test_required_collateral_100pct() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (pool, cap) = arisan_pool::test_create_pool_for_unit_test(5_000_000, 10, 1_000_000, 100, scenario.ctx());
+        let (pool, cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(5_000_000, 10, 1_000_000, 100, scenario.ctx());
         assert!(arisan_pool::required_collateral(&pool) == 5_000_000);
         cleanup_empty(pool, cap, &mut scenario);
         scenario.end();
@@ -73,7 +74,7 @@ module archa::arisan_pool_tests {
     #[test]
     fun test_required_collateral_150pct() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (pool, cap) = arisan_pool::test_create_pool_for_unit_test(1_000_000, 3, 500_000, 150, scenario.ctx());
+        let (pool, cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(1_000_000, 3, 500_000, 150, scenario.ctx());
         assert!(arisan_pool::required_collateral(&pool) == 1_500_000);
         cleanup_empty(pool, cap, &mut scenario);
         scenario.end();
@@ -83,11 +84,11 @@ module archa::arisan_pool_tests {
     fun test_pool_various_configs() {
         let mut scenario = test_scenario::begin(@0xA);
 
-        let (pool, cap) = arisan_pool::test_create_pool_for_unit_test(1_000_000, 2, 100_000, 200, scenario.ctx());
+        let (pool, cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(1_000_000, 2, 100_000, 200, scenario.ctx());
         assert!(arisan_pool::required_collateral(&pool) == 2_000_000);
         cleanup_empty(pool, cap, &mut scenario);
 
-        let (pool2, cap2) = arisan_pool::test_create_pool_for_unit_test(100_000_000, 50, 10_000_000_000, 100, scenario.ctx());
+        let (pool2, cap2) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(100_000_000, 50, 10_000_000_000, 100, scenario.ctx());
         assert!(arisan_pool::required_collateral(&pool2) == 100_000_000);
         cleanup_empty(pool2, cap2, &mut scenario);
         scenario.end();
@@ -164,7 +165,7 @@ module archa::arisan_pool_tests {
         );
 
         scenario.next_tx(@0xA);
-        let pool = scenario.take_shared<ArisanPool>();
+        let pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
 
         assert!(arisan_pool::participant_count(&pool) == 1);
         assert!(arisan_pool::is_participant(&pool, @0xA) == true);
@@ -211,7 +212,7 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
 
@@ -232,13 +233,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xC);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_c = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_c, scenario.ctx());
         test_scenario::return_shared(pool);
@@ -254,7 +255,7 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_a2 = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_a2, scenario.ctx());
 
@@ -276,14 +277,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Start pool as A (creator) using PoolAdminCap
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -315,21 +316,21 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral1, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         // Create a separate unit-test pool with different pool_id, extract just the cap
-        let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test(
+        let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, scenario.ctx()
         );
-        arisan_pool::test_destroy_pool_only(other_pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(other_pool, scenario.ctx());
 
         // B joins the shared pool
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A tries to start the shared pool using other_cap (wrong pool_id)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let clock = scenario.take_shared<Clock>();
         arisan_pool::start_pool(&other_cap, &mut pool, &clock, scenario.ctx());
         // Cap must be consumed (won't reach here due to abort)
@@ -350,7 +351,7 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
 
         let clock = scenario.take_shared<Clock>();
@@ -377,14 +378,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool + deposits
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let clock = scenario.take_shared<Clock>();
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
@@ -402,7 +403,7 @@ module archa::arisan_pool_tests {
 
         // B makes deposit
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
 
@@ -425,14 +426,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool + deposits twice (second should fail)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let clock = scenario.take_shared<Clock>();
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
@@ -461,14 +462,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool, then deposits wrong amount
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let clock = scenario.take_shared<Clock>();
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
@@ -496,14 +497,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(20_000_000, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -514,7 +515,7 @@ module archa::arisan_pool_tests {
 
         // A slashes B using PoolAdminCap (after cycle completes)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(CYCLE_DURATION_MS + 1000 + 1);
@@ -542,14 +543,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -560,7 +561,7 @@ module archa::arisan_pool_tests {
 
         // Slash B - full depletion (after cycle completes)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(CYCLE_DURATION_MS + 1000 + 1);
@@ -587,21 +588,21 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 200, string::utf8(b""), scenario.ctx());
 
         // Create separate unit-test pool, extract just the cap
-        let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test(
+        let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 200, scenario.ctx()
         );
-        arisan_pool::test_destroy_pool_only(other_pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(other_pool, scenario.ctx());
 
         // B joins pool
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(20_000_000, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool with correct cap
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -612,7 +613,7 @@ module archa::arisan_pool_tests {
 
         // A tries to slash B using other_cap (wrong pool_id) — should fail
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(CYCLE_DURATION_MS + 1000 + 1);
         arisan_pool::slash_collateral(&other_cap, &mut pool, @0xB, &clock, scenario.ctx());
@@ -670,14 +671,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool + deposits
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -691,20 +692,21 @@ module archa::arisan_pool_tests {
 
         // B deposits
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Advance time past cycle 1 end
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         // Cycle 1 ends at: start_time + 1 * cycle_duration = 1000 + 1_000_000 = 1_001_000
         clock.set_for_testing(1_001_000);
 
         // Select winner — payout goes directly to winner address (H-02 fix)
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
 
         // Verify pool state
@@ -742,14 +744,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -760,7 +762,7 @@ module archa::arisan_pool_tests {
 
         // A ends pool using PoolAdminCap
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         arisan_pool::end_pool(&cap, &mut pool, scenario.ctx());
 
@@ -783,21 +785,21 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         // Create separate unit-test pool with different pool_id
-        let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test(
+        let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, scenario.ctx()
         );
-        arisan_pool::test_destroy_pool_only(other_pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(other_pool, scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -808,7 +810,7 @@ module archa::arisan_pool_tests {
 
         // A tries to end pool using other_cap (wrong pool_id)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         arisan_pool::end_pool(&other_cap, &mut pool, scenario.ctx());
         transfer::public_transfer(other_cap, @0xA);
 
@@ -830,14 +832,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -848,7 +850,7 @@ module archa::arisan_pool_tests {
 
         // A ends pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         arisan_pool::end_pool(&cap, &mut pool, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
@@ -856,7 +858,7 @@ module archa::arisan_pool_tests {
 
         // A claims collateral
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_coin = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         assert!(coin::value(&collateral_coin) == REQUIRED_COLLATERAL);
         let bal = coin::into_balance(collateral_coin);
@@ -865,7 +867,7 @@ module archa::arisan_pool_tests {
 
         // B claims collateral
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_coin = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         assert!(coin::value(&collateral_coin) == REQUIRED_COLLATERAL);
         let bal = coin::into_balance(collateral_coin);
@@ -886,14 +888,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -904,7 +906,7 @@ module archa::arisan_pool_tests {
 
         // A tries to claim before pool ends — should fail
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_coin = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         let bal = coin::into_balance(collateral_coin);
         balance::destroy_for_testing(bal);
@@ -923,14 +925,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -941,7 +943,7 @@ module archa::arisan_pool_tests {
 
         // A ends pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         arisan_pool::end_pool(&cap, &mut pool, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
@@ -949,7 +951,7 @@ module archa::arisan_pool_tests {
 
         // A claims collateral — success
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_coin = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         let bal = coin::into_balance(collateral_coin);
         balance::destroy_for_testing(bal);
@@ -957,7 +959,7 @@ module archa::arisan_pool_tests {
 
         // A tries to claim again — should fail
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_coin = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         let bal = coin::into_balance(collateral_coin);
         balance::destroy_for_testing(bal);
@@ -1033,7 +1035,7 @@ module archa::arisan_pool_tests {
 
         assert!(arisan_pool::test_is_cycle_complete(&pool, 1_000_000) == false);
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -1047,13 +1049,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 100, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1064,7 +1066,7 @@ module archa::arisan_pool_tests {
 
         // Slash B once — full depletion, becomes inactive
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(CYCLE_DURATION_MS * 2 + 1);
@@ -1088,14 +1090,14 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(20_000_000, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Start pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(500);
@@ -1106,7 +1108,7 @@ module archa::arisan_pool_tests {
 
         // Try to slash B immediately — cycle hasn't completed yet
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(999);
@@ -1127,14 +1129,14 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(20_000_000, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Start pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(500);
@@ -1145,14 +1147,14 @@ module archa::arisan_pool_tests {
 
         // B deposits this cycle
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Try to slash B after cycle completes — but B already deposited
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1178,14 +1180,14 @@ module archa::arisan_pool_tests {
 
         // B joins
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // A starts pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1196,24 +1198,25 @@ module archa::arisan_pool_tests {
 
         // Cycle 1: A and B deposit
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Cycle 1: select winner
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
 
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
 
         // After first select_winner: pool at cycle 2, 1 winner selected
@@ -1226,24 +1229,25 @@ module archa::arisan_pool_tests {
 
         // Cycle 2: A and B deposit
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_a2 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_a2, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b2 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b2, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Cycle 2: select winner (this will end pool — all 2 participants have won)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(2_001_000);
 
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
 
         // Pool should be ended (all participants won)
@@ -1256,7 +1260,7 @@ module archa::arisan_pool_tests {
 
         // Both participants claim collateral
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let col_a = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         assert!(coin::value(&col_a) == REQUIRED_COLLATERAL);
         let bal = coin::into_balance(col_a);
@@ -1264,7 +1268,7 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let col_b = arisan_pool::claim_collateral(&mut pool, scenario.ctx());
         assert!(coin::value(&col_b) == REQUIRED_COLLATERAL);
         let bal = coin::into_balance(col_b);
@@ -1289,20 +1293,20 @@ module archa::arisan_pool_tests {
 
         // B and C join
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xC);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_c = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_c, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Start pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1313,20 +1317,20 @@ module archa::arisan_pool_tests {
 
         // Only A and B deposit (C misses)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Try to select winner — should fail because C hasn't deposited
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1346,14 +1350,14 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Start + deposit cycle 1
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1365,17 +1369,18 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Select cycle 1 winner
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -1389,7 +1394,7 @@ module archa::arisan_pool_tests {
 
         // Now cycle 2: winner must also deposit — both deposit
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let deposit_a2 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_a2, scenario.ctx());
@@ -1397,17 +1402,18 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b2 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b2, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Cycle 2 winner selection works because both deposited
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(2_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -1425,14 +1431,14 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 100, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Start pool
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1443,7 +1449,7 @@ module archa::arisan_pool_tests {
 
         // Slash B fully — B becomes inactive
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1454,7 +1460,7 @@ module archa::arisan_pool_tests {
 
         // Only A deposits — B is inactive, so not required
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
@@ -1463,10 +1469,11 @@ module archa::arisan_pool_tests {
 
         // select_winner should work — B is inactive, A deposited
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -1488,13 +1495,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1507,13 +1514,13 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1541,13 +1548,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1560,13 +1567,13 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1590,6 +1597,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
+    #[expected_failure(abort_code = archa::arisan_pool::E_NO_SEAL_SEED)]
     fun test_legacy_path_no_seal_seed() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -1598,13 +1606,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1617,13 +1625,13 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1631,9 +1639,6 @@ module archa::arisan_pool_tests {
         assert!(!arisan_pool::has_seal_seed(&pool));
 
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
-
-        let winner_opt = arisan_pool::get_cycle_winner(&pool, 1);
-        assert!(option::is_some(&winner_opt));
 
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -1666,13 +1671,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1685,13 +1690,13 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1722,13 +1727,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1740,16 +1745,17 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
 
         let info = arisan_pool::pool_info(&pool);
@@ -1792,13 +1798,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1810,13 +1816,13 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
@@ -1842,19 +1848,19 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xC);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_c = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_c, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1866,22 +1872,23 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xC);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_c = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_c, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
 
         let info = arisan_pool::pool_info(&pool);
@@ -1902,13 +1909,13 @@ module archa::arisan_pool_tests {
         arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), scenario.ctx());
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let collateral_b = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
@@ -1920,17 +1927,18 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Cycle 1 winner
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -1938,23 +1946,24 @@ module archa::arisan_pool_tests {
 
         // Cycle 2 deposits
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_a2 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_a2, scenario.ctx());
         test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit_b2 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit_b2, scenario.ctx());
         test_scenario::return_shared(pool);
 
         // Cycle 2 winner — should end pool (2 participants, 2 cycles)
         scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool>();
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(2_001_000);
+        arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         arisan_pool::select_winner(&cap, &mut pool, &clock, scenario.ctx());
 
         let info = arisan_pool::pool_info(&pool);
@@ -1978,7 +1987,7 @@ module archa::arisan_pool_tests {
             &cap, &mut pool, 30_000_000, scenario.ctx()
         );
 
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn_coin, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn_coin, receipt, scenario.ctx());
 
         let info = arisan_pool::pool_info(&pool);
         assert!(arisan_pool::info_total_pool_funds(&info) == 50_000_000);
@@ -1991,7 +2000,7 @@ module archa::arisan_pool_tests {
     fun test_walrus_blob_type_is_u8() {
         let mut scenario = test_scenario::begin(@0xA);
         let (pool, cap) = create_test_pool(&mut scenario);
-        arisan_pool::test_destroy_pool_only(pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(pool, scenario.ctx());
         arisan_pool::test_destroy_cap(cap);
         scenario.end();
     }

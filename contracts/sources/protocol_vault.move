@@ -9,10 +9,7 @@ module archa::protocol_vault {
     use sui::table::{Self, Table};
     use std::string::String;
 
-    use archa::test_usdc::TEST_USDC;
-
     const E_INSUFFICIENT_SHARES: u64 = 300;
-    const E_NOT_OWNER: u64 = 301;
 
     const MIN_SHARES_OFFSET: u64 = 1000;
 
@@ -20,14 +17,14 @@ module archa::protocol_vault {
         (((a as u128) * (b as u128) / (c as u128)) as u64)
     }
 
-    public struct ProtocolVault has key {
+    public struct ProtocolVault<phantom CoinType> has key {
         id: UID,
         owner: address,
         protocol_name: String,
         total_assets: u64,
         total_shares: u64,
         shares: Table<address, u64>,
-        funds: Balance<TEST_USDC>,
+        funds: Balance<CoinType>,
     }
 
     public struct VaultCreated has copy, drop {
@@ -52,12 +49,12 @@ module archa::protocol_vault {
     // ====== Functions ======
 
     /// Create a new protocol vault — called by deployer or admin
-    public fun create_vault(
+    public fun create_vault<CoinType>(
         protocol_name: String,
         ctx: &mut TxContext,
     ) {
         let vault_id = object::new(ctx);
-        let vault = ProtocolVault {
+        let vault = ProtocolVault<CoinType> {
             id: vault_id,
             owner: ctx.sender(),
             protocol_name,
@@ -76,9 +73,9 @@ module archa::protocol_vault {
     }
 
     /// Deposit USDC into vault
-    public fun deposit(
-        vault: &mut ProtocolVault,
-        coin: Coin<TEST_USDC>,
+    public fun deposit<CoinType>(
+        vault: &mut ProtocolVault<CoinType>,
+        coin: Coin<CoinType>,
         ctx: &mut TxContext,
     ) {
         let amount = coin::value(&coin);
@@ -113,11 +110,11 @@ module archa::protocol_vault {
     }
 
     /// Withdraw USDC from vault by burning shares
-    public fun withdraw(
-        vault: &mut ProtocolVault,
+    public fun withdraw<CoinType>(
+        vault: &mut ProtocolVault<CoinType>,
         share_amount: u64,
         ctx: &mut TxContext,
-    ): Coin<TEST_USDC> {
+    ): Coin<CoinType> {
         let withdrawer = ctx.sender();
 
         assert!(table::contains(&vault.shares, withdrawer), E_INSUFFICIENT_SHARES);
@@ -149,19 +146,19 @@ module archa::protocol_vault {
 
     // ====== View Functions ======
 
-    public fun get_protocol_name(vault: &ProtocolVault): String {
+    public fun get_protocol_name<CoinType>(vault: &ProtocolVault<CoinType>): String {
         vault.protocol_name
     }
 
-    public fun get_total_assets(vault: &ProtocolVault): u64 {
+    public fun get_total_assets<CoinType>(vault: &ProtocolVault<CoinType>): u64 {
         vault.total_assets
     }
 
-    public fun get_actual_balance(vault: &ProtocolVault): u64 {
+    public fun get_actual_balance<CoinType>(vault: &ProtocolVault<CoinType>): u64 {
         balance::value(&vault.funds)
     }
 
-    public fun get_shares(vault: &ProtocolVault, addr: address): u64 {
+    public fun get_shares<CoinType>(vault: &ProtocolVault<CoinType>, addr: address): u64 {
         if (table::contains(&vault.shares, addr)) {
             *table::borrow(&vault.shares, addr)
         } else {
@@ -172,8 +169,8 @@ module archa::protocol_vault {
     // ====== TEST HELPERS ======
 
     #[test_only]
-    public fun test_create_vault(ctx: &mut TxContext): ProtocolVault {
-        ProtocolVault {
+    public fun test_create_vault<CoinType>(ctx: &mut TxContext): ProtocolVault<CoinType> {
+        ProtocolVault<CoinType> {
             id: object::new(ctx),
             owner: ctx.sender(),
             protocol_name: std::string::utf8(b"Test Protocol"),
@@ -185,8 +182,8 @@ module archa::protocol_vault {
     }
 
     #[test_only]
-    public fun test_cleanup_vault(vault: ProtocolVault, _ctx: &mut TxContext) {
-        let ProtocolVault {
+    public fun test_cleanup_vault<CoinType>(vault: ProtocolVault<CoinType>, _ctx: &mut TxContext) {
+        let ProtocolVault<CoinType> {
             id, owner: _, protocol_name: _,
             total_assets: _, total_shares: _,
             shares, funds

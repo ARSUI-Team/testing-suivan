@@ -21,21 +21,21 @@ module archa::protocol_vault_tests {
     #[test]
     fun test_empty_vault_state() {
         let mut scenario = test_scenario::begin(@0xA);
-        let vault = protocol_vault::test_create_vault(scenario.ctx());
+        let vault = protocol_vault::test_create_vault<TEST_USDC>(scenario.ctx());
 
         assert!(protocol_vault::get_total_assets(&vault) == 0);
         assert!(protocol_vault::get_actual_balance(&vault) == 0);
         assert!(protocol_vault::get_shares(&vault, @0xA) == 0);
         assert!(protocol_vault::get_total_assets(&vault) == protocol_vault::get_actual_balance(&vault));
 
-        protocol_vault::test_cleanup_vault(vault, scenario.ctx());
+        protocol_vault::test_cleanup_vault<TEST_USDC>(vault, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_deposit() {
         let mut scenario = test_scenario::begin(@0xA);
-        let mut vault = protocol_vault::test_create_vault(scenario.ctx());
+        let mut vault = protocol_vault::test_create_vault<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         protocol_vault::deposit(&mut vault, deposit, scenario.ctx());
@@ -45,14 +45,14 @@ module archa::protocol_vault_tests {
         assert!(protocol_vault::get_shares(&vault, @0xA) == DEPOSIT_100_USDC + MIN_SHARES_OFFSET);
         assert!(protocol_vault::get_total_assets(&vault) == protocol_vault::get_actual_balance(&vault));
 
-        protocol_vault::test_cleanup_vault(vault, scenario.ctx());
+        protocol_vault::test_cleanup_vault<TEST_USDC>(vault, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_multiple_deposits() {
         let mut scenario = test_scenario::begin(@0xA);
-        let mut vault = protocol_vault::test_create_vault(scenario.ctx());
+        let mut vault = protocol_vault::test_create_vault<TEST_USDC>(scenario.ctx());
 
         let d1 = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         protocol_vault::deposit(&mut vault, d1, scenario.ctx());
@@ -68,14 +68,14 @@ module archa::protocol_vault_tests {
         assert!(second_shares > DEPOSIT_100_USDC - 100_000);
         assert!(second_shares < DEPOSIT_100_USDC + 100_000);
 
-        protocol_vault::test_cleanup_vault(vault, scenario.ctx());
+        protocol_vault::test_cleanup_vault<TEST_USDC>(vault, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_withdraw() {
         let mut scenario = test_scenario::begin(@0xA);
-        let mut vault = protocol_vault::test_create_vault(scenario.ctx());
+        let mut vault = protocol_vault::test_create_vault<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         protocol_vault::deposit(&mut vault, deposit, scenario.ctx());
@@ -90,14 +90,14 @@ module archa::protocol_vault_tests {
         assert!(protocol_vault::get_actual_balance(&vault) < DEPOSIT_100_USDC);
         assert!(protocol_vault::get_total_assets(&vault) == protocol_vault::get_actual_balance(&vault));
 
-        protocol_vault::test_cleanup_vault(vault, scenario.ctx());
+        protocol_vault::test_cleanup_vault<TEST_USDC>(vault, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_withdraw_all_invariant() {
         let mut scenario = test_scenario::begin(@0xA);
-        let mut vault = protocol_vault::test_create_vault(scenario.ctx());
+        let mut vault = protocol_vault::test_create_vault<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         protocol_vault::deposit(&mut vault, deposit, scenario.ctx());
@@ -112,7 +112,7 @@ module archa::protocol_vault_tests {
         assert!(protocol_vault::get_total_assets(&vault) == 0);
         assert!(protocol_vault::get_total_assets(&vault) == protocol_vault::get_actual_balance(&vault));
 
-        protocol_vault::test_cleanup_vault(vault, scenario.ctx());
+        protocol_vault::test_cleanup_vault<TEST_USDC>(vault, scenario.ctx());
         scenario.end();
     }
 
@@ -120,13 +120,13 @@ module archa::protocol_vault_tests {
     #[expected_failure(abort_code = 300)]
     fun test_withdraw_no_shares() {
         let mut scenario = test_scenario::begin(@0xA);
-        let mut vault = protocol_vault::test_create_vault(scenario.ctx());
+        let mut vault = protocol_vault::test_create_vault<TEST_USDC>(scenario.ctx());
 
         let withdrawn = protocol_vault::withdraw(&mut vault, 1, scenario.ctx());
         let bal = coin::into_balance(withdrawn);
         balance::destroy_for_testing(bal);
 
-        protocol_vault::test_cleanup_vault(vault, scenario.ctx());
+        protocol_vault::test_cleanup_vault<TEST_USDC>(vault, scenario.ctx());
         scenario.end();
     }
 }

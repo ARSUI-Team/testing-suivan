@@ -10,8 +10,9 @@
 /// - reveal: Decrypt using verified derived keys → produce seed
 /// - consume: Mark as consumed (replay protection)
 /// - destroy: Clean up after consumption
+#[allow(lint(public_entry))]
 module archa::seal_randomness {
-    use seal::bf_hmac_encryption::{Self, EncryptedObject, PublicKey, VerifiedDerivedKey};
+    use seal::bf_hmac_encryption::{Self, PublicKey, VerifiedDerivedKey};
     use seal::time;
     use sui::bls12381::G1;
     use sui::group_ops::Element;
@@ -174,6 +175,7 @@ module archa::seal_randomness {
         object::delete(id);
     }
 
+    #[allow(lint(share_owned))]
     public entry fun create_and_share(
         package_id: address,
         object_id: vector<u8>,

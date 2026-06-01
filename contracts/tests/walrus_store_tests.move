@@ -5,13 +5,14 @@ module archa::walrus_store_tests {
     use sui::test_scenario;
     use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap};
     use archa::walrus_store;
+    use archa::test_usdc::TEST_USDC;
     use std::string;
 
     const DEPOSIT_AMOUNT: u64 = 10_000_000;
     const CYCLE_DURATION_MS: u64 = 2_592_000_000;
 
-    fun create_test_pool(scenario: &mut test_scenario::Scenario): (ArisanPool, PoolAdminCap) {
-        arisan_pool::test_create_pool_for_unit_test(
+    fun create_test_pool(scenario: &mut test_scenario::Scenario): (ArisanPool<TEST_USDC>, PoolAdminCap) {
+        arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT,
             5,
             CYCLE_DURATION_MS,
@@ -29,7 +30,7 @@ module archa::walrus_store_tests {
         assert!(string::is_empty(&walrus_store::cycle_history_blob_id(&pool)));
         assert!(string::is_empty(&walrus_store::agreement_blob_id(&pool)));
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -47,7 +48,7 @@ module archa::walrus_store_tests {
         assert!(!string::is_empty(&walrus_store::pool_metadata_blob_id(&pool)));
         assert!(walrus_store::pool_metadata_blob_id(&pool) == string::utf8(b"walrus_blob_abc123"));
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -65,7 +66,7 @@ module archa::walrus_store_tests {
         assert!(!string::is_empty(&walrus_store::agreement_blob_id(&pool)));
         assert!(walrus_store::agreement_blob_id(&pool) == string::utf8(b"agreement_blob_xyz789"));
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -82,7 +83,7 @@ module archa::walrus_store_tests {
 
         assert!(walrus_store::cycle_history_blob_id(&pool) == string::utf8(b"history_v1"));
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -105,7 +106,7 @@ module archa::walrus_store_tests {
 
         assert!(walrus_store::cycle_history_blob_id(&pool) == string::utf8(b"history_v2"));
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -121,7 +122,7 @@ module archa::walrus_store_tests {
             string::utf8(b""),
         );
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -131,7 +132,7 @@ module archa::walrus_store_tests {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, _cap) = create_test_pool(&mut scenario);
 
-        let (other_pool, wrong_cap) = arisan_pool::test_create_pool_for_unit_test(
+        let (other_pool, wrong_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 100, scenario.ctx()
         );
 
@@ -141,8 +142,8 @@ module archa::walrus_store_tests {
             string::utf8(b"blob_id"),
         );
 
-        arisan_pool::test_cleanup_pool(pool, _cap, scenario.ctx());
-        arisan_pool::test_cleanup_pool(other_pool, wrong_cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, _cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(other_pool, wrong_cap, scenario.ctx());
         scenario.end();
     }
 
@@ -160,7 +161,7 @@ module archa::walrus_store_tests {
             string::utf8(b"blob_id"),
         );
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 }

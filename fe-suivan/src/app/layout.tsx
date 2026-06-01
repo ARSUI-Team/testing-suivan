@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { LanguageProvider } from "@/context/LanguageContext";
-import { SuiProvider } from "@/providers/SuiProvider";
-import { ToastProvider } from "@/components/Toast";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { ClientProviders } from "./ClientProviders";
 import "./globals.css";
 
 // Primary font - Inter (clean, modern, highly readable)
@@ -66,13 +66,13 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} antialiased`}
       >
-        <SuiProvider>
-          <LanguageProvider>
-            <ToastProvider>
+        <ThemeProvider>
+          <ClientProviders>
+            <LanguageProvider>
               {children}
-            </ToastProvider>
-          </LanguageProvider>
-        </SuiProvider>
+            </LanguageProvider>
+          </ClientProviders>
+        </ThemeProvider>
       </body>
     </html>
   );

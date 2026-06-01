@@ -25,6 +25,7 @@ export function useGsapEntrance(deps: unknown[] = []) {
     }, container);
 
     return () => ctx.revert();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return containerRef;

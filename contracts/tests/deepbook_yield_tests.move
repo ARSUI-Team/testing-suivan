@@ -20,8 +20,8 @@ module archa::deepbook_yield_tests {
         )
     }
 
-    fun create_test_pool(scenario: &mut test_scenario::Scenario): (ArisanPool, PoolAdminCap) {
-        arisan_pool::test_create_pool_for_unit_test(
+    fun create_test_pool(scenario: &mut test_scenario::Scenario): (ArisanPool<TEST_USDC>, PoolAdminCap) {
+        arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
             DEPOSIT_AMOUNT,
             MAX_PARTICIPANTS,
             CYCLE_DURATION_MS,
@@ -48,7 +48,7 @@ module archa::deepbook_yield_tests {
         let info_after = arisan_pool::pool_info(&pool);
         assert!(arisan_pool::info_total_yield(&info_after) == 5_000_000);
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -66,7 +66,7 @@ module archa::deepbook_yield_tests {
         let info = arisan_pool::pool_info(&pool);
         assert!(arisan_pool::info_total_yield(&info) == 5_500_000);
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -85,7 +85,7 @@ module archa::deepbook_yield_tests {
         let info = arisan_pool::pool_info(&pool);
         assert!(arisan_pool::info_total_pool_funds(&info) == 50_000_000);
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -115,12 +115,12 @@ module archa::deepbook_yield_tests {
         assert!(arisan_pool::info_total_pool_funds(&info2) == 30_000_000);
 
         // Return with receipt — consumes hot potato
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn, receipt, scenario.ctx());
 
         let info3 = arisan_pool::pool_info(&pool);
         assert!(arisan_pool::info_total_pool_funds(&info3) == 50_000_000);
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -137,9 +137,9 @@ module archa::deepbook_yield_tests {
         let (withdrawn, receipt) = arisan_pool::withdraw_pool_funds_for_yield(
             &cap, &mut pool, 20_000_000, scenario.ctx()
         );
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn, receipt, scenario.ctx());
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -152,9 +152,9 @@ module archa::deepbook_yield_tests {
         let (withdrawn, receipt) = arisan_pool::withdraw_pool_funds_for_yield(
             &cap, &mut pool, 0, scenario.ctx()
         );
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, withdrawn, receipt, scenario.ctx());
 
-        arisan_pool::test_cleanup_pool(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -179,10 +179,10 @@ module archa::deepbook_yield_tests {
         );
 
         // Try to return to pool2 using pool1's receipt — should fail E_WRONG_RECEIPT
-        arisan_pool::return_pool_funds_from_yield(&cap2, &mut pool2, withdrawn, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap2, &mut pool2, withdrawn, receipt, scenario.ctx());
 
-        arisan_pool::test_cleanup_pool_with_funds(pool1, cap1, scenario.ctx());
-        arisan_pool::test_cleanup_pool_with_funds(pool2, cap2, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool1, cap1, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool2, cap2, scenario.ctx());
         scenario.end();
     }
 
@@ -208,7 +208,7 @@ module archa::deepbook_yield_tests {
         let profit_coin = mint_coin(2_000_000, scenario.ctx());
 
         // 4. Return principal — consumes hot potato receipt
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, funds, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, funds, receipt, scenario.ctx());
 
         // 5. Deposit profit to yield_balance
         arisan_pool::deposit_yield_balance(&cap, &mut pool, coin::into_balance(profit_coin));
@@ -217,7 +217,7 @@ module archa::deepbook_yield_tests {
         assert!(arisan_pool::info_total_pool_funds(&info) == 100_000_000);
         assert!(arisan_pool::info_total_yield(&info) == 2_000_000);
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -232,12 +232,12 @@ module archa::deepbook_yield_tests {
         let (mut pool, _cap) = create_test_pool(&mut scenario);
 
         let (_other_pool, other_cap) = create_test_pool(&mut scenario);
-        arisan_pool::test_destroy_pool_only(_other_pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(_other_pool, scenario.ctx());
 
         let yield_coin = mint_coin(5_000_000, scenario.ctx());
         arisan_pool::deposit_yield_balance(&other_cap, &mut pool, coin::into_balance(yield_coin));
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, _cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, _cap, scenario.ctx());
         arisan_pool::test_destroy_cap(other_cap);
         scenario.end();
     }
@@ -249,7 +249,7 @@ module archa::deepbook_yield_tests {
         let (mut pool, _cap) = create_test_pool(&mut scenario);
 
         let (_other_pool, other_cap) = create_test_pool(&mut scenario);
-        arisan_pool::test_destroy_pool_only(_other_pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(_other_pool, scenario.ctx());
 
         let seed_coin = mint_coin(50_000_000, scenario.ctx());
         arisan_pool::deposit_pool_funds(&_cap, &mut pool, seed_coin);
@@ -258,8 +258,8 @@ module archa::deepbook_yield_tests {
             &other_cap, &mut pool, 10_000_000, scenario.ctx()
         );
 
-        arisan_pool::return_pool_funds_from_yield(&_cap, &mut pool, _withdrawn, _receipt);
-        arisan_pool::test_cleanup_pool_with_funds(pool, _cap, scenario.ctx());
+        arisan_pool::return_pool_funds_from_yield(&_cap, &mut pool, _withdrawn, _receipt, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, _cap, scenario.ctx());
         arisan_pool::test_destroy_cap(other_cap);
         scenario.end();
     }
@@ -271,7 +271,7 @@ module archa::deepbook_yield_tests {
         let (mut pool, _cap) = create_test_pool(&mut scenario);
 
         let (_other_pool, other_cap) = create_test_pool(&mut scenario);
-        arisan_pool::test_destroy_pool_only(_other_pool, scenario.ctx());
+        arisan_pool::test_destroy_pool_only<TEST_USDC>(_other_pool, scenario.ctx());
 
         // Need to first withdraw with correct cap to get a receipt
         let seed_coin = mint_coin(50_000_000, scenario.ctx());
@@ -282,9 +282,9 @@ module archa::deepbook_yield_tests {
         );
 
         // Try to return using wrong cap — should abort E_WRONG_POOL_CAP
-        arisan_pool::return_pool_funds_from_yield(&other_cap, &mut pool, withdrawn, receipt);
+        arisan_pool::return_pool_funds_from_yield(&other_cap, &mut pool, withdrawn, receipt, scenario.ctx());
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, _cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, _cap, scenario.ctx());
         arisan_pool::test_destroy_cap(other_cap);
         scenario.end();
     }
@@ -304,7 +304,7 @@ module archa::deepbook_yield_tests {
         let yield_coin = mint_coin(5_000_000, scenario.ctx());
         arisan_pool::deposit_yield_balance(&cap, &mut pool, coin::into_balance(yield_coin));
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -323,8 +323,8 @@ module archa::deepbook_yield_tests {
             &cap, &mut pool, 10_000_000, scenario.ctx()
         );
 
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, _withdrawn, _receipt);
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, _withdrawn, _receipt, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -339,7 +339,7 @@ module archa::deepbook_yield_tests {
         let seed_coin = mint_coin(10_000_000, scenario.ctx());
         arisan_pool::deposit_pool_funds(&cap, &mut pool, seed_coin);
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -362,12 +362,12 @@ module archa::deepbook_yield_tests {
 
         let _partial = coin::split(&mut withdrawn, 10_000_000, scenario.ctx());
         // Return only 10_000_000 instead of 20_000_000 → E_INSUFFICIENT_FUNDS
-        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, _partial, receipt);
+        arisan_pool::return_pool_funds_from_yield(&cap, &mut pool, _partial, receipt, scenario.ctx());
 
         // Unreachable after abort, but compiler needs withdrawal consumed
         balance::destroy_for_testing(coin::into_balance(withdrawn));
 
-        arisan_pool::test_cleanup_pool_with_funds(pool, cap, scenario.ctx());
+        arisan_pool::test_cleanup_pool_with_funds<TEST_USDC>(pool, cap, scenario.ctx());
         scenario.end();
     }
 }

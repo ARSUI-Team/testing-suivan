@@ -16,6 +16,8 @@ module archa::yield_strategy {
 
     use archa::test_usdc::TEST_USDC;
 
+
+
     const E_INSUFFICIENT_SHARES: u64 = 202;
     const E_MIN_DEPOSIT: u64 = 203;
 
@@ -23,14 +25,14 @@ module archa::yield_strategy {
 
     public struct StrategyAdminCap has key, store { id: UID }
 
-    public struct YieldStrategy has key {
+    public struct YieldStrategy<phantom CoinType> has key {
         id: UID,
         owner: address,
         ai_optimizer: address,
         total_deposits: u64,
         total_shares: u64,
         shares: Table<address, u64>,
-        funds: Balance<TEST_USDC>,
+        funds: Balance<CoinType>,
     }
 
     // ====== Events ======
@@ -60,7 +62,7 @@ module archa::yield_strategy {
 
     fun init(otw: YIELD_STRATEGY, ctx: &mut TxContext) {
         let strategy_id = object::new(ctx);
-        let strategy = YieldStrategy {
+        let strategy = YieldStrategy<TEST_USDC> {
             id: strategy_id,
             owner: ctx.sender(),
             ai_optimizer: ctx.sender(),
@@ -93,9 +95,9 @@ module archa::yield_strategy {
     /// Deposit USDC into the strategy, receive shares
     /// - Minimum deposit enforced (fix M2)
     /// - Share price = total_deposits / total_shares (1:1 initially)
-    public fun deposit(
-        strategy: &mut YieldStrategy,
-        coin: Coin<TEST_USDC>,
+    public fun deposit<CoinType>(
+        strategy: &mut YieldStrategy<CoinType>,
+        coin: Coin<CoinType>,
         ctx: &mut TxContext,
     ) {
         let amount = coin::value(&coin);
@@ -142,11 +144,11 @@ module archa::yield_strategy {
     /// - Caller must have enough shares
     /// - Share value = total_deposits / total_shares
     /// - Amount = shares * total_deposits / total_shares
-    public fun withdraw(
-        strategy: &mut YieldStrategy,
+    public fun withdraw<CoinType>(
+        strategy: &mut YieldStrategy<CoinType>,
         share_amount: u64,
         ctx: &mut TxContext,
-    ): Coin<TEST_USDC> {
+    ): Coin<CoinType> {
         let withdrawer = ctx.sender();
 
         assert!(table::contains(&strategy.shares, withdrawer), E_INSUFFICIENT_SHARES);
@@ -179,9 +181,9 @@ module archa::yield_strategy {
 
     // ====== Admin Functions ======
 
-    public fun set_ai_optimizer(
+    public fun set_ai_optimizer<CoinType>(
         _cap: &StrategyAdminCap,
-        strategy: &mut YieldStrategy,
+        strategy: &mut YieldStrategy<CoinType>,
         new_optimizer: address,
     ) {
         strategy.ai_optimizer = new_optimizer;
@@ -189,11 +191,11 @@ module archa::yield_strategy {
 
     // ====== View Functions ======
 
-    public fun get_total_value(strategy: &YieldStrategy): u64 {
+    public fun get_total_value<CoinType>(strategy: &YieldStrategy<CoinType>): u64 {
         strategy.total_deposits
     }
 
-    public fun get_shares(strategy: &YieldStrategy, addr: address): u64 {
+    public fun get_shares<CoinType>(strategy: &YieldStrategy<CoinType>, addr: address): u64 {
         if (table::contains(&strategy.shares, addr)) {
             *table::borrow(&strategy.shares, addr)
         } else {
@@ -201,18 +203,18 @@ module archa::yield_strategy {
         }
     }
 
-    public fun get_share_price(strategy: &YieldStrategy): u64 {
+    public fun get_share_price<CoinType>(strategy: &YieldStrategy<CoinType>): u64 {
         if (strategy.total_shares == 0) {
             return 1_000_000
         };
         mul_div(strategy.total_deposits, 1_000_000, strategy.total_shares)
     }
 
-    public fun get_actual_balance(strategy: &YieldStrategy): u64 {
+    public fun get_actual_balance<CoinType>(strategy: &YieldStrategy<CoinType>): u64 {
         balance::value(&strategy.funds)
     }
 
-    public fun shares_to_amount(strategy: &YieldStrategy, shares: u64): u64 {
+    public fun shares_to_amount<CoinType>(strategy: &YieldStrategy<CoinType>, shares: u64): u64 {
         if (strategy.total_shares == 0) {
             return 0
         };
@@ -222,8 +224,8 @@ module archa::yield_strategy {
     // ====== TEST HELPERS ======
 
     #[test_only]
-    public fun test_create_strategy(ctx: &mut TxContext): (YieldStrategy, StrategyAdminCap) {
-        let strategy = YieldStrategy {
+    public fun test_create_strategy<CoinType>(ctx: &mut TxContext): (YieldStrategy<CoinType>, StrategyAdminCap) {
+        let strategy = YieldStrategy<CoinType> {
             id: object::new(ctx),
             owner: ctx.sender(),
             ai_optimizer: ctx.sender(),
@@ -237,8 +239,8 @@ module archa::yield_strategy {
     }
 
     #[test_only]
-    public fun test_cleanup_strategy(strategy: YieldStrategy, cap: StrategyAdminCap, _ctx: &mut TxContext) {
-        let YieldStrategy {
+    public fun test_cleanup_strategy<CoinType>(strategy: YieldStrategy<CoinType>, cap: StrategyAdminCap, _ctx: &mut TxContext) {
+        let YieldStrategy<CoinType> {
             id, owner: _, ai_optimizer: _,
             total_deposits: _, total_shares: _,
             shares, funds

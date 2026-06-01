@@ -16,15 +16,8 @@ interface ConfettiPiece {
 }
 
 const COLORS = [
-  "#22c55e", // green-500
-  "#10b981", // emerald-500
-  "#14b8a6", // teal-500
-  "#06b6d4", // cyan-500
-  "#3b82f6", // blue-500
-  "#8b5cf6", // violet-500
-  "#ec4899", // pink-500
-  "#f59e0b", // amber-500
-  "#ef4444", // red-500
+  "#22c55e", "#10b981", "#14b8a6", "#06b6d4",
+  "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#ef4444",
 ];
 
 interface ConfettiProps {
@@ -40,7 +33,6 @@ export default function Confetti({ active, duration = 3000, onComplete }: Confet
   const createPieces = useCallback(() => {
     const newPieces: ConfettiPiece[] = [];
     const count = 100;
-
     for (let i = 0; i < count; i++) {
       newPieces.push({
         id: i,
@@ -55,7 +47,6 @@ export default function Confetti({ active, duration = 3000, onComplete }: Confet
         rounded: Math.random() > 0.5,
       });
     }
-
     return newPieces;
   }, []);
 
@@ -65,13 +56,11 @@ export default function Confetti({ active, duration = 3000, onComplete }: Confet
         setIsAnimating(true);
         setPieces(createPieces());
       }, 0);
-
       const timer = window.setTimeout(() => {
         setIsAnimating(false);
         setPieces([]);
         onComplete?.();
       }, duration);
-
       return () => {
         window.clearTimeout(startTimer);
         window.clearTimeout(timer);
@@ -81,7 +70,6 @@ export default function Confetti({ active, duration = 3000, onComplete }: Confet
 
   useEffect(() => {
     if (!isAnimating || pieces.length === 0) return;
-
     const interval = setInterval(() => {
       setPieces((prev) =>
         prev
@@ -90,12 +78,11 @@ export default function Confetti({ active, duration = 3000, onComplete }: Confet
             x: piece.x + piece.speedX,
             y: piece.y + piece.speedY,
             rotation: piece.rotation + piece.speedRotation,
-            speedY: piece.speedY + 0.1, // gravity
+            speedY: piece.speedY + 0.1,
           }))
-          .filter((piece) => piece.y < 110) // remove pieces that fell off screen
+          .filter((piece) => piece.y < 110)
       );
     }, 16);
-
     return () => clearInterval(interval);
   }, [isAnimating, pieces.length]);
 
@@ -122,7 +109,6 @@ export default function Confetti({ active, duration = 3000, onComplete }: Confet
   );
 }
 
-// Success celebration component with confetti + message
 export function SuccessCelebration({
   show,
   title,
@@ -150,28 +136,24 @@ export function SuccessCelebration({
       <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-        {/* Modal */}
-        <div className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 fade-in duration-300">
-          {/* Success Icon */}
+        <div className="relative w-full max-w-sm overflow-hidden rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] shadow-[8px_8px_0_var(--border)] animate-scale-in">
           <div className="pt-8 pb-4 flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center animate-bounce">
-              <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center animate-bounce shadow-[4px_4px_0_var(--border)]">
+              <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             </div>
           </div>
 
-          {/* Content */}
           <div className="px-8 pb-8 text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
-            {message && <p className="text-gray-600">{message}</p>}
+            <h3 className="text-2xl font-black text-[var(--foreground)] mb-2">{title}</h3>
+            {message && <p className="text-[var(--muted)] font-semibold">{message}</p>}
 
             <button
               onClick={onClose}
-              className="mt-6 w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="mt-6 w-full rounded-xl border-2 border-[var(--border)] bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-3 font-black text-white shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
             >
               Continue
             </button>

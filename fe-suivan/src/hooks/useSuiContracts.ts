@@ -1,8 +1,8 @@
 "use client";
 
-import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE } from "@/config/sui";
 
 // ─── Types ────────────────────────────────────────────────────────

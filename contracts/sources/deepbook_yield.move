@@ -20,9 +20,7 @@ module archa::deepbook_yield {
     use sui::event;
 
     use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap, YieldWithdrawalReceipt};
-    use archa::test_usdc::TEST_USDC;
     use deepbook::pool::{Self as deepbook_pool, Pool as DeepBookPool};
-    use deepbook::vault::FlashLoan;
     use deepbook::balance_manager::{Self as balance_manager, BalanceManager};
     use token::deep::DEEP;
 
@@ -186,10 +184,10 @@ module archa::deepbook_yield {
     /// Deposit flash arbitrage profit (USDC) to Archa pool yield_balance
     /// Call this after flash_arbitrage when the profit coin is TEST_USDC
     /// PTB-composable: chain after flash_arbitrage in same transaction
-    public fun deposit_yield_profit_usdc(
+    public fun deposit_yield_profit_usdc<CoinType>(
         cap: &PoolAdminCap,
-        archa_pool: &mut ArisanPool,
-        profit_coin: Coin<TEST_USDC>,
+        archa_pool: &mut ArisanPool<CoinType>,
+        profit_coin: Coin<CoinType>,
     ) {
         let profit_amount = coin::value(&profit_coin);
         if (profit_amount > 0) {
@@ -209,9 +207,9 @@ module archa::deepbook_yield {
     /// Deposit idle pool funds to DeepBook BalanceManager for trading
     /// Returns YieldWithdrawalReceipt — MUST be consumed by withdraw_funds_from_deepbook
     /// in the same PTB (hot potato pattern enforces return)
-    public fun deposit_funds_to_deepbook(
+    public fun deposit_funds_to_deepbook<CoinType>(
         cap: &PoolAdminCap,
-        archa_pool: &mut ArisanPool,
+        archa_pool: &mut ArisanPool<CoinType>,
         balance_manager: &mut BalanceManager,
         amount: u64,
         ctx: &mut TxContext,
@@ -229,16 +227,16 @@ module archa::deepbook_yield {
 
     /// Withdraw funds from DeepBook BalanceManager back to Archa pool
     /// Consumes YieldWithdrawalReceipt (hot potato)
-    public fun withdraw_funds_from_deepbook(
+    public fun withdraw_funds_from_deepbook<CoinType>(
         cap: &PoolAdminCap,
-        archa_pool: &mut ArisanPool,
+        archa_pool: &mut ArisanPool<CoinType>,
         balance_manager: &mut BalanceManager,
         amount: u64,
         receipt: YieldWithdrawalReceipt,
         ctx: &mut TxContext,
     ) {
-        let coin = balance_manager::withdraw<TEST_USDC>(balance_manager, amount, ctx);
-        arisan_pool::return_pool_funds_from_yield(cap, archa_pool, coin, receipt);
+        let coin = balance_manager::withdraw<CoinType>(balance_manager, amount, ctx);
+        arisan_pool::return_pool_funds_from_yield(cap, archa_pool, coin, receipt, ctx);
 
         event::emit(FundsWithdrawnFromDeepBook {
             pool_id: object::id(archa_pool),

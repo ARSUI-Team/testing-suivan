@@ -6,7 +6,6 @@ module archa::arisan_factory {
     use sui::coin::Coin;
     use std::string::{Self, String};
 
-    use archa::test_usdc::TEST_USDC;
     use archa::arisan_pool;
 
     // ====== Constants ======
@@ -155,9 +154,9 @@ module archa::arisan_factory {
 
     /// Create a pool from a predefined template
     /// Caller provides collateral Coin, factory reads template config
-    public fun create_pool_from_template(
+    public fun create_pool_from_template<CoinType>(
         factory: &mut ArisanFactory,
-        collateral: Coin<TEST_USDC>,
+        collateral: Coin<CoinType>,
         template_id: u64,
         ctx: &mut TxContext,
     ) {
@@ -200,9 +199,9 @@ module archa::arisan_factory {
     }
 
     /// Create a pool with custom configuration
-    public fun create_custom_pool(
+    public fun create_custom_pool<CoinType>(
         factory: &mut ArisanFactory,
-        collateral: Coin<TEST_USDC>,
+        collateral: Coin<CoinType>,
         deposit_amount: u64,
         max_participants: u64,
         cycle_duration_ms: u64,

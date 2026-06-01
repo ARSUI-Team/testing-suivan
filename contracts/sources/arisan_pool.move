@@ -8,16 +8,15 @@
 /// - C1: Payout uses active_depositors count, not maxParticipants
 /// - H1: deposits_this_cycle bool + last_deposit_cycle u64
 /// - C3: end_pool_internal sets flags; TODO: withdraw from strategy before ending
-#[allow(unused_field)]
+#[allow(unused_field, lint(self_transfer))]
 module archa::arisan_pool {
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use sui::event;
     use sui::table::{Self, Table};
-    use sui::transfer;
     use std::string::{Self, String};
 
-    use archa::test_usdc::TEST_USDC;
+
 
     // ====== Constants ======
     const E_POOL_NOT_ACTIVE: u64 = 0;
@@ -68,7 +67,7 @@ module archa::arisan_pool {
     }
 
     /// The shared pool object — one per arisan group
-    public struct ArisanPool has key {
+    public struct ArisanPool<phantom CoinType> has key {
         id: UID,
 
         // Immutable config
@@ -94,9 +93,9 @@ module archa::arisan_pool {
         active_depositors_count: u64,   // How many deposited THIS cycle
 
         // Funds — separated as per audit fix D3
-        collateral_balance: Balance<TEST_USDC>,  // Holds all collateral
-        pool_funds_balance: Balance<TEST_USDC>,   // Holds all deposits (for yield)
-        yield_balance: Balance<TEST_USDC>,        // Holds earned yield
+        collateral_balance: Balance<CoinType>,  // Holds all collateral
+        pool_funds_balance: Balance<CoinType>,   // Holds all deposits (for yield)
+        yield_balance: Balance<CoinType>,        // Holds earned yield
 
         // Yield strategy reference (G3 Option A)
         strategy_id: Option<ID>,        // ID of YieldStrategy shared object
@@ -237,42 +236,42 @@ module archa::arisan_pool {
     // ====== View Functions ======
 
     /// Get required collateral amount based on config
-    public fun required_collateral(pool: &ArisanPool): u64 {
+    public fun required_collateral<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         (((pool.config.deposit_amount as u128) * (pool.config.collateral_multiplier as u128) / 100) as u64)
     }
 
     /// Get total collateral held
-    public fun total_collateral(pool: &ArisanPool): u64 {
+    public fun total_collateral<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         balance::value(&pool.collateral_balance)
     }
 
     /// Get total pool funds (deposits)
-    public fun total_pool_funds(pool: &ArisanPool): u64 {
+    public fun total_pool_funds<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         balance::value(&pool.pool_funds_balance)
     }
 
     /// Get total yield earned
-    public fun total_yield(pool: &ArisanPool): u64 {
+    public fun total_yield<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         balance::value(&pool.yield_balance)
     }
 
     /// Get current participant count
-    public fun participant_count(pool: &ArisanPool): u64 {
+    public fun participant_count<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         vector::length(&pool.participant_list)
     }
 
     /// Get active depositors this cycle
-    public fun active_depositors(pool: &ArisanPool): u64 {
+    public fun active_depositors<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         pool.active_depositors_count
     }
 
     /// Check if an address is a participant
-    public fun is_participant(pool: &ArisanPool, addr: address): bool {
+    public fun is_participant<CoinType>(pool: &ArisanPool<CoinType>, addr: address): bool {
         table::contains(&pool.participants, addr)
     }
 
     /// Get participant info
-    public fun get_participant(pool: &ArisanPool, addr: address): Participant {
+    public fun get_participant<CoinType>(pool: &ArisanPool<CoinType>, addr: address): Participant {
         assert!(table::contains(&pool.participants, addr), E_NOT_PARTICIPANT);
         *table::borrow(&pool.participants, addr)
     }
@@ -285,7 +284,7 @@ module archa::arisan_pool {
     public fun participant_joined_at(p: &Participant): u64 { p.joined_at_ms }
 
     /// Check if participant has deposited this cycle (fix H1)
-    public fun has_deposited_this_cycle(pool: &ArisanPool, addr: address): bool {
+    public fun has_deposited_this_cycle<CoinType>(pool: &ArisanPool<CoinType>, addr: address): bool {
         if (!table::contains(&pool.participants, addr)) {
             return false
         };
@@ -293,7 +292,7 @@ module archa::arisan_pool {
     }
 
     /// Get eligible winners (active participants who haven't received payout)
-    public fun get_eligible_winners(pool: &ArisanPool): vector<address> {
+    public fun get_eligible_winners<CoinType>(pool: &ArisanPool<CoinType>): vector<address> {
         let mut eligible = vector[];
         let len = vector::length(&pool.participant_list);
         let mut i = 0;
@@ -310,7 +309,7 @@ module archa::arisan_pool {
     }
 
     /// Get pool info as a single struct for frontend
-    public fun pool_info(pool: &ArisanPool): PoolInfo {
+    public fun pool_info<CoinType>(pool: &ArisanPool<CoinType>): PoolInfo {
         PoolInfo {
             creator: pool.creator,
             deposit_amount: pool.config.deposit_amount,
@@ -333,7 +332,7 @@ module archa::arisan_pool {
     }
 
     /// Get participant list
-    public fun get_participant_list(pool: &ArisanPool): &vector<address> {
+    public fun get_participant_list<CoinType>(pool: &ArisanPool<CoinType>): &vector<address> {
         &pool.participant_list
     }
 
@@ -354,7 +353,7 @@ module archa::arisan_pool {
     public fun info_total_yield(i: &PoolInfo): u64 { i.total_yield }
 
     /// Get winner for a specific cycle
-    public fun get_cycle_winner(pool: &ArisanPool, cycle: u64): Option<address> {
+    public fun get_cycle_winner<CoinType>(pool: &ArisanPool<CoinType>, cycle: u64): Option<address> {
         if (table::contains(&pool.cycle_winners, cycle)) {
             option::some(*table::borrow(&pool.cycle_winners, cycle))
         } else {
@@ -364,7 +363,7 @@ module archa::arisan_pool {
 
     // ====== Internal Helpers ======
 
-    fun all_active_deposited(pool: &ArisanPool): bool {
+    fun all_active_deposited<CoinType>(pool: &ArisanPool<CoinType>): bool {
         let len = vector::length(&pool.participant_list);
         let mut i = 0;
         while (i < len) {
@@ -379,7 +378,7 @@ module archa::arisan_pool {
     }
 
     #[allow(unused_function)]
-    fun count_remaining_winners(pool: &ArisanPool): u64 {
+    fun count_remaining_winners<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         let len = vector::length(&pool.participant_list);
         let mut count = 0u64;
         let mut i = 0;
@@ -395,7 +394,7 @@ module archa::arisan_pool {
     }
 
     /// Internal: reset all participants' deposits_this_cycle to false
-    fun reset_cycle_deposits(pool: &mut ArisanPool) {
+    fun reset_cycle_deposits<CoinType>(pool: &mut ArisanPool<CoinType>) {
         let len = vector::length(&pool.participant_list);
         let mut i = 0;
         while (i < len) {
@@ -408,7 +407,7 @@ module archa::arisan_pool {
     }
 
     /// Internal: check if cycle is complete based on time
-    fun is_cycle_complete(pool: &ArisanPool, current_time_ms: u64): bool {
+    fun is_cycle_complete<CoinType>(pool: &ArisanPool<CoinType>, current_time_ms: u64): bool {
         if (pool.pool_start_time_ms == 0) { return false };
         if (current_time_ms < pool.pool_start_time_ms) { return false };
         let elapsed = current_time_ms - pool.pool_start_time_ms;
@@ -441,8 +440,8 @@ module archa::arisan_pool {
     /// - Accepts collateral Coin (must be >= deposit_amount * collateral_multiplier / 100)
     /// - Pool is created as shared object so anyone can join
     /// - Creator becomes first participant automatically
-    public fun create_pool(
-        collateral: Coin<TEST_USDC>,
+    public fun create_pool<CoinType>(
+        collateral: Coin<CoinType>,
         deposit_amount: u64,
         max_participants: u64,
         cycle_duration_ms: u64,
@@ -481,7 +480,7 @@ module archa::arisan_pool {
             },
         );
 
-        let pool = ArisanPool {
+        let pool = ArisanPool<CoinType> {
             id: pool_id,
             config: PoolConfig {
                 deposit_amount,
@@ -540,9 +539,9 @@ module archa::arisan_pool {
     /// - Pool must be active and not started yet
     /// - Must not have already joined
     /// - Pool must not be full
-    public fun join_pool(
-        pool: &mut ArisanPool,
-        collateral: Coin<TEST_USDC>,
+    public fun join_pool<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
+        collateral: Coin<CoinType>,
         ctx: &mut TxContext,
     ) {
         let sender = ctx.sender();
@@ -596,9 +595,9 @@ module archa::arisan_pool {
     /// - Requires at least 2 participants
     /// - Sets pool_start_time_ms, advances to cycle 1
     /// - Needs Clock for timestamp
-    public fun start_pool(
+    public fun start_pool<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
+        pool: &mut ArisanPool<CoinType>,
         clock: &sui::clock::Clock,
         _ctx: &mut TxContext,
     ) {
@@ -635,9 +634,9 @@ module archa::arisan_pool {
     /// - Caller must be an active participant
     /// - Must not have already deposited this cycle (fix H1)
     /// - Coin must be exactly deposit_amount
-    public fun make_deposit(
-        pool: &mut ArisanPool,
-        deposit: Coin<TEST_USDC>,
+    public fun make_deposit<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
+        deposit: Coin<CoinType>,
         ctx: &mut TxContext,
     ) {
         let sender = ctx.sender();
@@ -676,9 +675,9 @@ module archa::arisan_pool {
     /// - Requires PoolAdminCap (SEC-AC-1 fix)
     /// - Payout transferred directly to winner address on-chain (H-02 fix)
     /// - No return value — winner receives funds immediately, admin cannot intercept
-    public fun select_winner(
+    public fun select_winner<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
+        pool: &mut ArisanPool<CoinType>,
         clock: &sui::clock::Clock,
         ctx: &mut TxContext,
     ) {
@@ -808,7 +807,7 @@ module archa::arisan_pool {
 
     /// Check if this is the final winner — only 1 active participant hasn't won yet
     /// (called BEFORE setting has_received_payout = true on the winner)
-    fun check_all_received_payout_before_mark(pool: &ArisanPool): bool {
+    fun check_all_received_payout_before_mark<CoinType>(pool: &ArisanPool<CoinType>): bool {
         let len = vector::length(&pool.participant_list);
         let mut remaining = 0u64;
         let mut i = 0;
@@ -827,9 +826,9 @@ module archa::arisan_pool {
     /// End the pool — requires PoolAdminCap (SEC-AC-1 fix)
     /// - Sets is_ended flag, does NOT transfer coins internally
     /// - Participants call claim_collateral() individually
-    public fun end_pool(
+    public fun end_pool<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
+        pool: &mut ArisanPool<CoinType>,
         _ctx: &mut TxContext,
     ) {
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
@@ -837,7 +836,7 @@ module archa::arisan_pool {
     }
 
     /// Internal: end pool without cap check — called by select_winner() when all won
-    fun end_pool_internal(pool: &mut ArisanPool) {
+    fun end_pool_internal<CoinType>(pool: &mut ArisanPool<CoinType>) {
         assert!(!pool.is_ended, E_POOL_ENDED);
 
         // Safety: cannot end pool while funds are deployed to yield strategy (H-04 fix)
@@ -862,10 +861,10 @@ module archa::arisan_pool {
     /// - Pool must be ended
     /// - Caller must be an active participant with collateral
     /// - Returns collateral Coin to caller
-    public fun claim_collateral(
-        pool: &mut ArisanPool,
+    public fun claim_collateral<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
         ctx: &mut TxContext,
-    ): Coin<TEST_USDC> {
+    ): Coin<CoinType> {
         assert!(pool.is_ended, E_POOL_NOT_ENDED);
 
         let sender = ctx.sender();
@@ -894,9 +893,9 @@ module archa::arisan_pool {
     /// - Slashed amount = deposit_amount per missed payment
     /// - If collateral drops to 0, participant is removed (deactivated)
     /// - Slashed funds go to pool_funds_balance (becomes pool funds)
-    public fun slash_collateral(
+    public fun slash_collateral<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
+        pool: &mut ArisanPool<CoinType>,
         participant_addr: address,
         clock: &sui::clock::Clock,
         ctx: &mut TxContext,
@@ -978,10 +977,10 @@ module archa::arisan_pool {
     /// Called by external yield modules (e.g. deepbook_yield) after profitable arbitrage
     /// Requires PoolAdminCap to authorize
     /// public(package) — only callable within archa package (S1-2/H-03 fix)
-    public(package) fun deposit_yield_balance(
+    public(package) fun deposit_yield_balance<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
-        yield_balance: Balance<TEST_USDC>,
+        pool: &mut ArisanPool<CoinType>,
+        yield_balance: Balance<CoinType>,
     ) {
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(!pool.is_ended, E_POOL_ENDED);
@@ -991,10 +990,10 @@ module archa::arisan_pool {
     /// Deposit pool funds directly (for seeding or topping up pool_funds_balance)
     /// Does NOT require a receipt — this is for adding new funds, not returning borrowed ones
     /// public(package) — only callable within archa package
-    public(package) fun deposit_pool_funds(
+    public(package) fun deposit_pool_funds<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
-        funds: Coin<TEST_USDC>,
+        pool: &mut ArisanPool<CoinType>,
+        funds: Coin<CoinType>,
     ) {
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(!pool.is_ended, E_POOL_ENDED);
@@ -1005,12 +1004,12 @@ module archa::arisan_pool {
     /// Returns (Coin, YieldWithdrawalReceipt) — receipt MUST be consumed in same PTB
     /// YieldWithdrawalReceipt has no abilities → tx aborts if not returned
     /// public(package) — only callable within archa package (S1-2/H-03 fix)
-    public(package) fun withdraw_pool_funds_for_yield(
+    public(package) fun withdraw_pool_funds_for_yield<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
+        pool: &mut ArisanPool<CoinType>,
         amount: u64,
         ctx: &mut TxContext,
-    ): (Coin<TEST_USDC>, YieldWithdrawalReceipt) {
+    ): (Coin<CoinType>, YieldWithdrawalReceipt) {
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(!pool.is_ended, E_POOL_ENDED);
         assert!(amount > 0, E_WRONG_DEPOSIT_AMOUNT);
@@ -1030,18 +1029,19 @@ module archa::arisan_pool {
     /// Splits principal → pool_funds_balance, profit → yield_balance
     /// Consumes YieldWithdrawalReceipt (hot potato) — enforces return in same PTB
     /// public(package) — only callable within archa package (S1-2/H-03 fix)
-    public(package) fun return_pool_funds_from_yield(
+    public(package) fun return_pool_funds_from_yield<CoinType>(
         cap: &PoolAdminCap,
-        pool: &mut ArisanPool,
-        coin: Coin<TEST_USDC>,
+        pool: &mut ArisanPool<CoinType>,
+        mut coin: Coin<CoinType>,
         receipt: YieldWithdrawalReceipt,
+        ctx: &mut TxContext,
     ) {
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(receipt.pool_id == object::id(pool), E_WRONG_RECEIPT);
         assert!(!pool.is_ended, E_POOL_ENDED);
         assert!(coin::value(&coin) >= receipt.amount, E_INSUFFICIENT_FUNDS);
         let profit = coin::value(&coin) - receipt.amount;
-        let principal = coin::split(&mut coin, receipt.amount);
+        let principal = coin::split(&mut coin, receipt.amount, ctx);
         balance::join(&mut pool.pool_funds_balance, coin::into_balance(principal));
         if (profit > 0) {
             balance::join(&mut pool.yield_balance, coin::into_balance(coin));
@@ -1058,46 +1058,46 @@ module archa::arisan_pool {
 
     // ====== Walrus Blob Storage Accessors (package-only) ======
 
-    public(package) fun walrus_metadata_blob_id(pool: &ArisanPool): String {
+    public(package) fun walrus_metadata_blob_id<CoinType>(pool: &ArisanPool<CoinType>): String {
         pool.walrus_metadata_blob_id
     }
 
-    public(package) fun walrus_cycle_history_blob_id(pool: &ArisanPool): String {
+    public(package) fun walrus_cycle_history_blob_id<CoinType>(pool: &ArisanPool<CoinType>): String {
         pool.walrus_cycle_history_blob_id
     }
 
-    public(package) fun walrus_agreement_blob_id(pool: &ArisanPool): String {
+    public(package) fun walrus_agreement_blob_id<CoinType>(pool: &ArisanPool<CoinType>): String {
         pool.walrus_agreement_blob_id
     }
 
-    public(package) fun set_walrus_metadata_blob_id(pool: &mut ArisanPool, blob_id: String) {
+    public(package) fun set_walrus_metadata_blob_id<CoinType>(pool: &mut ArisanPool<CoinType>, blob_id: String) {
         pool.walrus_metadata_blob_id = blob_id;
     }
 
-    public(package) fun set_walrus_cycle_history_blob_id(pool: &mut ArisanPool, blob_id: String) {
+    public(package) fun set_walrus_cycle_history_blob_id<CoinType>(pool: &mut ArisanPool<CoinType>, blob_id: String) {
         pool.walrus_cycle_history_blob_id = blob_id;
     }
 
-    public(package) fun set_walrus_agreement_blob_id(pool: &mut ArisanPool, blob_id: String) {
+    public(package) fun set_walrus_agreement_blob_id<CoinType>(pool: &mut ArisanPool<CoinType>, blob_id: String) {
         pool.walrus_agreement_blob_id = blob_id;
     }
 
     // ====== Seal Randomness Seed Accessors (package-only, additive) ======
 
-    public(package) fun set_seal_seed(pool: &mut ArisanPool, seed: vector<u8>) {
+    public(package) fun set_seal_seed<CoinType>(pool: &mut ArisanPool<CoinType>, seed: vector<u8>) {
         pool.seal_seed = option::some(seed);
         event::emit(SealSeedSet { pool_id: object::id(pool) });
     }
 
-    public(package) fun clear_seal_seed(pool: &mut ArisanPool) {
+    public(package) fun clear_seal_seed<CoinType>(pool: &mut ArisanPool<CoinType>) {
         pool.seal_seed = option::none();
     }
 
-    public(package) fun has_seal_seed(pool: &ArisanPool): bool {
+    public(package) fun has_seal_seed<CoinType>(pool: &ArisanPool<CoinType>): bool {
         pool.seal_seed.is_some()
     }
 
-    public(package) fun borrow_seal_seed(pool: &ArisanPool): &vector<u8> {
+    public(package) fun borrow_seal_seed<CoinType>(pool: &ArisanPool<CoinType>): &vector<u8> {
         option::borrow(&pool.seal_seed)
     }
 
@@ -1105,7 +1105,7 @@ module archa::arisan_pool {
         cap.pool_id
     }
 
-    public(package) fun pool_is_ended(pool: &ArisanPool): bool {
+    public(package) fun pool_is_ended<CoinType>(pool: &ArisanPool<CoinType>): bool {
         pool.is_ended
     }
 
@@ -1129,15 +1129,15 @@ module archa::arisan_pool {
     // ====== TEST HELPERS (only compiled in test) ======
 
     #[test_only]
-    public fun test_create_pool_for_unit_test(
+    public fun test_create_pool_for_unit_test<CoinType>(
         deposit_amount: u64,
         max_participants: u64,
         cycle_duration_ms: u64,
         collateral_multiplier: u64,
         ctx: &mut TxContext,
-    ): (ArisanPool, PoolAdminCap) {
+    ): (ArisanPool<CoinType>, PoolAdminCap) {
         let pool_id = object::new(ctx);
-        let pool = ArisanPool {
+        let pool = ArisanPool<CoinType> {
             id: pool_id,
             config: PoolConfig {
                 deposit_amount,
@@ -1177,8 +1177,8 @@ module archa::arisan_pool {
     /// Test helper: destroy a pool + cap (clean up after test)
     /// Only works for empty pools (no participants, no funds)
     #[test_only]
-    public fun test_cleanup_pool(pool: ArisanPool, cap: PoolAdminCap, _ctx: &mut TxContext) {
-        let ArisanPool { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
+    public fun test_cleanup_pool<CoinType>(pool: ArisanPool<CoinType>, cap: PoolAdminCap, _ctx: &mut TxContext) {
+        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
         // Drop empty containers
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
@@ -1214,8 +1214,8 @@ module archa::arisan_pool {
     /// Test helper: destroy pool with non-zero balances (drains all funds first)
     /// Use this for yield integration tests where pool has accumulated yield/funds
     #[test_only]
-    public fun test_cleanup_pool_with_funds(pool: ArisanPool, cap: PoolAdminCap, _ctx: &mut TxContext) {
-        let ArisanPool { id, participants, cycle_winners, mut collateral_balance, mut pool_funds_balance, mut yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
+    public fun test_cleanup_pool_with_funds<CoinType>(pool: ArisanPool<CoinType>, cap: PoolAdminCap, _ctx: &mut TxContext) {
+        let ArisanPool<CoinType> { id, participants, cycle_winners, mut collateral_balance, mut pool_funds_balance, mut yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
 
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
@@ -1284,8 +1284,8 @@ module archa::arisan_pool {
     /// Test helper: destroy only the pool part (keep cap alive separately)
     /// Only works for empty pools (no participants, no funds)
     #[test_only]
-    public fun test_destroy_pool_only(pool: ArisanPool, _ctx: &mut TxContext) {
-        let ArisanPool { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
+    public fun test_destroy_pool_only<CoinType>(pool: ArisanPool<CoinType>, _ctx: &mut TxContext) {
+        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
         vector::destroy_empty(participant_list);
@@ -1314,13 +1314,13 @@ module archa::arisan_pool {
 
     /// Test helper: expose is_cycle_complete for testing
     #[test_only]
-    public fun test_is_cycle_complete(pool: &ArisanPool, current_time_ms: u64): bool {
+    public fun test_is_cycle_complete<CoinType>(pool: &ArisanPool<CoinType>, current_time_ms: u64): bool {
         is_cycle_complete(pool, current_time_ms)
     }
 
     /// Test helper: set pool as started with specific start time (for cycle completion tests)
     #[test_only]
-    public fun test_set_started(pool: &mut ArisanPool, start_time_ms: u64) {
+    public fun test_set_started<CoinType>(pool: &mut ArisanPool<CoinType>, start_time_ms: u64) {
         pool.is_started = true;
         pool.current_cycle = 1;
         pool.pool_start_time_ms = start_time_ms;
@@ -1328,7 +1328,7 @@ module archa::arisan_pool {
 
     /// Test helper: set pool as ended (for yield hook ended-pool tests)
     #[test_only]
-    public fun test_set_ended(pool: &mut ArisanPool) {
+    public fun test_set_ended<CoinType>(pool: &mut ArisanPool<CoinType>) {
         pool.is_ended = true;
         pool.is_active = false;
     }

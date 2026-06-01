@@ -13,9 +13,9 @@ function getClient() {
 }
 
 const SPONSOR_SECRET_KEY = process.env.SPONSOR_SECRET_KEY || "";
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0xff8500790272c409da1deddf45e46236d4d77a1a7d250ca7728a113d4fc08edf";
-const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xc47d988a84759e85a5386390e4eef4227bc5634c249a3493c16425ede16c1624";
-const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0xff8500790272c409da1deddf45e46236d4d77a1a7d250ca7728a113d4fc08edf::test_usdc::TEST_USDC";
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b";
+const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xd45cfd2dcc4be81c17f44f3e5f934605c7d09bcf1adaeadab576607493383867";
+const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b::test_usdc::TEST_USDC";
 const TREASURY_CAP_ID = process.env.TREASURY_CAP_ID || "0x63af2ef268e8ab668201807c1b8452210b43d2adfe8562bac96db8b3bfbb7e4f";
 
 interface SponsorRequest {

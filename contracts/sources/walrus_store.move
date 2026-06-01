@@ -40,22 +40,22 @@ module archa::walrus_store {
 
     // ====== View Functions ======
 
-    public fun pool_metadata_blob_id(pool: &ArisanPool): String {
+    public fun pool_metadata_blob_id<CoinType>(pool: &ArisanPool<CoinType>): String {
         arisan_pool::walrus_metadata_blob_id(pool)
     }
 
-    public fun cycle_history_blob_id(pool: &ArisanPool): String {
+    public fun cycle_history_blob_id<CoinType>(pool: &ArisanPool<CoinType>): String {
         arisan_pool::walrus_cycle_history_blob_id(pool)
     }
 
-    public fun agreement_blob_id(pool: &ArisanPool): String {
+    public fun agreement_blob_id<CoinType>(pool: &ArisanPool<CoinType>): String {
         arisan_pool::walrus_agreement_blob_id(pool)
     }
 
     // ====== Entry Functions ======
 
-    public fun link_pool_metadata(
-        pool: &mut ArisanPool,
+    public fun link_pool_metadata<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
         cap: &PoolAdminCap,
         blob_id: String,
     ) {
@@ -82,8 +82,8 @@ module archa::walrus_store {
         };
     }
 
-    public fun link_agreement(
-        pool: &mut ArisanPool,
+    public fun link_agreement<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
         cap: &PoolAdminCap,
         blob_id: String,
     ) {
@@ -110,8 +110,8 @@ module archa::walrus_store {
         };
     }
 
-    public fun update_cycle_history(
-        pool: &mut ArisanPool,
+    public fun update_cycle_history<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
         cap: &PoolAdminCap,
         blob_id: String,
     ) {

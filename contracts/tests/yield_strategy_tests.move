@@ -21,7 +21,7 @@ module archa::yield_strategy_tests {
     #[test]
     fun test_first_deposit_one_to_one() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (mut strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (mut strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         yield_strategy::deposit(&mut strategy, deposit, scenario.ctx());
@@ -31,14 +31,14 @@ module archa::yield_strategy_tests {
         assert!(yield_strategy::get_actual_balance(&strategy) == DEPOSIT_100_USDC);
         assert!(yield_strategy::get_total_value(&strategy) == yield_strategy::get_actual_balance(&strategy));
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_second_deposit_same_user() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (mut strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (mut strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         let d1 = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         yield_strategy::deposit(&mut strategy, d1, scenario.ctx());
@@ -53,14 +53,14 @@ module archa::yield_strategy_tests {
         assert!(second_shares > DEPOSIT_100_USDC - 100_000);
         assert!(second_shares < DEPOSIT_100_USDC + 100_000);
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_withdraw_success() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (mut strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (mut strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         yield_strategy::deposit(&mut strategy, deposit, scenario.ctx());
@@ -75,14 +75,14 @@ module archa::yield_strategy_tests {
         assert!(yield_strategy::get_actual_balance(&strategy) < DEPOSIT_100_USDC);
         assert!(yield_strategy::get_total_value(&strategy) == yield_strategy::get_actual_balance(&strategy));
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_withdraw_all_invariant() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (mut strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (mut strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         yield_strategy::deposit(&mut strategy, deposit, scenario.ctx());
@@ -97,7 +97,7 @@ module archa::yield_strategy_tests {
         assert!(yield_strategy::get_total_value(&strategy) == 0);
         assert!(yield_strategy::get_total_value(&strategy) == yield_strategy::get_actual_balance(&strategy));
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -105,7 +105,7 @@ module archa::yield_strategy_tests {
     #[expected_failure(abort_code = 202)]
     fun test_withdraw_more_than_shares() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (mut strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (mut strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         yield_strategy::deposit(&mut strategy, deposit, scenario.ctx());
@@ -114,7 +114,7 @@ module archa::yield_strategy_tests {
         let bal = coin::into_balance(withdrawn);
         balance::destroy_for_testing(bal);
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
@@ -122,7 +122,7 @@ module archa::yield_strategy_tests {
     #[expected_failure(abort_code = 202)]
     fun test_withdraw_no_owner_bypass() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (mut strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (mut strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         let deposit = mint_coin(DEPOSIT_100_USDC, scenario.ctx());
         yield_strategy::deposit(&mut strategy, deposit, scenario.ctx());
@@ -132,29 +132,29 @@ module archa::yield_strategy_tests {
         let bal = coin::into_balance(withdrawn);
         balance::destroy_for_testing(bal);
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_shares_to_amount_empty() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         assert!(yield_strategy::shares_to_amount(&strategy, 100) == 0);
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 
     #[test]
     fun test_get_shares_non_depositor() {
         let mut scenario = test_scenario::begin(@0xA);
-        let (strategy, cap) = yield_strategy::test_create_strategy(scenario.ctx());
+        let (strategy, cap) = yield_strategy::test_create_strategy<TEST_USDC>(scenario.ctx());
 
         assert!(yield_strategy::get_shares(&strategy, @0xB) == 0);
 
-        yield_strategy::test_cleanup_strategy(strategy, cap, scenario.ctx());
+        yield_strategy::test_cleanup_strategy<TEST_USDC>(strategy, cap, scenario.ctx());
         scenario.end();
     }
 }
