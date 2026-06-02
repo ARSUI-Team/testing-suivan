@@ -103,48 +103,43 @@ export function useAllPools() {
     queryFn: async () => {
       if (!SUI_FACTORY_ID) return [];
 
-      // Read pool_count from factory (Table-backed, scalable)
+      // Read pool_count and all_pools table ID from factory
       const factoryObj = await client.getObject({
         id: SUI_FACTORY_ID,
         options: { showContent: true },
       });
 
-      const factoryFields = (factoryObj.data?.content as { fields?: Record<string, unknown> })?.fields;
+      const factoryContent = factoryObj.data?.content as { fields?: Record<string, unknown> } | undefined;
+      const factoryFields = factoryContent?.fields;
       const poolCount = Number((factoryFields?.pool_count as string) || "0");
       if (poolCount === 0) return [];
 
+      const allPoolsTableId = (factoryFields?.all_pools as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+      if (!allPoolsTableId) return [];
+
       // Fetch all pool IDs from the all_pools Table via dynamic fields
       const dynamicFields = await client.getDynamicFields({
-        parentId: SUI_FACTORY_ID,
+        parentId: allPoolsTableId,
         limit: poolCount,
       });
 
-      // Filter for all_pools Table entries (type contains "all_pools")
-      const poolFieldIds = dynamicFields.data
-        .filter((f) => f.name.type?.includes("all_pools"))
-        .map((f) => f.name.value as string)
+      const poolIds: string[] = dynamicFields.data
+        .map((f) => (f.name.value as string) || "")
         .filter(Boolean);
 
-      // If dynamic field filtering works, return the IDs
-      if (poolFieldIds.length > 0) {
-        return poolFieldIds;
-      }
-
-      // Fallback: fetch each pool by index from the Table
-      const poolIds: string[] = [];
-      for (let i = 0; i < poolCount; i++) {
-        try {
-          const entry = await client.getDynamicFieldObject({
-            parentId: SUI_FACTORY_ID,
-            name: {
-              type: "u64",
-              value: String(i),
-            },
-          });
-          const value = (entry.data?.content as { fields?: { value?: string } })?.fields?.value;
-          if (value) poolIds.push(value);
-        } catch {
-          // skip missing entries
+      // If dynamic fields returned nothing, fallback: iterate by index
+      if (poolIds.length === 0) {
+        for (let i = 0; i < poolCount; i++) {
+          try {
+            const entry = await client.getDynamicFieldObject({
+              parentId: allPoolsTableId,
+              name: { type: "u64", value: String(i) },
+            });
+            const value = (entry.data?.content as { fields?: { value?: string } })?.fields?.value;
+            if (value) poolIds.push(value);
+          } catch {
+            // skip missing entries
+          }
         }
       }
       return poolIds;
