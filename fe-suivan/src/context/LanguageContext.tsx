@@ -317,7 +317,7 @@ const en: Record<string, string> = {
 
   "faucet.badge": "test_faucet",
   "faucet.title": "Get Test Tokens",
-  "faucet.subtitle": "Get USDC for testing + SUI for gas fees. Try out Suivan pools before mainnet.",
+  "faucet.subtitle": "Step 1: Get free SUI for gas. Step 2: Claim 500 USDC for testing. Then explore Suivan pools before mainnet.",
   "faucet.claimUsdc": "Claim 10,000 Test USDC",
   "faucet.claimSui": "Claim 1 Test SUI",
   "faucet.walletRequired": "Connect your wallet to claim test tokens.",
@@ -658,7 +658,7 @@ const id: Record<string, string> = {
 
   "faucet.badge": "test_faucet",
   "faucet.title": "Dapatkan Token Tes",
-  "faucet.subtitle": "Dapatkan USDC untuk testing + SUI untuk gas. Coba pool Suivan sebelum mainnet.",
+  "faucet.subtitle": "Langkah 1: Dapatkan SUI gratis untuk gas. Langkah 2: Klaim 500 USDC untuk testing. Lalu jelajahi pool Suivan sebelum mainnet.",
   "faucet.claimUsdc": "Klaim 10,000 Test USDC",
   "faucet.claimSui": "Klaim 1 Test SUI",
   "faucet.walletRequired": "Hubungkan dompet Anda untuk klaim token tes.",
