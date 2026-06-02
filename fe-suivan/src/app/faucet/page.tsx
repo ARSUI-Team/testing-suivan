@@ -26,6 +26,7 @@ const FAUCET_COOLDOWN_S = 30;
 const LS_KEY = "suivan_faucet_claim";
 const LS_HISTORY_KEY = "suivan_faucet_history";
 const SUI_TESTNET_FAUCET = "https://faucet.testnet.sui.io";
+const SUISCAN_URL = "https://suiscan.xyz/testnet";
 
 function getLastClaimTime(): number {
   if (typeof window === "undefined") return 0;
@@ -210,7 +211,7 @@ export default function FaucetPage() {
                     </div>
                     <div>
                       <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
-                        TEST_USDC
+                        {t("faucet.usdcLabel")}
                       </p>
                       <p
                         className="text-2xl font-black tracking-tight"
@@ -233,13 +234,13 @@ export default function FaucetPage() {
                     </div>
                     <div className="text-left">
                       <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
-                        SUI (gas)
+                        SUI for gas
                       </p>
                       <p
                         className="text-sm font-black tracking-tight"
                         style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
                       >
-                        Get from testnet faucet →
+                        Get free SUI →
                       </p>
                     </div>
                   </button>
@@ -266,39 +267,45 @@ export default function FaucetPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleClaimDirect}
-                  disabled={cooldownActive || claimStatus === "loading" || isWalletClaiming || !faucetId}
-                  className={`protocol-font w-full border-[3px] border-[var(--brutal-ink)] px-5 py-3 text-xs font-black shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
-                    claimStatus === "success"
-                      ? "bg-[var(--success-soft)] text-[var(--brutal-ink)]"
-                      : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]"
-                  }`}
-                >
-                  {claimStatus === "loading" ? (
-                    <span className="inline-flex items-center gap-2">
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-                      Minting...
-                    </span>
-                  ) : claimStatus === "success" ? (
-                    <span className="inline-flex items-center gap-2">
-                      <CheckCircle2 className="size-3.5" />
-                      Minted 500 USDC!
-                    </span>
-                  ) : (
-                    <span>Claim 500 TEST_USDC →</span>
+                <div className="relative">
+                  <button
+                    onClick={handleClaimDirect}
+                    disabled={cooldownActive || claimStatus === "loading" || isWalletClaiming || !faucetId}
+                    className={`protocol-font relative w-full border-[3px] border-[var(--brutal-ink)] px-5 py-3 text-xs font-black shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+                      claimStatus === "success"
+                        ? "bg-[var(--success-soft)] text-[var(--brutal-ink)]"
+                        : cooldownActive
+                        ? "bg-[var(--warn-soft)] text-[var(--brutal-ink)]"
+                        : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]"
+                    }`}
+                  >
+                    {claimStatus === "loading" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
+                        Minting...
+                      </span>
+                    ) : claimStatus === "success" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <CheckCircle2 className="size-3.5" />
+                        Minted 500 USDC!
+                      </span>
+                    ) : cooldownActive ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Clock className="size-3.5" />
+                        Wait {cooldown}s
+                      </span>
+                    ) : (
+                      <span>Claim 500 USDC →</span>
+                    )}
+                  </button>
+                  {cooldownActive && (
+                    <div
+                      className="absolute bottom-0 left-0 h-1 bg-[var(--brutal-ink)] opacity-30 transition-all duration-1000"
+                      style={{ width: `${(cooldown / FAUCET_COOLDOWN_S) * 100}%` }}
+                    />
                   )}
-                </button>
-              </div>
-
-              {cooldownActive && (
-                <div className="mt-6 inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] px-4 py-2 shadow-[4px_4px_0_var(--brutal-ink)]">
-                  <Clock className="size-4 text-[var(--brutal-ink)]" />
-                  <span className="protocol-font text-xs font-black uppercase tracking-[0.15em]">
-                    Cooldown: {cooldown}s
-                  </span>
+                  </div>
                 </div>
-              )}
 
               <p className="protocol-font mb-3 mt-10 text-xs font-black uppercase tracking-[0.18em] text-[var(--brutal-muted)]">
                 {t("faucet.recentTitle")}
@@ -318,12 +325,19 @@ export default function FaucetPage() {
                         </div>
                         <div className="flex-1">
                           <p className="font-black text-sm tracking-tight" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                            {rec.amount} TEST_USDC
+                            {rec.amount} USDC
                           </p>
                           <p className="text-[10px] font-semibold text-[var(--brutal-muted)]">
                             {formatTime(rec.time)}
                             {rec.txDigest && (
-                              <span className="ml-3 font-mono text-[9px] opacity-60">tx: 0x{rec.txDigest.slice(0, 8)}...</span>
+                              <a
+                                href={`${SUISCAN_URL}/tx/${rec.txDigest}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-3 font-mono text-[9px] opacity-60 underline underline-offset-2 hover:opacity-100"
+                              >
+                                tx: 0x{rec.txDigest.slice(0, 8)}...
+                              </a>
                             )}
                           </p>
                         </div>
@@ -336,8 +350,8 @@ export default function FaucetPage() {
 
               <div className="mt-6 border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
                 <p className="text-xs font-semibold text-[var(--brutal-ink)]">
-                  You need TEST_USDC for pool operations + SUI for gas fees.
-                  Claim 500 TEST_USDC here, then get free SUI from the testnet faucet.
+                  You need USDC for pool operations + SUI for gas fees.
+                  Claim 500 USDC here, then get free SUI from the testnet faucet.
                 </p>
               </div>
 
