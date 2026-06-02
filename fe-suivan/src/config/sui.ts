@@ -21,8 +21,8 @@ export function useFaucetId() {
 }
 
 // Sui package object IDs — deployed to testnet
-export const SUI_PACKAGE_ID = "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156";
-export const SUI_FACTORY_ID = "0xa8109352afcf4dfe8eba3337d901a24e9aad80515e8781902a395695b9cc7e83";
-export const SUI_USDC_TYPE = "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_usdc::TEST_USDC";
-export const SUI_SUI_TYPE = "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_sui::TEST_SUI";
+export const SUI_PACKAGE_ID = "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825";
+export const SUI_FACTORY_ID = "0xe2587c933fdd1f4fa4bab04655a773a23d896bab18738e0efafdc6c6f36f5558";
+export const SUI_USDC_TYPE = "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825::test_usdc::TEST_USDC";
+export const SUI_SUI_TYPE = "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825::test_sui::TEST_SUI";
 export const SUI_CLOCK_ID = "0x6";
