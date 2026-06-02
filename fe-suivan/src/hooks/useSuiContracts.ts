@@ -641,27 +641,23 @@ export function useClaimFinal() {
 // ─── Faucet ────────────────────────────────────────────────────────
 
 export function useClaimUSDC() {
-  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const { mutate: signAndExecute, isPending, data, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
 
-  const claimUSDC = (faucetId: string, callbacks?: { onSuccess?: (digest?: string) => void; onError?: (e: Error) => void }) => {
+  const claimUSDC = (faucetId: string) => {
     const tx = new Transaction();
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::faucet::claim_test_usdc`,
       arguments: [tx.object(faucetId), tx.object(SUI_CLOCK_ID)],
     });
     signAndExecute({ transaction: tx }, {
-      onSuccess: (result) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["suivan"] });
-        callbacks?.onSuccess?.(result?.digest);
-      },
-      onError: (e) => {
-        callbacks?.onError?.(e);
       },
     });
   };
 
-  return { claimUSDC, hash: txData?.digest, isPending, isSuccess: !!txData, error };
+  return { claimUSDC, hash: data?.digest, isPending, isSuccess: !!data, error };
 }
 
 export function useLeaderboardScore(poolAddress: string | undefined, userAddress: string | undefined) {

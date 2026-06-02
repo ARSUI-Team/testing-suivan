@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -18,6 +18,7 @@ import {
   ArrowRight,
   ExternalLink,
   Shield,
+  Zap,
 } from "lucide-react";
 
 type ClaimStatus = "idle" | "loading" | "success" | "error";
@@ -25,8 +26,8 @@ type ClaimStatus = "idle" | "loading" | "success" | "error";
 const FAUCET_COOLDOWN_S = 30;
 const LS_KEY = "suivan_faucet_claim";
 const LS_HISTORY_KEY = "suivan_faucet_history";
-const SUI_TESTNET_FAUCET = "https://faucet.testnet.sui.io";
 const SUISCAN_URL = "https://suiscan.xyz/testnet";
+const SUI_FAUCET_API = "https://faucet.testnet.sui.io/v1/gas";
 
 function getLastClaimTime(): number {
   if (typeof window === "undefined") return 0;
@@ -66,11 +67,13 @@ export default function FaucetPage() {
   const faucetId = useFaucetId();
 
   const { balance: usdcBalance, refetch: refetchBalance } = useUSDCBalance(address);
-  const { claimUSDC, isPending: isWalletClaiming } = useClaimUSDC();
+  const { claimUSDC, isPending: isWalletClaiming, hash: txHash, error: claimError } = useClaimUSDC();
 
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
+  const [suiStatus, setSuiStatus] = useState<ClaimStatus>("idle");
   const [cooldown, setCooldown] = useState(0);
   const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>(loadClaimHistory);
+  const lastSavedHash = useRef<string | undefined>(undefined);
 
   const addToHistory = useCallback((record: ClaimRecord) => {
     setClaimHistory((h) => {
@@ -102,6 +105,52 @@ export default function FaucetPage() {
     return () => clearInterval(id);
   }, [cooldownActive, cooldown]);
 
+  const onClaimSuccess = useCallback((digest?: string) => {
+    setClaimStatus("success");
+    setLastClaimTime();
+    setCooldown(FAUCET_COOLDOWN_S);
+    addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest || txHash });
+    refetchBalance();
+    successToast(t("faucet.success"));
+    setTimeout(() => setClaimStatus((s) => (s === "success" ? "idle" : s)), 3000);
+  }, [addToHistory, refetchBalance, successToast, t, txHash]);
+
+  const trySponsor = useCallback(async () => {
+    if (!address) return;
+    try {
+      const res = await fetch("/api/sponsor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "claim_usdc", userAddress: address }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Sponsor failed");
+      const { digest } = await res.json();
+      onClaimSuccess(digest);
+    } catch (fallbackErr) {
+      setClaimStatus("error");
+      errorToast(fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error"));
+      setTimeout(() => setClaimStatus("idle"), 2500);
+    }
+  }, [address, errorToast, onClaimSuccess, t]);
+
+  const lastErrorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!txHash || txHash === lastSavedHash.current) return;
+    lastSavedHash.current = txHash;
+    if (claimStatus !== "loading") return;
+    onClaimSuccess(txHash);
+  }, [txHash, claimStatus, onClaimSuccess]);
+
+  // Watch for mutation errors to trigger sponsor fallback
+  useEffect(() => {
+    if (!claimError || claimStatus !== "loading") return;
+    const msg = claimError.message;
+    if (msg === lastErrorRef.current) return;
+    lastErrorRef.current = msg;
+    trySponsor();
+  }, [claimError, claimStatus, trySponsor]);
+
   const handleClaimDirect = useCallback(() => {
     if (!address || cooldownActive || isWalletClaiming || !faucetId) return;
 
@@ -113,44 +162,31 @@ export default function FaucetPage() {
     }
 
     setClaimStatus("loading");
+    lastSavedHash.current = undefined;
+    lastErrorRef.current = null;
+    claimUSDC(faucetId);
+  }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, errorToast]);
 
-    const onClaimSuccess = (txDigest?: string) => {
-      setClaimStatus("success");
-      setLastClaimTime();
-      setCooldown(FAUCET_COOLDOWN_S);
-      addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest });
-      refetchBalance();
-      successToast(t("faucet.success"));
-      setTimeout(() => setClaimStatus((s) => (s === "success" ? "idle" : s)), 3000);
-    };
-
-    const trySponsor = async () => {
-      try {
-        const res = await fetch("/api/sponsor", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "claim_usdc", userAddress: address }),
-        });
-        if (!res.ok) throw new Error((await res.json()).error || "Sponsor failed");
-        const { digest } = await res.json();
-        onClaimSuccess(digest);
-      } catch (fallbackErr) {
-        setClaimStatus("error");
-        errorToast(fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error"));
-        setTimeout(() => setClaimStatus("idle"), 2500);
-      }
-    };
-
-    // Try direct wallet call
-    claimUSDC(faucetId, {
-      onSuccess: (digest) => onClaimSuccess(digest),
-      onError: () => trySponsor(),
-    });
-  }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, successToast, errorToast, t, refetchBalance]);
-
-  const handleOpenSuiFaucet = () => {
-    window.open(SUI_TESTNET_FAUCET, "_blank", "noopener");
-  };
+  const handleClaimSui = useCallback(async () => {
+    if (!address || suiStatus === "loading") return;
+    setSuiStatus("loading");
+    try {
+      const res = await fetch(SUI_FAUCET_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ FixedAmountRequest: { recipient: address } }),
+      });
+      if (!res.ok) throw new Error(`Faucet API returned ${res.status}`);
+      const data = await res.json();
+      setSuiStatus("success");
+      successToast("SUI sent! Check your wallet.");
+      setTimeout(() => setSuiStatus("idle"), 3000);
+    } catch (err) {
+      setSuiStatus("error");
+      errorToast(err instanceof Error ? err.message : "SUI faucet request failed");
+      setTimeout(() => setSuiStatus("idle"), 3000);
+    }
+  }, [address, successToast, errorToast]);
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
@@ -202,25 +238,6 @@ export default function FaucetPage() {
 
       <section className="px-5 pb-20 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">
-
-          {isConnected && (
-            <div className="mb-8 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-5 shadow-[4px_4px_0_var(--brutal-ink)]">
-              <p className="protocol-font mb-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--brutal-muted)]">
-                How it works
-              </p>
-              <ol className="space-y-2 text-sm font-semibold text-[var(--brutal-ink)]">
-                <li className="flex items-start gap-3">
-                  <span className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] text-xs font-black">1</span>
-                  <span>Get free <strong>SUI</strong> from the testnet faucet → this pays for transaction fees</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] text-xs font-black">2</span>
-                  <span>Claim <strong>500 USDC</strong> below → use it to join or create pools</span>
-                </li>
-              </ol>
-            </div>
-          )}
-
           {!isConnected ? (
             <div className="mx-auto max-w-md border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-10 text-center shadow-[8px_8px_0_var(--brutal-ink)]">
               <div className="mx-auto mb-6 grid size-16 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)]">
@@ -261,11 +278,22 @@ export default function FaucetPage() {
                   </div>
 
                   <button
-                    onClick={handleOpenSuiFaucet}
-                    className="flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                    onClick={handleClaimSui}
+                    disabled={suiStatus === "loading"}
+                    className={`flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+                      suiStatus === "success"
+                        ? "bg-[var(--success-soft)]"
+                        : suiStatus === "error"
+                        ? "bg-[var(--error-soft)]"
+                        : "bg-[var(--accent-soft)] hover:bg-[var(--brutal-ink)]"
+                    }`}
                   >
                     <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)]">
-                      <ExternalLink className="size-5 text-[var(--brutal-ink)]" />
+                      {suiStatus === "loading" ? (
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
+                      ) : (
+                        <Zap className="size-5 text-[var(--brutal-ink)]" />
+                      )}
                     </div>
                     <div className="text-left">
                       <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
@@ -275,7 +303,13 @@ export default function FaucetPage() {
                         className="text-sm font-black tracking-tight"
                         style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
                       >
-                        Get free SUI →
+                        {suiStatus === "loading"
+                          ? "Requesting..."
+                          : suiStatus === "success"
+                          ? "SUI sent!"
+                          : suiStatus === "error"
+                          ? "Try again"
+                          : "Get free SUI →"}
                       </p>
                     </div>
                   </button>
@@ -317,7 +351,7 @@ export default function FaucetPage() {
                     {claimStatus === "loading" ? (
                       <span className="inline-flex items-center gap-2">
                         <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-                        Minting...
+                        Confirming in wallet...
                       </span>
                     ) : claimStatus === "success" ? (
                       <span className="inline-flex items-center gap-2">
@@ -339,8 +373,13 @@ export default function FaucetPage() {
                       style={{ width: `${(cooldown / FAUCET_COOLDOWN_S) * 100}%` }}
                     />
                   )}
-                  </div>
                 </div>
+                {cooldownActive && (
+                  <p className="mt-3 text-center text-[10px] font-semibold text-[var(--brutal-muted)]">
+                    Next claim available in <strong className="text-[var(--brutal-ink)]">{cooldown}s</strong>. Need more USDC? Get SUI first above, then claim again.
+                  </p>
+                )}
+              </div>
 
               <p className="protocol-font mb-3 mt-10 text-xs font-black uppercase tracking-[0.18em] text-[var(--brutal-muted)]">
                 {t("faucet.recentTitle")}
@@ -365,17 +404,17 @@ export default function FaucetPage() {
                           <p className="text-[10px] font-semibold text-[var(--brutal-muted)]">
                             {formatDate(rec.time)} · {formatTime(rec.time)}
                           </p>
-                          {rec.txDigest && (
-                            <a
-                              href={`${SUISCAN_URL}/tx/${rec.txDigest}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-1 inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--brutal-muted)] underline underline-offset-2 decoration-dotted hover:text-[var(--brutal-ink)] hover:decoration-solid transition-colors"
-                            >
-                              <ExternalLink className="size-3 shrink-0" />
-                              {rec.txDigest.slice(0, 16)}…{rec.txDigest.slice(-4)}
-                            </a>
-                          )}
+                          <a
+                            href={`${SUISCAN_URL}/tx/${rec.txDigest || "0x"}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--brutal-muted)] underline underline-offset-2 decoration-dotted hover:text-[var(--brutal-ink)] hover:decoration-solid transition-colors"
+                          >
+                            <ExternalLink className="size-3 shrink-0" />
+                            {rec.txDigest
+                              ? `${rec.txDigest.slice(0, 16)}…${rec.txDigest.slice(-4)}`
+                              : "View on SuiScan"}
+                          </a>
                         </div>
                         <CheckCircle2 className="size-4 shrink-0 text-[var(--success-soft)]" />
                         <button
@@ -392,13 +431,6 @@ export default function FaucetPage() {
                     ))}
                   </div>
                 )}
-              </div>
-
-              <div className="mt-6 border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
-                <p className="text-xs font-semibold text-[var(--brutal-ink)]">
-                  You need USDC for pool operations + SUI for gas fees.
-                  Claim 500 USDC here, then get free SUI from the testnet faucet.
-                </p>
               </div>
 
               <div className="mt-8 text-center">
