@@ -25,8 +25,8 @@ module archa::faucet {
 
     const E_COOLDOWN_ACTIVE: u64 = 1;
 
-    /// Cooldown: 30 seconds — rapid testing cycles
-    const COOLDOWN_MS: u64 = 30_000;
+    /// Cooldown: 24 hours — serious rate-limited faucet
+    const COOLDOWN_MS: u64 = 86_400_000;
 
     /// 500 TEST_USDC with 6 decimals = 500 * 10^6
     /// Enough for 1x join pool (12.5) + 5x deposits (50) + buffer

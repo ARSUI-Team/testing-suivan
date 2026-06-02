@@ -23,7 +23,7 @@ import {
 
 type ClaimStatus = "idle" | "loading" | "success" | "error";
 
-const FAUCET_COOLDOWN_S = 30;
+const FAUCET_COOLDOWN_S = 86400;
 const LS_KEY = "suivan_faucet_claim";
 const LS_HISTORY_KEY = "suivan_faucet_history";
 const SUISCAN_URL = "https://suiscan.xyz/testnet";
