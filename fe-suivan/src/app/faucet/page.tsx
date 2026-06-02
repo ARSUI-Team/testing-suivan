@@ -94,7 +94,7 @@ export default function FaucetPage() {
     return () => clearInterval(id);
   }, [cooldownActive, cooldown]);
 
-  const handleClaimDirect = useCallback(async () => {
+  const handleClaimDirect = useCallback(() => {
     if (!address || cooldownActive || isWalletClaiming || !faucetId) return;
 
     const last = getLastClaimTime();
@@ -105,23 +105,18 @@ export default function FaucetPage() {
     }
 
     setClaimStatus("loading");
-    try {
-      await new Promise<void>((resolve, reject) => {
-        claimUSDC(faucetId);
-        // useSignAndExecuteTransaction doesn't return promise — we rely on the mutation callbacks
-        // Instead, we optimistically show success after the tx is submitted
-        setTimeout(() => {
-          setClaimStatus("success");
-          setLastClaimTime();
-          setCooldown(FAUCET_COOLDOWN_S);
-          addToHistory({ token: "usdc", amount: "500", time: Date.now() });
-          refetchBalance();
-          successToast(t("faucet.success"));
-          resolve();
-        }, 1500);
-      });
-    } catch (err) {
-      // Fallback to sponsored tx
+
+    const onClaimSuccess = (txDigest?: string) => {
+      setClaimStatus("success");
+      setLastClaimTime();
+      setCooldown(FAUCET_COOLDOWN_S);
+      addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest });
+      refetchBalance();
+      successToast(t("faucet.success"));
+      setTimeout(() => setClaimStatus((s) => (s === "success" ? "idle" : s)), 3000);
+    };
+
+    const trySponsor = async () => {
       try {
         const res = await fetch("/api/sponsor", {
           method: "POST",
@@ -130,21 +125,19 @@ export default function FaucetPage() {
         });
         if (!res.ok) throw new Error((await res.json()).error || "Sponsor failed");
         const { digest } = await res.json();
-        setClaimStatus("success");
-        setLastClaimTime();
-        setCooldown(FAUCET_COOLDOWN_S);
-        addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest });
-        refetchBalance();
-        successToast(t("faucet.success"));
+        onClaimSuccess(digest);
       } catch (fallbackErr) {
         setClaimStatus("error");
         errorToast(fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error"));
+        setTimeout(() => setClaimStatus("idle"), 2500);
       }
-    } finally {
-      setTimeout(() => {
-        setClaimStatus((s) => (s === "loading" ? "idle" : s));
-      }, 2500);
-    }
+    };
+
+    // Try direct wallet call
+    claimUSDC(faucetId, {
+      onSuccess: () => onClaimSuccess(),
+      onError: () => trySponsor(),
+    });
   }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, successToast, errorToast, t, refetchBalance]);
 
   const handleOpenSuiFaucet = () => {

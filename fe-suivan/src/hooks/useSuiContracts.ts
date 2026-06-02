@@ -644,7 +644,7 @@ export function useClaimUSDC() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
 
-  const claimUSDC = (faucetId: string) => {
+  const claimUSDC = (faucetId: string, callbacks?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
     const tx = new Transaction();
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::faucet::claim_test_usdc`,
@@ -653,6 +653,10 @@ export function useClaimUSDC() {
     signAndExecute({ transaction: tx }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["suivan"] });
+        callbacks?.onSuccess?.();
+      },
+      onError: (e) => {
+        callbacks?.onError?.(e);
       },
     });
   };
