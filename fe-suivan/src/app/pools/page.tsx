@@ -20,6 +20,7 @@ import {
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
 import { CrossChainBridgeModal } from "@/components/CrossChainBridgeModal";
+import { PoolName } from "@/components/PoolName";
 import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
@@ -290,7 +291,7 @@ export default function PoolsPage() {
                     <div className="mb-3 flex items-start justify-between">
                       <div>
                         <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-ink)" }}>object::pool</p>
-                        <h3 className="mt-2 text-2xl font-black tracking-[-0.03em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>{pool.name}</h3>
+                        <h3 className="mt-2 text-2xl font-black tracking-[-0.03em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}><PoolName blobId={pool.walrusMetadataBlobId} fallback={pool.name} /></h3>
                         <p className="protocol-font mt-1 text-[10px] font-bold" style={{ color: "var(--brutal-ink)" }}>
                           {pool.address.slice(0, 6)}...{pool.address.slice(-4)}
                         </p>
