@@ -176,6 +176,11 @@ export default function FaucetPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ FixedAmountRequest: { recipient: address } }),
       });
+      if (res.status === 429) {
+        setSuiStatus("error");
+        errorToast("Testnet faucet is rate-limited. Use the external faucet instead.");
+        return;
+      }
       if (!res.ok) throw new Error(`Faucet API returned ${res.status}`);
       const data = await res.json();
       setSuiStatus("success");
@@ -308,11 +313,21 @@ export default function FaucetPage() {
                           : suiStatus === "success"
                           ? "SUI sent!"
                           : suiStatus === "error"
-                          ? "Try again"
+                          ? "Rate-limited — try external faucet"
                           : "Get free SUI →"}
                       </p>
                     </div>
                   </button>
+                  {suiStatus === "error" && (
+                    <a
+                      href="https://faucet.testnet.sui.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 block text-center text-[10px] font-semibold text-[var(--brutal-muted)] underline underline-offset-2 hover:text-[var(--brutal-ink)]"
+                    >
+                      Open external SUI faucet →
+                    </a>
+                  )}
                 </div>
               </div>
 
