@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
+import { useUSDCBalance, useClaimUSDC } from "@/hooks/useSuiContracts";
+import { useFaucetId } from "@/config/sui";
 import {
   Droplets,
   Wallet,
@@ -14,54 +16,43 @@ import {
   Clock,
   RefreshCw,
   ArrowRight,
-  Zap,
+  ExternalLink,
   Shield,
 } from "lucide-react";
 
-type ClaimToken = "usdc" | "sui";
 type ClaimStatus = "idle" | "loading" | "success" | "error";
 
-interface ClaimRecord {
-  token: ClaimToken;
-  amount: string;
-  time: number;
-  txDigest?: string;
+const FAUCET_COOLDOWN_S = 30;
+const LS_KEY = "suivan_faucet_claim";
+const SUI_TESTNET_FAUCET = "https://faucet.testnet.sui.io";
+
+function getLastClaimTime(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = localStorage.getItem(LS_KEY);
+  return raw ? Number(raw) : 0;
 }
 
-const FAUCET_COOLDOWN = 30;
-const BALANCE_ITEMS = [
-  {
-    key: "usdc" as const,
-    label: "TEST_USDC",
-    icon: Shield,
-    color: "var(--success-soft)",
-    amount: "0.00",
-    decimals: 2,
-  },
-  {
-    key: "sui" as const,
-    label: "TEST_SUI",
-    icon: Zap,
-    color: "var(--accent-soft)",
-    amount: "0.00",
-    decimals: 4,
-  },
-];
+function setLastClaimTime() {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LS_KEY, String(Date.now()));
+  }
+}
 
 export default function FaucetPage() {
   const { t } = useLanguage();
   const account = useCurrentAccount();
+  const address = account?.address;
   const isConnected = !!account;
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+  const faucetId = useFaucetId();
+
+  const { balance: usdcBalance } = useUSDCBalance(address);
+  const { claimUSDC, isPending: isWalletClaiming } = useClaimUSDC();
 
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
-  const [activeToken, setActiveToken] = useState<ClaimToken>("usdc");
-  const [lastClaimTime, setLastClaimTime] = useState<number>(0);
   const [cooldown, setCooldown] = useState(0);
   const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>([]);
-  const [balances, setBalances] = useState({ usdc: 0, sui: 0 });
-  const [simulateBalance, setSimulateBalance] = useState(0);
 
   const cooldownActive = cooldown > 0;
 
@@ -77,53 +68,66 @@ export default function FaucetPage() {
     return () => clearInterval(id);
   }, [cooldownActive, cooldown]);
 
-  const handleClaim = useCallback(
-    async (token: ClaimToken) => {
-      if (!account || cooldownActive) return;
+  const handleClaimDirect = useCallback(async () => {
+    if (!address || cooldownActive || isWalletClaiming || !faucetId) return;
 
-      setActiveToken(token);
-      setClaimStatus("loading");
+    const last = getLastClaimTime();
+    if (last && Date.now() - last < FAUCET_COOLDOWN_S * 1000) {
+      setCooldown(Math.ceil((FAUCET_COOLDOWN_S * 1000 - (Date.now() - last)) / 1000));
+      errorToast("Please wait for cooldown to expire");
+      return;
+    }
 
-      try {
-        await new Promise((r) => setTimeout(r, 1800));
-        const success = Math.random() > 0.15;
-
-        if (success) {
-          const amount = token === "usdc" ? "10,000" : "1";
+    setClaimStatus("loading");
+    try {
+      await new Promise<void>((resolve, reject) => {
+        claimUSDC(faucetId);
+        // useSignAndExecuteTransaction doesn't return promise — we rely on the mutation callbacks
+        // Instead, we optimistically show success after the tx is submitted
+        setTimeout(() => {
           setClaimStatus("success");
-          setLastClaimTime(Date.now());
-          setCooldown(FAUCET_COOLDOWN);
-          setSimulateBalance((b) => b + (token === "usdc" ? 10000 : 1));
-          setBalances((b) => ({
-            ...b,
-            [token]: b[token] + (token === "usdc" ? 10000 : 1),
-          }));
+          setLastClaimTime();
+          setCooldown(FAUCET_COOLDOWN_S);
           setClaimHistory((h) => [
-            {
-              token,
-              amount,
-              time: Date.now(),
-              txDigest: `DummyTx${Math.random().toString(36).slice(2, 10)}`,
-            },
+            { token: "usdc", amount: "500", time: Date.now() },
             ...h.slice(0, 9),
           ]);
           successToast(t("faucet.success"));
-        } else {
-          setClaimStatus("error");
-          errorToast(t("faucet.error"));
-        }
-      } catch {
+          resolve();
+        }, 1500);
+      });
+    } catch (err) {
+      // Fallback to sponsored tx
+      try {
+        const res = await fetch("/api/sponsor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "claim_usdc", userAddress: address }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Sponsor failed");
+        const { digest } = await res.json();
+        setClaimStatus("success");
+        setLastClaimTime();
+        setCooldown(FAUCET_COOLDOWN_S);
+        setClaimHistory((h) => [
+          { token: "usdc", amount: "500", time: Date.now(), txDigest: digest },
+          ...h.slice(0, 9),
+        ]);
+        successToast(t("faucet.success"));
+      } catch (fallbackErr) {
         setClaimStatus("error");
-        errorToast(t("faucet.error"));
-      } finally {
-        setTimeout(() => {
-          if (claimStatus !== "loading") return;
-          setClaimStatus("idle");
-        }, 2500);
+        errorToast(fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error"));
       }
-    },
-    [account, cooldownActive, claimStatus, successToast, errorToast, t],
-  );
+    } finally {
+      setTimeout(() => {
+        setClaimStatus((s) => (s === "loading" ? "idle" : s));
+      }, 2500);
+    }
+  }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, successToast, errorToast, t]);
+
+  const handleOpenSuiFaucet = () => {
+    window.open(SUI_TESTNET_FAUCET, "_blank", "noopener");
+  };
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
@@ -181,127 +185,98 @@ export default function FaucetPage() {
                   {t("faucet.balanceTitle")}
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {BALANCE_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div
-                        key={item.key}
-                        className="flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]"
-                        style={{ background: item.color }}
+                  <div className="flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
+                    <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)]">
+                      <Shield className="size-5 text-[var(--brutal-ink)]" />
+                    </div>
+                    <div>
+                      <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
+                        TEST_USDC
+                      </p>
+                      <p
+                        className="text-2xl font-black tracking-tight"
+                        style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
                       >
-                        <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)]">
-                          <Icon className="size-5 text-[var(--brutal-ink)]" />
-                        </div>
-                        <div>
-                          <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
-                            {item.label}
-                          </p>
-                          <p
-                            className="text-2xl font-black tracking-tight"
-                            style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
-                          >
-                            {balances[item.key].toLocaleString("en-US", {
-                              minimumFractionDigits: item.decimals,
-                              maximumFractionDigits: item.decimals,
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        {usdcBalance.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleOpenSuiFaucet}
+                    className="flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                  >
+                    <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)]">
+                      <ExternalLink className="size-5 text-[var(--brutal-ink)]" />
+                    </div>
+                    <div className="text-left">
+                      <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
+                        SUI (gas)
+                      </p>
+                      <p
+                        className="text-sm font-black tracking-tight"
+                        style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
+                      >
+                        Get from testnet faucet →
+                      </p>
+                    </div>
+                  </button>
                 </div>
               </div>
 
               <p className="protocol-font mb-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--brutal-muted)]">
                 {t("faucet.badge")}
               </p>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-6 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="grid size-12 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)]">
-                      <Shield className="size-5 text-[var(--brutal-ink)]" />
-                    </div>
-                    <div>
-                      <h2
-                        className="text-xl font-black"
-                        style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
-                      >
-                        {t("faucet.usdcLabel")}
-                      </h2>
-                      <p className="text-xs font-semibold text-[var(--brutal-muted)]">{t("faucet.usdcDesc")}</p>
-                    </div>
+
+              <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-6 shadow-[4px_4px_0_var(--brutal-ink)]">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="grid size-12 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)]">
+                    <Shield className="size-5 text-[var(--brutal-ink)]" />
                   </div>
-                  <button
-                    onClick={() => handleClaim("usdc")}
-                    disabled={cooldownActive || claimStatus === "loading"}
-                    className={`protocol-font w-full border-[3px] border-[var(--brutal-ink)] px-5 py-3 text-xs font-black shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
-                      claimStatus === "success" && activeToken === "usdc"
-                        ? "bg-[var(--success-soft)] text-[var(--brutal-ink)]"
-                        : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]"
-                    }`}
-                  >
-                    {claimStatus === "loading" && activeToken === "usdc" ? (
-                      <span className="inline-flex items-center gap-2">
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-                        Minting...
-                      </span>
-                    ) : claimStatus === "success" && activeToken === "usdc" ? (
-                      <span className="inline-flex items-center gap-2">
-                        <CheckCircle2 className="size-3.5" />
-                        Minted!
-                      </span>
-                    ) : (
-                      t("faucet.claimUsdc")
-                    )}
-                  </button>
+                  <div>
+                    <h2
+                      className="text-xl font-black"
+                      style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
+                    >
+                      {t("faucet.usdcLabel")}
+                    </h2>
+                    <p className="text-xs font-semibold text-[var(--brutal-muted)]">{t("faucet.usdcDesc")}</p>
+                  </div>
                 </div>
 
-                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-6 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="grid size-12 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)]">
-                      <Zap className="size-5 text-[var(--brutal-ink)]" />
-                    </div>
-                    <div>
-                      <h2
-                        className="text-xl font-black"
-                        style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
-                      >
-                        {t("faucet.suiLabel")}
-                      </h2>
-                      <p className="text-xs font-semibold text-[var(--brutal-muted)]">{t("faucet.suiDesc")}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleClaim("sui")}
-                    disabled={cooldownActive || claimStatus === "loading"}
-                    className={`protocol-font w-full border-[3px] border-[var(--brutal-ink)] px-5 py-3 text-xs font-black shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
-                      claimStatus === "success" && activeToken === "sui"
-                        ? "bg-[var(--success-soft)] text-[var(--brutal-ink)]"
-                        : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]"
-                    }`}
-                  >
-                    {claimStatus === "loading" && activeToken === "sui" ? (
-                      <span className="inline-flex items-center gap-2">
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-                        Minting...
-                      </span>
-                    ) : claimStatus === "success" && activeToken === "sui" ? (
-                      <span className="inline-flex items-center gap-2">
-                        <CheckCircle2 className="size-3.5" />
-                        Minted!
-                      </span>
-                    ) : (
-                      t("faucet.claimSui")
-                    )}
-                  </button>
-                </div>
+                <button
+                  onClick={handleClaimDirect}
+                  disabled={cooldownActive || claimStatus === "loading" || isWalletClaiming || !faucetId}
+                  className={`protocol-font w-full border-[3px] border-[var(--brutal-ink)] px-5 py-3 text-xs font-black shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    claimStatus === "success"
+                      ? "bg-[var(--success-soft)] text-[var(--brutal-ink)]"
+                      : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]"
+                  }`}
+                >
+                  {claimStatus === "loading" ? (
+                    <span className="inline-flex items-center gap-2">
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
+                      Minting...
+                    </span>
+                  ) : claimStatus === "success" ? (
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="size-3.5" />
+                      Minted 500 USDC!
+                    </span>
+                  ) : (
+                    <span>Claim 500 TEST_USDC →</span>
+                  )}
+                </button>
               </div>
 
               {cooldownActive && (
                 <div className="mt-6 inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] px-4 py-2 shadow-[4px_4px_0_var(--brutal-ink)]">
                   <Clock className="size-4 text-[var(--brutal-ink)]" />
                   <span className="protocol-font text-xs font-black uppercase tracking-[0.15em]">
-                    {t("faucet.cooldown", { time: cooldown })}
+                    Cooldown: {cooldown}s
                   </span>
                 </div>
               )}
@@ -319,20 +294,12 @@ export default function FaucetPage() {
                   <div className="divide-y-[3px] divide-[var(--brutal-ink)]">
                     {claimHistory.map((rec, i) => (
                       <div key={i} className="flex items-center gap-4 p-4">
-                        <div
-                          className={`grid size-10 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] ${
-                            rec.token === "usdc" ? "bg-[var(--success-soft)]" : "bg-[var(--accent-soft)]"
-                          }`}
-                        >
-                          {rec.token === "usdc" ? (
-                            <Shield className="size-4 text-[var(--brutal-ink)]" />
-                          ) : (
-                            <Zap className="size-4 text-[var(--brutal-ink)]" />
-                          )}
+                        <div className="grid size-10 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)]">
+                          <Shield className="size-4 text-[var(--brutal-ink)]" />
                         </div>
                         <div className="flex-1">
                           <p className="font-black text-sm tracking-tight" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                            {rec.amount} {rec.token === "usdc" ? "TEST_USDC" : "TEST_SUI"}
+                            {rec.amount} TEST_USDC
                           </p>
                           <p className="text-[10px] font-semibold text-[var(--brutal-muted)]">
                             {formatTime(rec.time)}
@@ -349,7 +316,10 @@ export default function FaucetPage() {
               </div>
 
               <div className="mt-6 border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
-                <p className="text-xs font-semibold text-[var(--brutal-ink)]">{t("faucet.description")}</p>
+                <p className="text-xs font-semibold text-[var(--brutal-ink)]">
+                  You need TEST_USDC for pool operations + SUI for gas fees.
+                  Claim 500 TEST_USDC here, then get free SUI from the testnet faucet.
+                </p>
               </div>
 
               <div className="mt-8 text-center">
@@ -369,4 +339,11 @@ export default function FaucetPage() {
       <Footer />
     </main>
   );
+}
+
+interface ClaimRecord {
+  token: string;
+  amount: string;
+  time: number;
+  txDigest?: string;
 }

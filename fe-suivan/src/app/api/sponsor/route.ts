@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
-import { fromHex } from "@mysten/sui/utils";
+import { fromHex, fromBase64 } from "@mysten/sui/utils";
 
 let client: SuiJsonRpcClient | null = null;
 function getClient() {
@@ -12,14 +12,22 @@ function getClient() {
   return client;
 }
 
+function parseSecretKey(raw: string): Uint8Array {
+  if (raw.startsWith("suiprivkey")) {
+    const bytes = fromBase64(raw.replace("suiprivkey", ""));
+    return bytes.length >= 33 ? bytes.slice(1, 33) : bytes;
+  }
+  return fromHex(raw);
+}
+
 const SPONSOR_SECRET_KEY = process.env.SPONSOR_SECRET_KEY || "";
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b";
-const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xd45cfd2dcc4be81c17f44f3e5f934605c7d09bcf1adaeadab576607493383867";
-const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b::test_usdc::TEST_USDC";
-const TREASURY_CAP_ID = process.env.TREASURY_CAP_ID || "0x63af2ef268e8ab668201807c1b8452210b43d2adfe8562bac96db8b3bfbb7e4f";
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156";
+const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xa8109352afcf4dfe8eba3337d901a24e9aad80515e8781902a395695b9cc7e83";
+const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_usdc::TEST_USDC";
+const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0x3dc30bab44e1d2f6ed75503ff701c3a406cf2144ac3b2e21d8b53947be9d2819";
 
 interface SponsorRequest {
-  action: "mint_faucet" | "join_pool" | "create_pool" | "make_deposit";
+  action: "claim_usdc" | "join_pool" | "create_pool" | "make_deposit";
   userAddress: string;
   poolId?: string;
   usdcCoinId?: string;
@@ -43,17 +51,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "userAddress required" }, { status: 400 });
     }
 
-    const keypair = Ed25519Keypair.fromSecretKey(fromHex(SPONSOR_SECRET_KEY));
+    const keypair = Ed25519Keypair.fromSecretKey(parseSecretKey(SPONSOR_SECRET_KEY));
     const sponsorAddress = keypair.toSuiAddress();
 
     const tx = new Transaction();
 
     switch (action) {
-      case "mint_faucet": {
+      case "claim_usdc": {
         tx.moveCall({
-          target: `${PACKAGE_ID}::test_usdc::mint_faucet`,
-          arguments: [tx.object(TREASURY_CAP_ID)],
-          typeArguments: [],
+          target: `${PACKAGE_ID}::faucet::claim_test_usdc`,
+          arguments: [tx.object(FAUCET_ID), tx.object("0x6")],
         });
         break;
       }
@@ -106,7 +113,7 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        return NextResponse.json({ error: `Unknown action: ${action}. Supported: create_pool, join_pool, make_deposit` }, { status: 400 });
+        return NextResponse.json({ error: `Unknown action: ${action}. Supported: claim_usdc, create_pool, join_pool, make_deposit` }, { status: 400 });
     }
 
     tx.setSender(userAddress);

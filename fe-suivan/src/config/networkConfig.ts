@@ -5,18 +5,22 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetwork
     network: "testnet",
     url: "https://fullnode.testnet.sui.io:443",
     variables: {
-      packageId: "0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b",
-      factoryId: "0xd45cfd2dcc4be81c17f44f3e5f934605c7d09bcf1adaeadab576607493383867",
-      usdcType: "0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b::test_usdc::TEST_USDC",
+      packageId: "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156",
+      factoryId: "0xa8109352afcf4dfe8eba3337d901a24e9aad80515e8781902a395695b9cc7e83",
+      usdcType: "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_usdc::TEST_USDC",
+      suiType: "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_sui::TEST_SUI",
+      faucetId: "0x3dc30bab44e1d2f6ed75503ff701c3a406cf2144ac3b2e21d8b53947be9d2819",
     },
   },
   mainnet: {
     network: "mainnet",
     url: "https://fullnode.mainnet.sui.io:443",
     variables: {
-      packageId: "",
-      factoryId: "",
-      usdcType: "",
+      packageId: "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156",
+      factoryId: "0xa8109352afcf4dfe8eba3337d901a24e9aad80515e8781902a395695b9cc7e83",
+      usdcType: "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_usdc::TEST_USDC",
+      suiType: "0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156::test_sui::TEST_SUI",
+      faucetId: "0x3dc30bab44e1d2f6ed75503ff701c3a406cf2144ac3b2e21d8b53947be9d2819",
     },
   },
 });

@@ -1,123 +1,61 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useLanguage } from "@/context/LanguageContext";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-import { ArrowUpRight, Sparkles, Shield, Users, Coins, Globe, Wallet, Zap, Database, BarChart3 } from "lucide-react";
+import { ArrowUpRight, Sparkles, Shield, Users, Coins, Globe, Wallet, Zap, Database, BarChart3, Droplets } from "lucide-react";
+import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
 
 gsap.registerPlugin(ScrollTrigger);
 
-
-
 const features = [
-  {
-    title: "feature1Title",
-    desc: "feature1Desc",
-    Icon: Wallet,
-    gradient: "from-[#38bdf8] to-[#818cf8]",
-    bg: "bg-[var(--accent-soft)]",
-  },
-  {
-    title: "feature2Title",
-    desc: "feature2Desc",
-    Icon: Zap,
-    gradient: "from-[#14b8a6] to-[#38bdf8]",
-    bg: "bg-[var(--success-soft)]",
-  },
-  {
-    title: "feature3Title",
-    desc: "feature3Desc",
-    Icon: BarChart3,
-    gradient: "from-[#8b5cf6] to-[#38bdf8]",
-    bg: "bg-[var(--purple-soft)]",
-  },
-  {
-    title: "feature4Title",
-    desc: "feature4Desc",
-    Icon: Database,
-    gradient: "from-[#f6c85f] to-[#14b8a6]",
-    bg: "bg-[var(--warn-soft)]",
-  },
+  { title: "feature1Title", desc: "feature1Desc", Icon: Wallet, gradient: "from-[#38bdf8] to-[#818cf8]", bg: "bg-[var(--accent-soft)]" },
+  { title: "feature2Title", desc: "feature2Desc", Icon: Zap, gradient: "from-[#14b8a6] to-[#38bdf8]", bg: "bg-[var(--success-soft)]" },
+  { title: "feature3Title", desc: "feature3Desc", Icon: BarChart3, gradient: "from-[#8b5cf6] to-[#38bdf8]", bg: "bg-[var(--purple-soft)]" },
+  { title: "feature4Title", desc: "feature4Desc", Icon: Database, gradient: "from-[#f6c85f] to-[#14b8a6]", bg: "bg-[var(--warn-soft)]" },
 ] as const;
 
 const steps = [
-  {
-    code: "01",
-    title: "step1Title",
-    copy: "step1Copy",
-    color: "bg-[var(--accent-soft)]",
-    borderColor: "border-[var(--accent-deep)]/30",
-    Icon: GoogleLoginIcon,
-  },
-  {
-    code: "02",
-    title: "step2Title",
-    copy: "step2Copy",
-    color: "bg-[var(--warn-soft)]",
-    borderColor: "border-[var(--warn-deep)]/30",
-    Icon: PoolPickIcon,
-  },
-  {
-    code: "03",
-    title: "step3Title",
-    copy: "step3Copy",
-    color: "bg-[var(--success-soft)]",
-    borderColor: "border-[var(--success-deep)]/30",
-    Icon: ContributeIcon,
-  },
-  {
-    code: "04",
-    title: "step4Title",
-    copy: "step4Copy",
-    color: "bg-[var(--purple-soft)]",
-    borderColor: "border-[var(--purple-deep)]/30",
-    Icon: YieldIcon,
-  },
-] as const;
-
-const pools = [
-  { name: "Sui Creators Circle", members: "12 members", cycle: "cycle 08 / 12", apy: "8.1%", progress: 82 },
-  { name: "Global Arisan Guild", members: "20 members", cycle: "cycle 03 / 10", apy: "7.4%", progress: 30 },
-  { name: "Builder Savings DAO", members: "40 members", cycle: "cycle 11 / 20", apy: "6.8%", progress: 55 },
+  { code: "01", title: "step1Title", copy: "step1Copy", color: "bg-[var(--accent-soft)]", borderColor: "border-[var(--accent-deep)]/30", Icon: GoogleLoginIcon },
+  { code: "02", title: "step2Title", copy: "step2Copy", color: "bg-[var(--warn-soft)]", borderColor: "border-[var(--warn-deep)]/30", Icon: PoolPickIcon },
+  { code: "03", title: "step3Title", copy: "step3Copy", color: "bg-[var(--success-soft)]", borderColor: "border-[var(--success-deep)]/30", Icon: ContributeIcon },
+  { code: "04", title: "step4Title", copy: "step4Copy", color: "bg-[var(--purple-soft)]", borderColor: "border-[var(--purple-deep)]/30", Icon: YieldIcon },
 ] as const;
 
 const trustPillars = [
-  {
-    title: "trust1",
-    desc: "trust1Desc",
-    Icon: Shield,
-  },
-  {
-    title: "trust2",
-    desc: "trust2Desc",
-    Icon: Coins,
-  },
-  {
-    title: "trust3",
-    desc: "trust3Desc",
-    Icon: Globe,
-  },
+  { title: "trust1", desc: "trust1Desc", Icon: Shield },
+  { title: "trust2", desc: "trust2Desc", Icon: Coins },
+  { title: "trust3", desc: "trust3Desc", Icon: Globe },
 ] as const;
 
 export default function SuivanLanding() {
   const rootRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const [yieldProtocols, setYieldProtocols] = useState<any[]>([]);
+  const [yieldError, setYieldError] = useState(false);
+  const { pools: poolsData, isLoading: poolsLoading } = useAllPoolsWithInfo();
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/yields")
       .then((r) => r.json())
       .then((data) => {
+        if (cancelled) return;
         if (data.success) {
           const sorted = [...data.data.protocols].sort((a: any, b: any) => b.apy - a.apy);
           setYieldProtocols(sorted.slice(0, 7));
+        } else {
+          setYieldError(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setYieldError(true);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -128,99 +66,90 @@ export default function SuivanLanding() {
       frame = requestAnimationFrame(raf);
     };
     frame = requestAnimationFrame(raf);
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    const fallback = setTimeout(() => {
+      document.querySelectorAll(".suivan-pop, .suivan-feature, .suivan-card, .suivan-reveal, .suivan-trust").forEach((el) => el.classList.add("gsap-done"));
+    }, 3000);
     return () => {
       cancelAnimationFrame(frame);
       lenis.destroy();
+      clearTimeout(fallback);
     };
   }, []);
+
+  const realPools = useMemo(() => {
+    if (!poolsData) return [];
+    return poolsData.slice(0, 4).map((p: any) => {
+      const progress = Math.min(100, ((p.currentCycle || 1) / p.maxParticipants) * 100);
+      const cycleLabel = `cycle ${String(p.currentCycle || 1).padStart(2, "0")} / ${p.maxParticipants}`;
+      return {
+        name: p.name || `Pool #${String(p.address).slice(0, 6)}...`,
+        members: `${p.currentParticipants} members`,
+        cycle: cycleLabel,
+        apy: `${(p.apy || 0).toFixed(1)}%`,
+        progress,
+      };
+    });
+  }, [poolsData]);
+
+  const stats = useMemo(() => {
+    if (!poolsData) return { tvl: 0, activePools: 0, participants: 0, cycles: 0 };
+    const tvl = poolsData.reduce((sum: number, p: any) => sum + (p.totalFunds || 0), 0);
+    const participants = poolsData.reduce((sum: number, p: any) => sum + (p.currentParticipants || 0), 0);
+    const cycles = poolsData.reduce((sum: number, p: any) => sum + (p.currentCycle || 0), 0);
+    return { tvl, activePools: poolsData.length, participants, cycles };
+  }, [poolsData]);
 
   useGSAP(
     () => {
       ScrollTrigger.normalizeScroll(true);
       const ctx = gsap.context(() => {
+        const markDone = (selector: string) => {
+          gsap.utils.toArray<HTMLElement>(selector).forEach((el) => {
+            if (el) el.classList.add("gsap-done");
+          });
+        };
+
         gsap.from(".suivan-pop", {
-          y: 42,
-          opacity: 0,
-          duration: 0.7,
-          ease: "power3.out",
-          stagger: 0.07,
+          y: 42, opacity: 0, duration: 0.7, ease: "power3.out", stagger: 0.07,
+          onComplete: () => markDone(".suivan-pop"),
         });
 
         gsap.from(".suivan-feature", {
-          y: 30,
-          opacity: 0,
-          duration: 0.6,
-          ease: "power2.out",
-          stagger: 0.08,
-          scrollTrigger: {
-            trigger: ".suivan-features-grid",
-            start: "top 80%",
-            fastScrollEnd: true,
-          },
+          y: 30, opacity: 0, duration: 0.6, ease: "power2.out", stagger: 0.08,
+          scrollTrigger: { trigger: ".suivan-features-grid", start: "top 80%", fastScrollEnd: true },
+          onComplete: () => markDone(".suivan-feature"),
         });
 
         gsap.from(".suivan-card", {
-          y: 28,
-          rotate: -1,
-          opacity: 0,
-          duration: 0.6,
-          ease: "power2.out",
-          stagger: 0.07,
-          scrollTrigger: {
-            trigger: ".suivan-flow",
-            start: "top 76%",
-            fastScrollEnd: true,
-          },
+          y: 28, rotate: -1, opacity: 0, duration: 0.6, ease: "power2.out", stagger: 0.07,
+          scrollTrigger: { trigger: ".suivan-flow", start: "top 76%", fastScrollEnd: true },
+          onComplete: () => markDone(".suivan-card"),
         });
 
         gsap.to(".suivan-mascot", {
-          y: -20,
-          rotate: 1.5,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ".suivan-hero",
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.5,
-          },
+          y: -20, rotate: 1.5, ease: "none",
+          scrollTrigger: { trigger: ".suivan-hero", start: "top top", end: "bottom top", scrub: 0.5 },
         });
 
         gsap.to(".suivan-float-bg", {
-          y: -40,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ".suivan-hero",
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.8,
-          },
+          y: -40, ease: "none",
+          scrollTrigger: { trigger: ".suivan-hero", start: "top top", end: "bottom top", scrub: 0.8 },
         });
 
         gsap.utils.toArray<HTMLElement>(".suivan-reveal").forEach((el) => {
           gsap.from(el, {
-            y: 34,
-            opacity: 0,
-            duration: 0.6,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: el,
-              start: "top 82%",
-              fastScrollEnd: true,
-            },
+            y: 34, opacity: 0, duration: 0.6, ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 82%", fastScrollEnd: true },
+            onComplete: () => { if (el) el.classList.add("gsap-done"); },
           });
         });
 
         gsap.utils.toArray<HTMLElement>(".suivan-trust").forEach((el) => {
           gsap.from(el, {
-            scale: 0.92,
-            opacity: 0,
-            duration: 0.5,
-            ease: "back.out(1.4)",
-            scrollTrigger: {
-              trigger: el,
-              start: "top 85%",
-              fastScrollEnd: true,
-            },
+            scale: 0.92, opacity: 0, duration: 0.5, ease: "back.out(1.4)",
+            scrollTrigger: { trigger: el, start: "top 85%", fastScrollEnd: true },
+            onComplete: () => { if (el) el.classList.add("gsap-done"); },
           });
         });
       }, rootRef);
@@ -231,7 +160,8 @@ export default function SuivanLanding() {
   );
 
   return (
-    <div ref={rootRef} className="suivan-brutal" style={{ background: "var(--brutal-bg)" }}>      <HeroSection />
+    <div ref={rootRef} className="suivan-brutal" style={{ background: "var(--brutal-bg)" }}>
+      <HeroSection />
       <PoweredBySui />
       <HowItWorks />
       <LivePools />
@@ -239,32 +169,6 @@ export default function SuivanLanding() {
       <CTASection />
     </div>
   );
-
-  function MarqueeContent() {
-    const sponsors = [
-      { name: "Sui Overflow 2026", role: "Presented by Sui Foundation", href: "https://sui.io" },
-      { name: "Walrus", role: "Headline Partner & Track Sponsor", href: "https://walrus.xyz" },
-      { name: "DeepBook", role: "Track Sponsor", href: "https://deepbook.tech" },
-      { name: "OpenZeppelin", role: "Prize Sponsor", href: "https://openzeppelin.com" },
-      { name: "OtterSec", role: "Prize Sponsor", href: "https://osec.io" },
-      { name: "Scallop", role: "Award Sponsor", href: "https://scallop.io" },
-    ];
-    const doubled = [...sponsors, ...sponsors];
-    return (
-      <div className="flex items-center gap-6 shrink-0">
-        {doubled.map((s, i) => (
-          <div key={i} className="flex items-center gap-4 border-r-[2px] border-[var(--brutal-ink)] pr-6">
-            <span className="whitespace-nowrap text-lg font-black tracking-tight text-[var(--brutal-ink)]">
-              {s.name}
-            </span>
-            <span className="whitespace-nowrap text-xs font-bold tracking-[0.12em] uppercase text-[var(--brutal-ink)]">
-              {s.role}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   function HeroSection() {
     return (
@@ -300,79 +204,65 @@ export default function SuivanLanding() {
                 <a className="brutal-btn-outline" href="#how">
                   {t("landing.how")}
                 </a>
+                <Link className="brutal-btn-outline" href="/faucet" style={{ background: "var(--brutal-accent)" }}>
+                  <Droplets className="size-4" />
+                  Faucet
+                </Link>
+              </div>
+
+              <div className="suivan-pop mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-3 text-center shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                    {stats.activePools || "—"}
+                  </p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--brutal-muted)]">Active Pools</p>
+                </div>
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-3 text-center shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                    {stats.participants || "—"}
+                  </p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--brutal-muted)]">Participants</p>
+                </div>
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-3 text-center shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="text-lg font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                    {stats.tvl >= 1000 ? `$${(stats.tvl / 1000).toFixed(1)}K` : `$${stats.tvl.toFixed(0)}`}
+                  </p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--brutal-muted)]">TVL</p>
+                </div>
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-3 text-center shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                    {stats.cycles || "—"}
+                  </p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--brutal-muted)]">Cycles</p>
+                </div>
               </div>
             </div>
 
             <div className="suivan-pop relative w-full lg:mt-12">
-              {yieldProtocols.length >= 7 ? (
+              {yieldError ? (
+                <div className="flex items-center justify-center rounded-[4px] border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-8 shadow-[6px_6px_0_var(--brutal-ink)]" style={{ minHeight: 380 }}>
+                  <p className="text-sm font-bold text-[var(--brutal-muted)]">Yield data temporarily unavailable</p>
+                </div>
+              ) : yieldProtocols.length < 7 ? (
+                <div className="flex items-center justify-center" style={{ minHeight: 380 }}>
+                  <YieldCardSkeleton />
+                </div>
+              ) : (
                 <div className="cylinder-stage">
                   <div className="cylinder-scene">
                     {(() => {
                       const count = yieldProtocols.length;
                       const angleStep = 360 / count;
-                      const radius = window.innerWidth < 1024 ? 180 : 300;
-                      return yieldProtocols.map((p: any, i: number) => {
-                        const init = p.name.charAt(0).toUpperCase();
-                        const apyFormatted = (typeof p.apy === "number" ? p.apy : parseFloat(p.apy)).toFixed(1);
-                        const tvlFormatted = p.tvl >= 1_000_000_000 ? `$${(p.tvl / 1_000_000_000).toFixed(1)}B` : p.tvl >= 1_000_000 ? `$${(p.tvl / 1_000_000).toFixed(1)}M` : p.tvl >= 1_000 ? `$${(p.tvl / 1_000).toFixed(1)}K` : `$${p.tvl}`;
-                        const riskLabel = p.riskScore <= 2 ? "Low" : p.riskScore <= 4 ? "Mid" : "High";
-                        const riskColor = p.riskScore <= 2 ? "#00e060" : p.riskScore <= 4 ? "#f6c85f" : "#e8180a";
-
-                        return (
-                          <div key={p.name} className="cylinder-face" style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${radius}px)` }}>
-                            <div className="prof-card-can">
-                              <div className="prof-header-can">
-                                <div className="prof-header-num-can">{apyFormatted.split(".")[0]}</div>
-                                <div className="prof-avatar-can">{init}</div>
-                                <div className="prof-badge-can" style={{ background: riskColor, color: "var(--brutal-ink)" }}>
-                                  L{p.riskScore} · {riskLabel}
-                                </div>
-                              </div>
-                              <div className="prof-body-can">
-                                <p className="prof-handle-can">{p.name.toUpperCase().replace(" PROTOCOL", "").replace(" FINANCE", "")}::YIELD</p>
-                                <h3 className="prof-name-can">{p.name}</h3>
-                                <p className="prof-bio-can">Top-tier {p.chain} lending protocol. Current APY reflects real-time market conditions.</p>
-                              </div>
-                              <div className="prof-stats-can">
-                                <div className="pstat-can">
-                                  <span className="psv-can">{apyFormatted}%</span>
-                                  <span className="psl-can">APY</span>
-                                </div>
-                                <div className="pstat-can">
-                                  <span className="psv-can">{tvlFormatted}</span>
-                                  <span className="psl-can">TVL</span>
-                                </div>
-                                <div className="pstat-can">
-                                  <span className="psv-can">{p.source === "defillama" ? "LIVE" : "SIM"}</span>
-                                  <span className="psl-can">SOURCE</span>
-                                </div>
-                              </div>
-                              <a className="prof-btn-can" href={`https://defillama.com/protocol/${p.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`} target="_blank" rel="noopener noreferrer">
-                                Supply on {p.name.split(" ")[0]} →
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      });
+                      return yieldProtocols.map((p: any, i: number) => (
+                        <div key={p.name} className="cylinder-face" style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${window.innerWidth < 1024 ? 180 : 300}px)` }}>
+                          <CylinderCard p={p} t={t} />
+                        </div>
+                      ));
                     })()}
                   </div>
                   <p className="mt-8 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--brutal-muted)] text-center">
                     Live from DeFiLlama · Hover to pause
                   </p>
-                </div>
-              ) : (
-                <div className="cylinder-stage flex items-center justify-center" style={{ minHeight: 380 }}>
-                  <div className="w-full border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[6px_6px_0_var(--brutal-ink)] p-6 animate-pulse text-center">
-                    <div className="h-3 w-28 bg-[var(--brutal-ink)] mx-auto mb-5" />
-                    <div className="h-12 w-36 bg-[var(--brutal-ink)] mx-auto mb-3" />
-                    <div className="h-3 w-24 bg-[var(--brutal-ink)] mx-auto mb-5" />
-                    <div className="h-px bg-[var(--brutal-ink)] mb-4" />
-                    <div className="flex justify-center gap-8">
-                      <div className="h-6 w-16 bg-[var(--brutal-ink)]" />
-                      <div className="h-6 w-16 bg-[var(--brutal-ink)]" />
-                      <div className="h-6 w-16 bg-[var(--brutal-ink)]" />
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -406,10 +296,7 @@ export default function SuivanLanding() {
 
           <div className="suivan-features-grid grid gap-4 md:grid-cols-2 auto-rows-fr">
             {features.map(({ title, desc, Icon }) => (
-              <div
-                className="suivan-feature brutal-card flex items-start gap-4 p-5 h-full"
-                key={title}
-              >
+              <div className="suivan-feature brutal-card flex items-start gap-4 p-5 h-full" key={title}>
                 <div className="grid size-14 shrink-0 place-items-center border-[3px] border-[var(--ink)]" style={{ background: "var(--brutal-accent)" }}>
                   <Icon className="size-6" style={{ color: "var(--ink)" }} />
                 </div>
@@ -442,26 +329,19 @@ export default function SuivanLanding() {
 
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 auto-rows-fr">
             {steps.map(({ code, title, copy, Icon }) => (
-              <article
-                className="suivan-card brutal-card relative p-6 h-full transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1"
-                key={title}
-              >
+              <article className="suivan-card brutal-card relative p-6 h-full transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1" key={title}>
                 <div className="absolute -right-2 -top-2 grid size-8 place-items-center border-[3px] border-[var(--ink)] text-xs font-black shadow-[3px_3px_0_var(--ink)]" style={{ background: "var(--brutal-bg)" }}>
                   {code}
                 </div>
-
                 <div className="mb-6">
                   <Icon />
                 </div>
-
                 <h3 className="text-3xl font-black tracking-[-0.04em]">
                   {t(`landing.${title}`)}
                 </h3>
-
                 <p className="mt-3 text-sm font-semibold leading-6" style={{ color: "var(--brutal-muted)" }}>
                   {t(`landing.${copy}`)}
                 </p>
-
                 <div className="mt-6 h-1 transition-all duration-200" style={{ width: "48px", background: "var(--yellow)", border: "2px solid var(--ink)" }} />
               </article>
             ))}
@@ -472,6 +352,9 @@ export default function SuivanLanding() {
   }
 
   function LivePools() {
+    const showSkeleton = poolsLoading && realPools.length === 0;
+    const showEmpty = !poolsLoading && realPools.length === 0;
+    const displayPools = realPools.length > 0 ? realPools : showEmpty ? [{ name: "Sui Creators Circle", members: "12 members", cycle: "cycle 08 / 12", apy: "8.1%", progress: 82 }] : [];
     return (
       <section className="px-5 py-20 md:px-10 lg:px-12" style={{ background: "var(--brutal-ink)", color: "var(--brutal-bg)" }}>
         <div className="mx-auto max-w-6xl">
@@ -488,43 +371,37 @@ export default function SuivanLanding() {
           </div>
 
           <div className="grid gap-4">
-            {pools.map((pool) => (
-              <article
-                className="suivan-reveal p-5 md:p-6"
-                key={pool.name}
-                style={{ background: "var(--brutal-bg)", border: "4px solid var(--brutal-ink)", boxShadow: "8px 8px 0 var(--brutal-ink)", color: "var(--brutal-ink)" }}
-              >
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#e8180a", fontFamily: "var(--font-bebas)" }}>
-                      object::pool
-                    </p>
-                    <h3 className="mt-1.5 text-xl font-black md:text-2xl">{pool.name}</h3>
+            {showSkeleton ? (
+              <div className="p-8 text-center border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[8px_8px_0_var(--brutal-ink)]">
+                <div className="mx-auto mb-4 h-3 w-48 bg-[var(--brutal-ink)] animate-pulse opacity-20" />
+                <div className="mx-auto h-3 w-32 bg-[var(--brutal-ink)] animate-pulse opacity-20" />
+              </div>
+            ) : (
+              displayPools.map((pool) => (
+                <article className="suivan-reveal p-5 md:p-6" key={pool.name} style={{ background: "var(--brutal-bg)", border: "4px solid var(--brutal-ink)", boxShadow: "8px 8px 0 var(--brutal-ink)", color: "var(--brutal-ink)" }}>
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#e8180a", fontFamily: "var(--font-bebas)" }}>
+                        object::pool
+                      </p>
+                      <h3 className="mt-1.5 text-xl font-black md:text-2xl">{pool.name}</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="border-[3px] border-[var(--brutal-ink)] px-3 py-2 text-[11px] font-black" style={{ color: "var(--brutal-ink)" }}>{pool.members}</span>
+                      <span className="border-[3px] border-[var(--brutal-ink)] px-3 py-2 text-[11px] font-black" style={{ color: "var(--brutal-ink)" }}>{pool.cycle}</span>
+                      <span className="border-[3px] px-3 py-2 text-[11px] font-black" style={{ borderColor: "var(--brutal-accent)", background: "var(--brutal-accent)", color: "var(--brutal-ink)" }}>{pool.apy}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="border-[3px] border-[var(--brutal-ink)] px-3 py-2 text-[11px] font-black" style={{ color: "var(--brutal-ink)" }}>
-                      {pool.members}
-                    </span>
-                    <span className="border-[3px] border-[var(--brutal-ink)] px-3 py-2 text-[11px] font-black" style={{ color: "var(--brutal-ink)" }}>
-                      {pool.cycle}
-                    </span>
-                    <span className="border-[3px] px-3 py-2 text-[11px] font-black" style={{ borderColor: "var(--brutal-accent)", background: "var(--brutal-accent)", color: "var(--brutal-ink)" }}>
-                      {pool.apy}
-                    </span>
+                  <div className="mt-4 h-2" style={{ background: "var(--brutal-surface)", border: "3px solid var(--brutal-ink)" }}>
+                    <div className="h-full transition-all duration-700" style={{ width: `${pool.progress}%`, background: "var(--brutal-accent)" }} />
                   </div>
-                </div>
-                <div className="mt-4 h-2" style={{ background: "var(--brutal-surface)", border: "3px solid var(--brutal-ink)" }}>
-                  <div
-                    className="h-full transition-all duration-700"
-                    style={{ width: `${pool.progress}%`, background: "var(--brutal-accent)" }}
-                  />
-                </div>
-                <div className="mt-2 flex justify-between text-[10px] font-black" style={{ color: "var(--brutal-muted)", fontFamily: "var(--font-bebas)" }}>
-                  <span>cycle progress</span>
-                  <span>{pool.progress}%</span>
-                </div>
-              </article>
-            ))}
+                  <div className="mt-2 flex justify-between text-[10px] font-black" style={{ color: "var(--brutal-muted)", fontFamily: "var(--font-bebas)" }}>
+                    <span>cycle progress</span>
+                    <span>{pool.progress}%</span>
+                  </div>
+                </article>
+              ))
+            )}
           </div>
 
           <div className="suivan-reveal mt-8 text-center">
@@ -554,10 +431,7 @@ export default function SuivanLanding() {
 
           <div className="grid gap-5 md:grid-cols-3 auto-rows-fr">
             {trustPillars.map(({ title, desc, Icon }) => (
-              <div
-                className="suivan-trust brutal-card p-6 h-full"
-                key={title}
-              >
+              <div className="suivan-trust brutal-card p-6 h-full" key={title}>
                 <div className="mb-5 grid size-14 place-items-center border-[3px] border-[var(--ink)]" style={{ background: "var(--green)" }}>
                   <Icon className="size-6" style={{ color: "var(--ink)" }} />
                 </div>
@@ -597,12 +471,37 @@ export default function SuivanLanding() {
                 <Users className="size-4" />
                 Try Simulator
               </Link>
+              <Link className="brutal-btn-outline" href="/faucet" style={{ background: "var(--brutal-accent)" }}>
+                <Droplets className="size-4" />
+                Faucet
+              </Link>
             </div>
           </div>
         </div>
       </section>
     );
   }
+}
+
+function MarqueeContent() {
+  const sponsors = [
+    { name: "Sui Overflow 2026", role: "Presented by Sui Foundation", href: "https://sui.io" },
+    { name: "Walrus", role: "Headline Partner & Track Sponsor", href: "https://walrus.xyz" },
+    { name: "DeepBook", role: "Track Sponsor", href: "https://deepbook.tech" },
+    { name: "OpenZeppelin", role: "Prize Sponsor", href: "https://openzeppelin.com" },
+    { name: "OtterSec", role: "Prize Sponsor", href: "https://osec.io" },
+    { name: "Scallop", role: "Award Sponsor", href: "https://scallop.io" },
+  ];
+  return (
+    <div className="flex items-center gap-6 shrink-0" aria-hidden="true">
+      {[...sponsors, ...sponsors].map((s, i) => (
+        <div key={i} className="flex items-center gap-4 border-r-[2px] border-[var(--brutal-ink)] pr-6">
+          <span className="whitespace-nowrap text-lg font-black tracking-tight text-[var(--brutal-ink)]">{s.name}</span>
+          <span className="whitespace-nowrap text-xs font-bold tracking-[0.12em] uppercase text-[var(--brutal-ink)]">{s.role}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function GoogleLoginIcon() {
@@ -654,5 +553,64 @@ function YieldIcon() {
       <path d="M63 16h13v13" className="stroke-[var(--brutal-ink)]" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="78" cy="18" r="6" className="fill-[var(--warn)] stroke-[var(--brutal-ink)]" strokeWidth="3" />
     </svg>
+  );
+}
+
+function YieldCardSkeleton() {
+  return (
+    <div className="w-full border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[6px_6px_0_var(--brutal-ink)] p-6 animate-pulse text-center">
+      <div className="h-3 w-28 bg-[var(--brutal-ink)] mx-auto mb-5 opacity-20" />
+      <div className="h-12 w-36 bg-[var(--brutal-ink)] mx-auto mb-3 opacity-20" />
+      <div className="h-3 w-24 bg-[var(--brutal-ink)] mx-auto mb-5 opacity-20" />
+      <div className="h-px bg-[var(--brutal-ink)] mb-4 opacity-20" />
+      <div className="flex justify-center gap-8">
+        <div className="h-6 w-16 bg-[var(--brutal-ink)] opacity-20" />
+        <div className="h-6 w-16 bg-[var(--brutal-ink)] opacity-20" />
+        <div className="h-6 w-16 bg-[var(--brutal-ink)] opacity-20" />
+      </div>
+    </div>
+  );
+}
+
+function CylinderCard({ p, t }: { p: any; t: (key: string, params?: Record<string, string | number>) => string }) {
+  const init = p.name.charAt(0).toUpperCase();
+  const apyFormatted = (typeof p.apy === "number" ? p.apy : parseFloat(p.apy)).toFixed(1);
+  const tvlFormatted = p.tvl >= 1_000_000_000 ? `$${(p.tvl / 1_000_000_000).toFixed(1)}B` : p.tvl >= 1_000_000 ? `$${(p.tvl / 1_000_000).toFixed(1)}M` : p.tvl >= 1_000 ? `$${(p.tvl / 1_000).toFixed(1)}K` : `$${p.tvl}`;
+  const riskLabel = p.riskScore <= 2 ? "Low" : p.riskScore <= 4 ? "Mid" : "High";
+  const riskColor = p.riskScore <= 2 ? "#00e060" : p.riskScore <= 4 ? "#f6c85f" : "#e8180a";
+  const defiSlug = p.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+  return (
+    <div className="prof-card-can">
+      <div className="prof-header-can">
+        <div className="prof-header-num-can">{apyFormatted.split(".")[0]}</div>
+        <div className="prof-avatar-can">{init}</div>
+        <div className="prof-badge-can" style={{ background: riskColor, color: "var(--brutal-ink)" }}>
+          L{p.riskScore} · {riskLabel}
+        </div>
+      </div>
+      <div className="prof-body-can">
+        <p className="prof-handle-can">{p.name.toUpperCase().replace(" PROTOCOL", "").replace(" FINANCE", "")}::YIELD</p>
+        <h3 className="prof-name-can">{p.name}</h3>
+        <p className="prof-bio-can">{t("landing.cylinderDesc", { chain: p.chain })}</p>
+      </div>
+      <div className="prof-stats-can">
+        <div className="pstat-can">
+          <span className="psv-can">{apyFormatted}%</span>
+          <span className="psl-can">APY</span>
+        </div>
+        <div className="pstat-can">
+          <span className="psv-can">{tvlFormatted}</span>
+          <span className="psl-can">TVL</span>
+        </div>
+        <div className="pstat-can">
+          <span className="psv-can">{p.source === "defillama" ? t("landing.cylinderLive") : "SIM"}</span>
+          <span className="psl-can">{t("landing.cylinderSource")}</span>
+        </div>
+      </div>
+      <a className="prof-btn-can" href={`https://defillama.com/protocol/${defiSlug}`} target="_blank" rel="noopener noreferrer">
+        {t("landing.cylinderSupply", { name: p.name.split(" ")[0] })}
+      </a>
+    </div>
   );
 }

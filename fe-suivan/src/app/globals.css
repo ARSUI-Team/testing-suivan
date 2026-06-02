@@ -27,6 +27,7 @@
   --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
   --font-space: 'Space Grotesk', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-bebas: 'Bebas Neue', system-ui, sans-serif;
   --sui-glow: rgba(56, 189, 248, 0.35);
   --sui-gradient: linear-gradient(135deg, #38bdf8, #818cf8, #a78bfa);
   --walrus-teal: #14b8a6;
@@ -298,6 +299,14 @@ body::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   will-change: transform, opacity;
 }
 
+/* Initial state for GSAP animated elements — prevent FOUC */
+.suivan-pop, .suivan-feature, .suivan-card, .suivan-reveal, .suivan-trust {
+  opacity: 0;
+}
+.suivan-pop.gsap-done, .suivan-feature.gsap-done, .suivan-card.gsap-done, .suivan-reveal.gsap-done, .suivan-trust.gsap-done {
+  opacity: 1;
+}
+
 .glass {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
@@ -442,6 +451,12 @@ body::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 .suivan-brutal .brutal-btn-outline:active { background: var(--ink); color: var(--bg); transform: translate(0px, 0px); box-shadow: 4px 4px 0 var(--ink); }
 .suivan-brutal .brutal-badge { background: var(--yellow); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); font-family: 'Bebas Neue', system-ui, sans-serif; font-size: 0.65rem; letter-spacing: 0.18em; padding: 4px 12px; display: inline-block; }
 .stripe-bg { background: repeating-linear-gradient(45deg, transparent 0px, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 12px); }
+
+.brutal-card {
+  border: 4px solid var(--ink);
+  background: var(--brutal-bg);
+  box-shadow: 6px 6px 0 var(--ink);
+}
 
 .prof-card { background: #f5f0eb; border: 5px solid #0a0a0a; box-shadow: 10px 10px 0 #0a0a0a; overflow: hidden; transition: transform 0.2s; }
 .prof-card:hover { transform: translate(-2px, -2px); }

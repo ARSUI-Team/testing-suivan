@@ -3,7 +3,8 @@
 import { useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE } from "@/config/sui";
+import { useState } from "react";
+import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID } from "@/config/sui";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -15,8 +16,13 @@ export interface SuiPoolInfo {
   cycle: number;
   started: boolean;
   active: boolean;
+  isEnded: boolean;
   totalFunds: number;
   yield: number;
+  collateralYield: number;
+  gachaWinner: string | null;
+  gachaPrize: number;
+  walrusMetadataBlobId: string;
 }
 
 export interface FormattedPool {
@@ -31,32 +37,56 @@ export interface FormattedPool {
   status: "open" | "active" | "completed";
   apy: number;
   currentCycle: number;
+  walrusMetadataBlobId: string;
 }
 
 export interface ParticipantInfo {
   addr: string;
   collateralAmount: number;
-  totalDeposited: number;
   missedPayments: number;
   hasReceivedPayout: boolean;
   isActive: boolean;
-  joinedAt: number;
+  joinedAtMs: number;
+  lastDepositCycle: number;
+  depositsThisCycle: boolean;
+  proportionalYieldEarned: number;
+  leaderboardScore: number;
+  gachaClaimed: boolean;
 }
 
 // ─── Helper ────────────────────────────────────────────────────────
 
 function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
   try {
+    const id = String((fields?.id as { fields?: { id?: { fields?: { id?: string } } } })?.fields?.id?.fields?.id || fields?.id || "");
+    const config = (fields?.config as { fields?: Record<string, unknown> })?.fields;
+    const depositAmount = Number((config?.deposit_amount as string) || 0) / 1_000_000;
+    const maxParticipants = Number((config?.max_participants as string) || 0);
+    const participantList = (fields?.participant_list as { fields?: { value?: unknown[] } })?.fields?.value ?? [];
+    const poolFundsBalance = Number(((fields?.pool_funds_balance as { fields?: { value?: string } })?.fields?.value) || 0) / 1_000_000;
+    const yieldBalance = Number(((fields?.yield_balance as { fields?: { value?: string } })?.fields?.value) || 0) / 1_000_000;
+    const collateralYieldBalance = Number(((fields?.collateral_yield_balance as { fields?: { value?: string } })?.fields?.value) || 0) / 1_000_000;
+
+    // Read gacha winner from PoolInfo event or pool fields
+    const gachaWinner = fields?.gacha_winner
+      ? (fields.gacha_winner as { fields?: { vec?: string[] } })?.fields?.vec?.[0] ?? null
+      : null;
+
     return {
-      id: String(fields.id || ""),
-      depositAmount: Number(fields.deposit_amount || 0) / 1_000_000,
-      maxParticipants: Number(fields.max_participants || 0),
-      currentParticipants: Number(fields.current_participants || 0),
-      cycle: Number(fields.cycle || 0),
-      started: Boolean(fields.started),
-      active: Boolean(fields.active),
-      totalFunds: Number(fields.total_funds || 0) / 1_000_000,
-      yield: Number(fields.yield_amount || 0) / 1_000_000,
+      id,
+      depositAmount,
+      maxParticipants,
+      currentParticipants: participantList.length,
+      cycle: Number((fields?.current_cycle as string) || 0),
+      started: Boolean(fields?.is_started),
+      active: Boolean(fields?.is_active),
+      isEnded: Boolean(fields?.is_ended),
+      totalFunds: poolFundsBalance,
+      yield: yieldBalance,
+      collateralYield: collateralYieldBalance,
+      gachaWinner,
+      gachaPrize: yieldBalance, // cumulative yield becomes gacha pool
+      walrusMetadataBlobId: String((fields?.walrus_metadata_blob_id as string) || ""),
     };
   } catch {
     return null;
@@ -73,15 +103,51 @@ export function useAllPools() {
     queryFn: async () => {
       if (!SUI_FACTORY_ID) return [];
 
-      const obj = await client.getObject({
+      // Read pool_count from factory (Table-backed, scalable)
+      const factoryObj = await client.getObject({
         id: SUI_FACTORY_ID,
         options: { showContent: true },
       });
 
-      const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
-      const raw = fields?.all_pools as { fields?: { value: { fields?: unknown }[] } } | undefined;
-      const poolIds = raw?.fields?.value?.map((v: unknown) => String((v as { fields?: { value?: string } }).fields?.value)) ?? [];
-      return poolIds as string[];
+      const factoryFields = (factoryObj.data?.content as { fields?: Record<string, unknown> })?.fields;
+      const poolCount = Number((factoryFields?.pool_count as string) || "0");
+      if (poolCount === 0) return [];
+
+      // Fetch all pool IDs from the all_pools Table via dynamic fields
+      const dynamicFields = await client.getDynamicFields({
+        parentId: SUI_FACTORY_ID,
+        limit: poolCount,
+      });
+
+      // Filter for all_pools Table entries (type contains "all_pools")
+      const poolFieldIds = dynamicFields.data
+        .filter((f) => f.name.type?.includes("all_pools"))
+        .map((f) => f.name.value as string)
+        .filter(Boolean);
+
+      // If dynamic field filtering works, return the IDs
+      if (poolFieldIds.length > 0) {
+        return poolFieldIds;
+      }
+
+      // Fallback: fetch each pool by index from the Table
+      const poolIds: string[] = [];
+      for (let i = 0; i < poolCount; i++) {
+        try {
+          const entry = await client.getDynamicFieldObject({
+            parentId: SUI_FACTORY_ID,
+            name: {
+              type: "u64",
+              value: String(i),
+            },
+          });
+          const value = (entry.data?.content as { fields?: { value?: string } })?.fields?.value;
+          if (value) poolIds.push(value);
+        } catch {
+          // skip missing entries
+        }
+      }
+      return poolIds;
     },
     enabled: !!SUI_FACTORY_ID,
   });
@@ -172,6 +238,7 @@ function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
     status,
     apy: Math.round(apy * 10) / 10,
     currentCycle: pool.cycle,
+    walrusMetadataBlobId: pool.walrusMetadataBlobId,
   };
 }
 
@@ -186,7 +253,11 @@ export function useRequiredCollateral(poolAddress: string | undefined) {
         options: { showContent: true },
       });
       const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
-      return Number(fields?.collateral_amount || 0) / 1_000_000;
+      const config = (fields?.config as { fields?: Record<string, unknown> })?.fields;
+      if (!config) return 0;
+      const depositAmount = Number(config.deposit_amount as string || "0");
+      const collateralMultiplier = Number(config.collateral_multiplier as string || "0");
+      return (depositAmount * collateralMultiplier / 100) / 1_000_000;
     },
     enabled: !!poolAddress,
   });
@@ -215,11 +286,15 @@ export function useParticipantInfo(poolAddress: string | undefined, participantA
       return {
         addr: participantAddress,
         collateralAmount: Number(fields.collateral_amount || 0) / 1_000_000,
-        totalDeposited: Number(fields.total_deposited || 0) / 1_000_000,
         missedPayments: Number(fields.missed_payments || 0),
         hasReceivedPayout: Boolean(fields.has_received_payout),
         isActive: Boolean(fields.is_active),
-        joinedAt: Number(fields.joined_at || 0),
+        joinedAtMs: Number(fields.joined_at_ms || 0),
+        lastDepositCycle: Number(fields.last_deposit_cycle || 0),
+        depositsThisCycle: Boolean(fields.deposits_this_cycle),
+        proportionalYieldEarned: Number(fields.proportional_yield_earned || 0) / 1_000_000,
+        leaderboardScore: Number(fields.leaderboard_score || 0),
+        gachaClaimed: Boolean(fields.gacha_claimed),
       } as ParticipantInfo;
     },
     enabled: !!poolAddress && !!participantAddress,
@@ -240,7 +315,7 @@ export function useParticipantList(poolAddress: string | undefined) {
         options: { showContent: true },
       });
       const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
-      const raw = fields?.participants as { fields?: { value: { fields?: unknown }[] } } | undefined;
+      const raw = fields?.participant_list as { fields?: { value: { fields?: unknown }[] } } | undefined;
       const addresses = raw?.fields?.value?.map((v: unknown) => String((v as { fields?: { value?: string } }).fields?.value)) ?? [];
       return { addresses, count: addresses.length };
     },
@@ -267,7 +342,7 @@ export function useHasDepositedThisCycle(poolAddress: string | undefined, userAd
           name: { type: "address", value: userAddress },
         });
         const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields?.value as Record<string, unknown>;
-        return Boolean(fields?.deposited_this_cycle);
+        return Boolean(fields?.deposits_this_cycle);
       } catch {
         return false;
       }
@@ -282,17 +357,19 @@ export function useCurrentYield(poolAddress: string | undefined) {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["suivan", "currentYield", poolAddress],
     queryFn: async () => {
-      if (!poolAddress) return 0;
+      if (!poolAddress) return { cumulative: 0, collateral: 0, total: 0 };
       const obj = await client.getObject({
         id: poolAddress,
         options: { showContent: true },
       });
       const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
-      return Number(fields?.current_yield || 0) / 1_000_000;
+      const cumulative = Number(((fields?.yield_balance as { fields?: { value?: string } })?.fields?.value) || "0") / 1_000_000;
+      const collateral = Number(((fields?.collateral_yield_balance as { fields?: { value?: string } })?.fields?.value) || "0") / 1_000_000;
+      return { cumulative, collateral, total: cumulative + collateral };
     },
     enabled: !!poolAddress,
   });
-  return { currentYield: data ?? 0, isLoading, refetch };
+  return { currentYield: data ?? { cumulative: 0, collateral: 0, total: 0 }, isLoading, refetch };
 }
 
 export function useUSDCBalance(address: string | undefined) {
@@ -310,6 +387,27 @@ export function useUSDCBalance(address: string | undefined) {
         total += Number(coin.balance);
       }
       return total / 1_000_000;
+    },
+    enabled: !!address,
+  });
+  return { balance: data ?? 0, isLoading };
+}
+
+export function useSUIBalance(address: string | undefined) {
+  const client = useSuiClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["suivan", "suiBalance", address],
+    queryFn: async () => {
+      if (!address) return 0;
+      const coins = await client.getCoins({
+        owner: address,
+        coinType: SUI_SUI_TYPE,
+      });
+      let total = 0;
+      for (const coin of coins.data) {
+        total += Number(coin.balance);
+      }
+      return total / 1_000_000_000;
     },
     enabled: !!address,
   });
@@ -393,11 +491,22 @@ export function useJoinPool() {
 export function useCreatePool() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [txResponse, setTxResponse] = useState<any>(null);
 
-  const createPool = (depositAmount: number, maxParticipants: number, cycleDurationDays: number, usdcCoinId: string) => {
+  const COLLATERAL_MULTIPLIER = 125;
+
+  const createPool = (
+    depositAmount: number,
+    maxParticipants: number,
+    cycleDurationDays: number,
+    usdcCoinId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess?: (response: any) => void,
+  ) => {
     const tx = new Transaction();
 
-    const requiredCollateral = Math.ceil(depositAmount * (maxParticipants - 1) * 1.25);
+    const requiredCollateral = Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100);
     const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
 
     tx.moveCall({
@@ -408,14 +517,16 @@ export function useCreatePool() {
         tx.pure.u64(depositAmount * 1_000_000),
         tx.pure.u64(maxParticipants),
         tx.pure.u64(cycleDurationDays * 24 * 60 * 60 * 1000),
-        tx.pure.u64(125),
+        tx.pure.u64(COLLATERAL_MULTIPLIER),
       ],
       typeArguments: [SUI_USDC_TYPE],
     });
 
     signAndExecute({ transaction: tx }, {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        setTxResponse(response);
         queryClient.invalidateQueries({ queryKey: ["suivan"] });
+        onSuccess?.(response);
       },
     });
   };
@@ -423,6 +534,7 @@ export function useCreatePool() {
   return {
     createPool,
     hash: txData?.digest,
+    txResponse,
     isPending,
     isSuccess: !!txData,
     error,
@@ -461,4 +573,103 @@ export function useMakeDeposit() {
     isSuccess: !!txData,
     error,
   };
+}
+
+export function useLinkPoolMetadata() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const linkMetadata = (poolId: string, blobId: string, poolAdminCapId: string) => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::walrus_store::link_pool_metadata`,
+      arguments: [
+        tx.object(poolId),
+        tx.object(poolAdminCapId),
+        tx.pure.string(blobId),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    linkMetadata,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+export function useClaimFinal() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const claimFinal = (poolId: string) => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::claim_final`,
+      arguments: [tx.object(poolId)],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    claimFinal,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+// ─── Faucet ────────────────────────────────────────────────────────
+
+export function useClaimUSDC() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const claimUSDC = (faucetId: string) => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::faucet::claim_test_usdc`,
+      arguments: [tx.object(faucetId), tx.object(SUI_CLOCK_ID)],
+    });
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return { claimUSDC, hash: txData?.digest, isPending, isSuccess: !!txData, error };
+}
+
+export function useLeaderboardScore(poolAddress: string | undefined, userAddress: string | undefined) {
+  const client = useSuiClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["suivan", "leaderboard", poolAddress, userAddress],
+    queryFn: async () => {
+      if (!poolAddress || !userAddress) return 0;
+      const obj = await client.getDynamicFieldObject({
+        parentId: poolAddress,
+        name: { type: "address", value: userAddress },
+      });
+      const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields?.value as Record<string, unknown>;
+      return Number(fields?.leaderboard_score || 0);
+    },
+    enabled: !!poolAddress && !!userAddress,
+  });
+  return { leaderboardScore: data ?? 0, isLoading };
 }

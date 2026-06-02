@@ -7,9 +7,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SharePool from "@/components/SharePool";
 import SuiFeeProfile from "@/components/SuiFeeProfile";
-import PoolAnalyticsChart from "@/components/PoolAnalyticsChart";
+import PoolAnalyticsChart, { type AnalyticsDataPoint } from "@/components/PoolAnalyticsChart";
 import { SuccessCelebration } from "@/components/Confetti";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import ConnectSuiWallet from "@/components/ConnectSuiWallet";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
@@ -24,7 +24,10 @@ import {
   useCurrentYield,
   useUSDCBalance,
   useUserUSDCcoins,
+  useLinkPoolMetadata,
 } from "@/hooks/useSuiContracts";
+import { SUI_PACKAGE_ID } from "@/config/sui";
+import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 
 export default function PoolDetailPage() {
   const params = useParams();
@@ -56,20 +59,90 @@ export default function PoolDetailPage() {
 
   // Live data
   const { currentYield } = useCurrentYield(poolAddress);
+  const { cumulative: cumYield, collateral: collYield, total: totalYield } = currentYield;
   const { balance: usdcBalance } = useUSDCBalance(address);
   const { coins: usdcCoins } = useUserUSDCcoins(address);
   const defaultCoinId = usdcCoins.length > 0 ? usdcCoins[0].coinObjectId : "";
 
   // Live APY from contract
   const liveApy = poolInfo && poolInfo.totalFunds > 0
-    ? Math.round(((currentYield / poolInfo.totalFunds) * 100 * 12) * 10) / 10
+    ? Math.round(((totalYield / poolInfo.totalFunds) * 100 * 12) * 10) / 10
     : 8.5;
+
+  // Walrus metadata
+  const { metadata: walrusMeta, refetch: refetchWalrusMeta } = usePoolWalrusMetadata(poolInfo?.walrusMetadataBlobId);
 
   // Actions
   const { joinPool, isPending: joining, isSuccess: joinSuccess, error: joinError } = useJoinPool();
   const { makeDeposit, isPending: depositing, isSuccess: depositSuccess, error: depositError } = useMakeDeposit();
+  const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+
+  // Metadata editor state
+  const [showMetaEditor, setShowMetaEditor] = useState(false);
+  const [metaName, setMetaName] = useState(walrusMeta?.name || "");
+  const [metaDesc, setMetaDesc] = useState(walrusMeta?.description || "");
+  const [adminCapId, setAdminCapId] = useState("");
+  const [publishingMeta, setPublishingMeta] = useState(false);
+
+  // Auto-fill admin cap from owned objects
+  const client = useSuiClient();
+  useEffect(() => {
+    if (!account?.address || adminCapId) return;
+    const findAdminCap = async () => {
+      try {
+        const objs = await client.getOwnedObjects({
+          owner: account.address,
+          filter: { StructType: `${SUI_PACKAGE_ID}::arisan_pool::PoolAdminCap` },
+          options: { showContent: true },
+        });
+        const cap = objs.data?.[0];
+        if (cap?.data?.objectId) {
+          setAdminCapId(cap.data.objectId);
+        }
+      } catch { /* ignore */ }
+    };
+    findAdminCap();
+  }, [account?.address, adminCapId, client]);
+
+  // Update form when walrus metadata loads
+  useEffect(() => {
+    if (walrusMeta) {
+      setMetaName(walrusMeta.name || "");
+      setMetaDesc(walrusMeta.description || "");
+    }
+  }, [walrusMeta]);
+
+  // Handle link success
+  useEffect(() => {
+    if (linkSuccess) {
+      setShowMetaEditor(false);
+      refetchPool();
+      refetchWalrusMeta();
+      successToast("Metadata Updated", "Pool metadata has been linked via Walrus.");
+    }
+  }, [linkSuccess, refetchPool, refetchWalrusMeta, successToast]);
+
+  const handleSaveMetadata = async () => {
+    if (!metaName.trim()) {
+      errorToast("Validation", "Pool name is required");
+      return;
+    }
+    setPublishingMeta(true);
+    try {
+      const blobId = await publishPoolMetadata(metaName, metaDesc, account?.address || "", "");
+      if (!blobId) {
+        errorToast("Walrus Error", "Failed to publish metadata to Walrus");
+        return;
+      }
+      linkMetadata(poolAddress, blobId, adminCapId);
+    } catch {
+      errorToast("Error", "Failed to save metadata");
+    } finally {
+      setPublishingMeta(false);
+    }
+  };
 
   // Format pool info
   const depositAmount = poolInfo?.depositAmount || 0;
@@ -85,11 +158,13 @@ export default function PoolDetailPage() {
   if (isStarted && isActive) status = "active";
   else if (isStarted && !isActive) status = "completed";
 
-  // Pool name based on deposit
-  let poolName = "Custom Pool";
-  if (depositAmount === 10) poolName = "Small Pool";
-  else if (depositAmount === 50) poolName = "Medium Pool";
-  else if (depositAmount === 100) poolName = "Large Pool";
+  // Pool name from Walrus metadata or fallback
+  let poolName = walrusMeta?.name || "Custom Pool";
+  if (!walrusMeta) {
+    if (depositAmount === 10) poolName = "Small Pool";
+    else if (depositAmount === 50) poolName = "Medium Pool";
+    else if (depositAmount === 100) poolName = "Large Pool";
+  }
 
   // User is participant
   const isParticipant = participantInfo?.isActive || false;
@@ -138,8 +213,10 @@ export default function PoolDetailPage() {
     setDepositCoinId(defaultCoinId);
   }
 
+  const COLLATERAL_MULTIPLIER = 125;
+
   const handleJoinPool = () => {
-    joinPool(poolAddress, Math.ceil(depositAmount * (maxParticipants - 1) * 1.25), joinCoinId);
+    joinPool(poolAddress, Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100), joinCoinId);
   };
 
   const handleMakeDeposit = () => {
@@ -193,7 +270,7 @@ export default function PoolDetailPage() {
                 </span>
               </div>
               <div className="protocol-font inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-black text-[var(--muted)] shadow-[4px_4px_0_var(--border)]">
-                {poolAddress}
+                <span className="max-w-[200px] truncate md:max-w-none">{poolAddress}</span>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-9 4h12M7 8h10" />
                 </svg>
@@ -259,30 +336,63 @@ export default function PoolDetailPage() {
                 </div>
               </div>
 
+              {/* Walrus Metadata Description */}
+              {walrusMeta?.description && (
+                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
+                  <h2 className="mb-2 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">About</h2>
+                  <p className="font-semibold leading-relaxed text-[var(--muted)]">{walrusMeta.description}</p>
+                  {walrusMeta.creator && (
+                    <p className="mt-3 text-xs font-bold text-[var(--muted)]">
+                      Created by {walrusMeta.creator.slice(0, 6)}...{walrusMeta.creator.slice(-4)}
+                    </p>
+                  )}
+                </div>
+              )}
+              {poolInfo?.walrusMetadataBlobId && (
+                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-[var(--success)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="protocol-font text-xs font-black text-[var(--muted)]">Walrus Metadata Linked</p>
+                  </div>
+                  <p className="mt-1 text-[10px] font-mono text-[var(--muted)] break-all">{poolInfo.walrusMetadataBlobId}</p>
+                </div>
+              )}
+
               {/* Yield Info */}
               <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.yieldSection")}</h2>
                   <SuiFeeProfile transactionType="join" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--purple-soft)] p-4">
-                    <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.yield")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{currentYield.toFixed(2)} USDC</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--purple-soft)] p-4">
+                    <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Cumulative Yield (Gacha)</p>
+                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{cumYield.toFixed(2)} USDC</p>
+                  </div>
+                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
+                    <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Collateral Yield (Proportional)</p>
+                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{collYield.toFixed(2)} USDC</p>
                   </div>
                   <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.estApy")}</p>
                     <p className="protocol-font text-xl font-black text-[var(--foreground)]">{liveApy}%</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.collateral")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * (maxParticipants - 1) * 1.25)} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                   </div>
                 </div>
               </div>
 
               {/* Pool Analytics Chart */}
-              <PoolAnalyticsChart title={`${poolName} Performance`} poolAddress={poolAddress} />
+              <PoolAnalyticsChart
+                title={`${poolName} Performance`}
+                poolAddress={poolAddress}
+                currentValue={liveApy}
+                metricLabel="APY"
+              />
 
               {/* Participants List */}
               <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
@@ -305,18 +415,34 @@ export default function PoolDetailPage() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="protocol-font flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--accent)] font-black text-[var(--foreground)]">
+                          <div className={`protocol-font flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--border)] font-black text-[var(--foreground)] ${
+                            poolInfo?.gachaWinner?.toLowerCase() === addr.toLowerCase()
+                              ? "bg-[var(--yellow)] text-black"
+                              : "bg-[var(--accent)]"
+                          }`}>
                             {index + 1}
                           </div>
                           <div>
                             <p className="protocol-font text-sm font-bold text-[var(--foreground)]">
                               {addr.slice(0, 6)}...{addr.slice(-4)}
                             </p>
-                            {addr.toLowerCase() === address?.toLowerCase() && (
-                              <span className="protocol-font text-xs font-black text-[var(--success-deep)]">You</span>
-                            )}
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {poolInfo?.gachaWinner?.toLowerCase() === addr.toLowerCase() && (
+                                <span className="protocol-font text-xs font-black text-[var(--yellow)]">🏆 Gacha Winner</span>
+                              )}
+                              {addr.toLowerCase() === address?.toLowerCase() && (
+                                <span className="protocol-font text-xs font-black text-[var(--success-deep)]">You</span>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        {poolInfo?.isEnded && poolInfo?.gachaWinner?.toLowerCase() === addr.toLowerCase() && (
+                          <div className="text-right">
+                            <p className="protocol-font text-xs font-black text-[var(--yellow)]">
+                              {(poolInfo?.gachaPrize ?? 0).toFixed(2)} USDC
+                            </p>
+                          </div>
+                        )}
 
                       </div>
                     ))}
@@ -353,7 +479,7 @@ export default function PoolDetailPage() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="protocol-font text-xs font-black text-[var(--muted)]">{t("detail.totalDeposited")}</span>
-                          <span className="protocol-font font-black">{participantInfo?.totalDeposited.toFixed(2)} USDC</span>
+                          <span className="protocol-font font-black">{participantInfo?.collateralAmount.toFixed(2)} USDC</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="protocol-font text-xs font-black text-[var(--muted)]">{t("detail.receivedPayout")}</span>
@@ -380,6 +506,22 @@ export default function PoolDetailPage() {
                           <p className="mb-3 text-sm font-semibold text-[var(--muted)]">
                             {t("detail.collateralReturned")}
                           </p>
+                          {(participantInfo?.proportionalYieldEarned ?? 0) > 0 && (
+                            <p className="mb-3 text-sm font-bold text-[var(--success-deep)]">
+                              + Yield Earned: {participantInfo?.proportionalYieldEarned.toFixed(2)} USDC
+                            </p>
+                          )}
+                          {participantInfo?.gachaClaimed && (
+                            <p className="mb-3 text-sm font-bold text-[var(--yellow)]">
+                              🏆 You won the Gacha prize!
+                            </p>
+                          )}
+                          <button
+                            onClick={() => {/* claim_final tx will go here */}}
+                            className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                          >
+                            Claim Collateral + Yield
+                          </button>
                         </div>
                       )}
                     </div>
@@ -413,6 +555,95 @@ export default function PoolDetailPage() {
                       <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{usdcCoins.length} coin{usdcCoins.length > 1 ? 's' : ''} available</p>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Pool Metadata Editor */}
+              {isConnected && (
+                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Pool Metadata</h2>
+                    {walrusMeta && <span className="protocol-font text-[10px] font-black text-[var(--success)]">✓ Walrus</span>}
+                  </div>
+
+                  {!showMetaEditor ? (
+                    <div className="space-y-3">
+                      {walrusMeta ? (
+                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-3">
+                          <p className="protocol-font text-xs font-black">"{walrusMeta.name}"</p>
+                          {walrusMeta.description && (
+                            <p className="mt-1 text-xs text-[var(--muted)] line-clamp-2">{walrusMeta.description}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-3">
+                          <p className="text-xs text-[var(--muted)]">No Walrus metadata linked. Add a name and description.</p>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setShowMetaEditor(true)}
+                        className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                      >
+                        {walrusMeta ? "Edit Metadata" : "Add Metadata"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="protocol-font mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">Pool Name</label>
+                        <input
+                          type="text"
+                          maxLength={64}
+                          value={metaName}
+                          onChange={(e) => setMetaName(e.target.value)}
+                          placeholder="My Awesome Pool"
+                          className="min-h-[44px] w-full rounded-xl border-2 border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="protocol-font mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">Description</label>
+                        <textarea
+                          maxLength={500}
+                          value={metaDesc}
+                          onChange={(e) => setMetaDesc(e.target.value)}
+                          placeholder="Brief description..."
+                          rows={3}
+                          className="min-h-[44px] w-full rounded-xl border-2 border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none"
+                        />
+                      </div>
+                      {!adminCapId && (
+                        <div>
+                          <label className="protocol-font mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">PoolAdminCap ID</label>
+                          <input
+                            type="text"
+                            value={adminCapId}
+                            onChange={(e) => setAdminCapId(e.target.value)}
+                            placeholder="0x... (required to link metadata)"
+                            className="min-h-[44px] w-full rounded-xl border-2 border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none"
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowMetaEditor(false)}
+                          className="protocol-font flex-1 rounded-xl border-2 border-[var(--border)] bg-[var(--background)] py-3 font-black text-[var(--foreground)] transition hover:-translate-y-0.5"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveMetadata}
+                          disabled={publishingMeta || linkingMeta}
+                          className={`protocol-font flex-1 rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                            publishingMeta || linkingMeta
+                              ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                              : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {publishingMeta ? "Publishing..." : linkingMeta ? "Linking..." : "Save & Link"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -451,7 +682,7 @@ export default function PoolDetailPage() {
 
               <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("pools.collateral")}</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * (maxParticipants - 1) * 1.25)} USDC</p>
+                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Returned at the end of the cycle with yield bonus when available</p>
               </div>
 

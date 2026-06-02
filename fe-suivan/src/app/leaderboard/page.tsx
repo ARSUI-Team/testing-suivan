@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useLeaderboardData } from "@/hooks/useLeaderboardData";
 import {
   Trophy,
   Medal,
@@ -84,29 +85,11 @@ const POINTS_BREAKDOWN = [
   { range: "After 20th (Late)", points: 10, color: "var(--danger-soft)" },
 ];
 
-const MOCK_PARTICIPANTS: Participant[] = [
-  { rank: 1, address: "0x7a3b…c9d2", tier: "diamond", points: 485, onTimeRate: 100, totalYield: 3240, monthlyYield: 2100, collateralYield: 1140, lastPaymentDay: 3, activePools: 3 },
-  { rank: 2, address: "0x1e4f…b8a7", tier: "diamond", points: 460, onTimeRate: 100, totalYield: 2980, monthlyYield: 1950, collateralYield: 1030, lastPaymentDay: 5, activePools: 2 },
-  { rank: 3, address: "0xf2c8…3d6e", tier: "diamond", points: 425, onTimeRate: 100, totalYield: 2710, monthlyYield: 1800, collateralYield: 910, lastPaymentDay: 7, activePools: 2 },
-  { rank: 4, address: "0x9b5d…1f4a", tier: "platinum", points: 380, onTimeRate: 100, totalYield: 2450, monthlyYield: 1650, collateralYield: 800, lastPaymentDay: 8, activePools: 3 },
-  { rank: 5, address: "0x4c7e…2a9f", tier: "platinum", points: 355, onTimeRate: 100, totalYield: 2190, monthlyYield: 1500, collateralYield: 690, lastPaymentDay: 10, activePools: 2 },
-  { rank: 6, address: "0xd8f1…5b0c", tier: "platinum", points: 320, onTimeRate: 100, totalYield: 1930, monthlyYield: 1350, collateralYield: 580, lastPaymentDay: 12, activePools: 1 },
-  { rank: 7, address: "0x3a6c…7e8d", tier: "gold", points: 280, onTimeRate: 100, totalYield: 1670, monthlyYield: 1200, collateralYield: 470, lastPaymentDay: 14, activePools: 2 },
-  { rank: 8, address: "0x6b2d…4f9e", tier: "gold", points: 250, onTimeRate: 100, totalYield: 1410, monthlyYield: 1050, collateralYield: 360, lastPaymentDay: 16, activePools: 1 },
-  { rank: 9, address: "0xe7f8…1c3b", tier: "gold", points: 215, onTimeRate: 100, totalYield: 1150, monthlyYield: 900, collateralYield: 250, lastPaymentDay: 18, activePools: 1 },
-  { rank: 10, address: "0x5c9a…3d2e", tier: "silver", points: 180, onTimeRate: 100, totalYield: 890, monthlyYield: 750, collateralYield: 140, lastPaymentDay: 19, activePools: 1 },
-  { rank: 11, address: "0xab1c…8f4d", tier: "silver", points: 150, onTimeRate: 86, totalYield: 640, monthlyYield: 550, collateralYield: 90, lastPaymentDay: 20, activePools: 1 },
-  { rank: 12, address: "0x2d3e…6a7b", tier: "silver", points: 115, onTimeRate: 71, totalYield: 410, monthlyYield: 370, collateralYield: 40, lastPaymentDay: 22, activePools: 1 },
-  { rank: 13, address: "0x8f4a…1b2c", tier: "bronze", points: 85, onTimeRate: 57, totalYield: 230, monthlyYield: 210, collateralYield: 20, lastPaymentDay: 24, activePools: 1 },
-  { rank: 14, address: "0x3e5f…7c8d", tier: "bronze", points: 50, onTimeRate: 43, totalYield: 120, monthlyYield: 110, collateralYield: 10, lastPaymentDay: 26, activePools: 1 },
-  { rank: 15, address: "0x1a2b…9c0d", tier: "bronze", points: 20, onTimeRate: 29, totalYield: 45, monthlyYield: 40, collateralYield: 5, lastPaymentDay: 28, activePools: 0 },
-];
-
 const CURRENT_CYCLE = {
   number: 3,
   deadline: 20,
   drawing: 25,
-  participants: 15,
+  participants: 0,
   monthlyContribution: 100,
   totalPot: 1500,
   collateralPool: 45000,
@@ -117,6 +100,7 @@ export default function LeaderboardPage() {
   const account = useCurrentAccount();
   const isConnected = !!account;
   const [showRules, setShowRules] = useState(false);
+  const { participants, isLoading } = useLeaderboardData();
 
   const tierInfo = useMemo(() => {
     const tiers = (Object.keys(TIER_CONFIG) as Tier[]).map((key) => ({
@@ -129,18 +113,35 @@ export default function LeaderboardPage() {
   }, [t]);
 
   const userRank = useMemo(() => {
-    if (!account) return null;
-    const idx = Math.floor(Math.random() * 5) + 1;
-    return MOCK_PARTICIPANTS[idx];
-  }, [account]);
+    if (!account || participants.length === 0) return null;
+    const fullAddr = account.address;
+    return participants.find((p) => p.address === `${fullAddr.slice(0, 6)}…${fullAddr.slice(-4)}`) ?? null;
+  }, [account, participants]);
 
   const stats = useMemo(() => {
-    const totalPools = [...new Set(MOCK_PARTICIPANTS.map((p) => p.activePools))].reduce((a, b) => a + b, 0) + 3;
-    const totalMembers = MOCK_PARTICIPANTS.length;
-    const totalYieldDistributed = MOCK_PARTICIPANTS.reduce((s, p) => s + p.totalYield, 0);
+    const totalPools = participants.reduce((s, p) => s + p.activePools, 0);
+    const totalMembers = participants.length || 15;
+    const totalYieldDistributed = participants.reduce((s, p) => s + p.totalYield, 0);
     const avgApy = 12.4;
     return { totalPools, totalMembers, totalYieldDistributed, avgApy };
-  }, []);
+  }, [participants]);
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-[var(--brutal-bg)] text-[var(--brutal-ink)]">
+        <Header />
+        <section className="px-5 pt-36 pb-20 md:px-10 lg:px-12">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-center justify-center py-20">
+              <div className="h-12 w-12 animate-spin border-2 border-[var(--brutal-ink)] border-b-[var(--brutal-muted)]" />
+              <span className="protocol-font ml-4 text-sm font-black text-[var(--brutal-muted)]">Loading Leaderboard</span>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[var(--brutal-bg)] text-[var(--brutal-ink)]">
@@ -337,25 +338,43 @@ export default function LeaderboardPage() {
                 <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.yield")}</span>
                 <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.pools")}</span>
               </div>
-              {MOCK_PARTICIPANTS.map((p, i) => {
+              {participants.map((p) => {
                 const TierIcon = TIER_CONFIG[p.tier].icon;
                 return (
                   <div
                     key={p.address}
-                    className="grid items-center gap-3 border-b-[3px] border-[var(--brutal-ink)] p-4 last:border-b-0 md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px]"
+                    className="border-b-[3px] border-[var(--brutal-ink)] p-4 last:border-b-0 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px] md:items-center md:gap-3"
                   >
-                    <span className="protocol-font flex size-7 items-center justify-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] text-xs font-black">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <span className="protocol-font text-sm font-bold text-[var(--brutal-ink)]">
-                        {p.address}
+                    <div className="mb-2 flex items-center justify-between md:mb-0">
+                      <span className="protocol-font flex size-7 items-center justify-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] text-xs font-black md:static">
+                        {p.rank}
                       </span>
-                      {isConnected && i < 5 && (
-                        <span className="ml-2 border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] px-1.5 py-0.5 text-[8px] font-black uppercase">Top</span>
-                      )}
+                      <div className="flex items-center gap-2 md:hidden">
+                        <div
+                          className="grid size-5 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)]"
+                          style={{ background: TIER_CONFIG[p.tier].color }}
+                        >
+                          <TierIcon className="size-3 text-[var(--brutal-ink)]" />
+                        </div>
+                        <span className="protocol-font text-xs font-black">{p.points} pts</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="mb-2 md:mb-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="protocol-font text-sm font-bold text-[var(--brutal-ink)]">
+                          {p.address}
+                        </span>
+                        {isConnected && p.rank <= 5 && (
+                          <span className="border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] px-1.5 py-0.5 text-[8px] font-black uppercase">Top</span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[var(--brutal-muted)] md:hidden">
+                        <span>Yield: <strong className="text-[var(--success)]">${p.totalYield}</strong></span>
+                        <span>On-time: <strong>{p.onTimeRate}%</strong></span>
+                        <span>Pools: <strong>{p.activePools}</strong></span>
+                      </div>
+                    </div>
+                    <div className="hidden items-center gap-1.5 md:flex">
                       <div
                         className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)]"
                         style={{ background: TIER_CONFIG[p.tier].color }}
@@ -369,9 +388,9 @@ export default function LeaderboardPage() {
                         {t(TIER_CONFIG[p.tier].labelKey)}
                       </span>
                     </div>
-                    <span className="protocol-font text-sm font-black text-[var(--brutal-ink)]">{p.points}</span>
+                    <span className="hidden text-sm font-black text-[var(--brutal-ink)] md:block">{p.points}</span>
                     <span
-                      className={`protocol-font inline-flex w-fit items-center gap-1 border-[2px] border-[var(--brutal-ink)] px-2 py-0.5 text-[10px] font-black ${
+                      className={`hidden items-center gap-1 border-[2px] border-[var(--brutal-ink)] px-2 py-0.5 text-[10px] font-black md:inline-flex ${
                         p.onTimeRate >= 100
                           ? "bg-[var(--success-soft)]"
                           : p.onTimeRate >= 70
@@ -381,10 +400,10 @@ export default function LeaderboardPage() {
                     >
                       {p.onTimeRate}%
                     </span>
-                    <span className="protocol-font text-sm font-black text-[var(--success)]">
+                    <span className="hidden text-sm font-black text-[var(--success)] md:block">
                       ${p.totalYield}
                     </span>
-                    <span className="protocol-font text-[11px] text-[var(--brutal-muted)]">
+                    <span className="hidden text-[11px] text-[var(--brutal-muted)] md:block">
                       {p.activePools}
                     </span>
                   </div>

@@ -8,7 +8,7 @@
 
 [![Sui Overflow 2026](https://img.shields.io/badge/Sui%20Overflow-2026-6F2BFF?style=for-the-badge&logo=sui&logoColor=white)](https://suioverflow.dev)
 [![Built with Move](https://img.shields.io/badge/Built%20with-Move-00D4AA?style=for-the-badge&logo=sui&logoColor=white)](https://move-language.github.io/move/)
-[![Testnet](https://img.shields.io/badge/Deployed-Sui%20Testnet-F5A623?style=for-the-badge)](https://suiscan.xyz/testnet/package/0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b)
+[![Testnet](https://img.shields.io/badge/Deployed-Sui%20Testnet-F5A623?style=for-the-badge)](https://suiscan.xyz/testnet/package/0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156)
 [![Frontend](https://img.shields.io/badge/Live-suivan.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://suivan.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
@@ -117,9 +117,11 @@ Critical issues identified during code audit and resolved:
 
 | Component | Address | Explorer |
 |---|---|---|
-| **Package** | `0x72bb…1bb1b` | [Suiscan](https://suiscan.xyz/testnet/package/0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b) |
-| **Arisan Factory** | `0xd45c…3867` | [Suiscan](https://suiscan.xyz/testnet/object/0xd45cfd2dcc4be81c17f44f3e5f934605c7d09bcf1adaeadab576607493383867) |
-| **Yield Strategy** | `0xf374…1b5e2` | [Suiscan](https://suiscan.xyz/testnet/object/0xf374ed58edfbf394acca7b352ef0c6738f4b5c5dd378df28c7f69cdd0611b5e2) |
+| **Package** | `0x02f4…a156` | [Suiscan](https://suiscan.xyz/testnet/package/0x02f49c6e953acb2708c745729bfcd3f6653b0725d86a8c1dd84fbeb2dbbca156) |
+| **Arisan Factory** | `0xa810…7e83` | [Suiscan](https://suiscan.xyz/testnet/object/0xa8109352afcf4dfe8eba3337d901a24e9aad80515e8781902a395695b9cc7e83) |
+| **Faucet** | `0x3dc3…2819` | [Suiscan](https://suiscan.xyz/testnet/object/0x3dc30bab44e1d2f6ed75503ff701c3a406cf2144ac3b2e21d8b53947be9d2819) |
+| **Test Pool 1** | `0x3222…4556` | [Suiscan](https://suiscan.xyz/testnet/object/0x322251f8b167ececf9f0136cb26c1cde4adbaffbd1091daa60f4520b56995456) |
+| **Test Pool 2 (Walrus)** | `0x79e2…8de9` | [Suiscan](https://suiscan.xyz/testnet/object/0x79e2330889f83dcfc9462ead823ca2be34d2194eba35356793c99472e29b8de9) |
 
 Frontend: **[suivan.vercel.app](https://suivan.vercel.app)**
 

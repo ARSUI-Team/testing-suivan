@@ -13,12 +13,14 @@ import {
   useCreatePool,
   useUserUSDCcoins,
   useUSDCBalance,
+  useLinkPoolMetadata,
   FormattedPool,
 } from "@/hooks/useSuiContracts";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
 import { CrossChainBridgeModal } from "@/components/CrossChainBridgeModal";
 import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
+import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 
 type PoolStatus = "all" | "open" | "active" | "completed";
@@ -35,6 +37,8 @@ export default function PoolsPage() {
     maxParticipants: 8,
     cycleDuration: 30,
     usdcCoinId: "",
+    poolName: "",
+    poolDescription: "",
   });
   const {
     showBridgeModal,
@@ -50,8 +54,11 @@ export default function PoolsPage() {
   const { balance: usdcBalance } = useUSDCBalance(account?.address);
 
   const { joinPool, isPending: joining, isSuccess: joinSuccess } = useJoinPool();
-  const { createPool, isPending: creating, isSuccess: createSuccess } = useCreatePool();
+  const { createPool, isPending: creating, isSuccess: createSuccess, txResponse: createTxResponse } = useCreatePool();
+  const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const successToast = useSuccessToast();
+  const [pendingBlobId, setPendingBlobId] = useState<string | null>(null);
+  const [creatingWithMeta, setCreatingWithMeta] = useState(false);
 
   useEffect(() => {
     if (joinSuccess) {
@@ -63,13 +70,27 @@ export default function PoolsPage() {
     }
   }, [joinSuccess, refetchPools, successToast]);
   useEffect(() => {
-    if (createSuccess) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (createSuccess && createTxResponse) {
       setShowCreateModal(false);
       refetchPools();
+
+      if (pendingBlobId) {
+        const changes = createTxResponse.objectChanges || [];
+        const poolChange = changes.find((c: any) =>
+          c.type === "created" && c.objectType?.includes("::ArisanPool")
+        );
+        const capChange = changes.find((c: any) =>
+          c.type === "created" && c.objectType?.includes("::PoolAdminCap")
+        );
+        if (poolChange?.objectId && capChange?.objectId) {
+          linkMetadata(poolChange.objectId, pendingBlobId, capChange.objectId);
+        }
+      }
+      setPendingBlobId(null);
+      setCreatingWithMeta(false);
       successToast("Pool Created", "Your ROSCA pool is now live and open for participants.");
     }
-  }, [createSuccess, refetchPools, successToast]);
+  }, [createSuccess, createTxResponse, pendingBlobId, linkMetadata, refetchPools, successToast]);
 
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)
@@ -95,15 +116,37 @@ export default function PoolsPage() {
 
   const gsapRef = useGsapEntrance([pools]);
 
+  const COLLATERAL_MULTIPLIER = 125;
+
   const handleJoinPool = () => {
     if (selectedPool) {
-      const collateralAmt = Math.ceil(selectedPool.depositAmount * (selectedPool.maxParticipants - 1) * 1.25);
+      const collateralAmt = Math.ceil(selectedPool.depositAmount * COLLATERAL_MULTIPLIER / 100);
       joinPool(selectedPool.address, collateralAmt, joinCoinId);
     }
   };
 
-  const handleCreatePool = () => {
-    createPool(createForm.depositAmount, createForm.maxParticipants, createForm.cycleDuration, createForm.usdcCoinId);
+  const handleCreatePool = async () => {
+    setCreatingWithMeta(true);
+
+    // 1. Publish metadata to Walrus if name is provided
+    let blobId: string | null = null;
+    if (createForm.poolName) {
+      blobId = await publishPoolMetadata(
+        createForm.poolName,
+        createForm.poolDescription,
+        account?.address || "",
+        "",
+      );
+    }
+    setPendingBlobId(blobId);
+
+    // 2. Create pool on-chain
+    createPool(
+      createForm.depositAmount,
+      createForm.maxParticipants,
+      createForm.cycleDuration,
+      createForm.usdcCoinId,
+    );
   };
 
   return (
@@ -236,6 +279,12 @@ export default function PoolsPage() {
                       <span className="protocol-font text-xs font-black tracking-[0.05em]" style={{ color: "var(--brutal-ink)" }}>{pool.apy}% APY</span>
                       <span className="protocol-font text-[10px] font-black tracking-[0.12em]" style={{ color: "var(--brutal-muted)" }}>Yield signal</span>
                     </div>
+                    {pool.walrusMetadataBlobId && (
+                      <div className="mt-2 flex w-fit items-center gap-1.5 border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] px-2 py-1 shadow-[2px_2px_0_var(--brutal-ink)]">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="var(--brutal-ink)"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        <span className="protocol-font text-[9px] font-black tracking-[0.12em]" style={{ color: "var(--brutal-ink)" }}>Walrus</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4 p-5">
@@ -349,7 +398,7 @@ export default function PoolsPage() {
               <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
                 <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.collateral")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                  {Math.ceil(selectedPool.depositAmount * (selectedPool.maxParticipants - 1) * 1.25)} USDC
+                  {Math.ceil(selectedPool.depositAmount * 125 / 100)} USDC
                 </p>
                 <p className="mt-1 text-xs font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.collateralDesc")}</p>
               </div>
@@ -447,6 +496,30 @@ export default function PoolsPage() {
 
             <div className="mb-6 space-y-4">
               <div>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>Pool Name</label>
+                <input
+                  type="text"
+                  maxLength={64}
+                  value={createForm.poolName}
+                  onChange={(e) => setCreateForm({ ...createForm, poolName: e.target.value })}
+                  placeholder="My Awesome Pool"
+                  className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>Description (optional)</label>
+                <textarea
+                  maxLength={500}
+                  value={createForm.poolDescription}
+                  onChange={(e) => setCreateForm({ ...createForm, poolDescription: e.target.value })}
+                  placeholder="Brief description of your pool..."
+                  rows={3}
+                  className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
+                />
+              </div>
+
+              <div>
                 <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.deposit")} (USDC)</label>
                 <input
                   type="number"
@@ -521,7 +594,7 @@ export default function PoolsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.requiredCollateral")}</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                    {Math.ceil(createForm.depositAmount * (createForm.maxParticipants - 1) * 1.25)} USDC
+                    {Math.ceil(createForm.depositAmount * 125 / 100)} USDC
                   </span>
                 </div>
               </div>
@@ -529,9 +602,9 @@ export default function PoolsPage() {
 
             <button
               onClick={handleCreatePool}
-              disabled={creating}
+              disabled={creating || linkingMeta}
               className={`w-full border-[3px] border-[var(--brutal-ink)] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_var(--brutal-ink)] ${
-                creating
+                creating || linkingMeta
                   ? "cursor-not-allowed bg-[var(--brutal-surface)] text-[var(--brutal-muted)] opacity-50"
                   : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:-translate-x-0.5 hover:-translate-y-0.5"
               }`}
@@ -539,7 +612,12 @@ export default function PoolsPage() {
               {creating ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-                  Creating...
+                  Creating pool...
+                </span>
+              ) : linkingMeta ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
+                  Linking metadata...
                 </span>
               ) : "Create Pool"}
             </button>

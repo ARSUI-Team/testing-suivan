@@ -13,6 +13,7 @@ module archa::arisan_pool {
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use sui::event;
+    use sui::random::{Self, Random, new_generator};
     use sui::table::{Self, Table};
     use std::string::{Self, String};
 
@@ -41,9 +42,20 @@ module archa::arisan_pool {
     const E_DEPOSITS_INCOMPLETE: u64 = 22;
     const E_STRATEGY_ACTIVE: u64 = 23;
     const E_NO_SEAL_SEED: u64 = 24;
+    const E_POOL_PAUSED: u64 = 25;
+    const E_GACHA_ALREADY_CLAIMED: u64 = 26;
+
+    // Score scaling for leaderboard → gacha tickets
+    const TICKET_SCALE: u64 = 10;
 
     // DES-OM-1 fix: maximum pool size cap to prevent gas timeout
     const MAX_POOL_SIZE: u64 = 50;
+
+    // Scored penalty deducted from leaderboard when participant misses a deposit
+    const LEADERBOARD_SLASH_PENALTY: u64 = 15;
+
+    // Hard cap on leaderboard score — prevents extreme ticket concentration
+    const LEADERBOARD_MAX: u64 = 5000;
 
     // ====== Structs ======
 
@@ -64,6 +76,10 @@ module archa::arisan_pool {
         joined_at_ms: u64,             // Timestamp when joined
         last_deposit_cycle: u64,       // Last cycle where deposit was made (fix H1)
         deposits_this_cycle: bool,     // Already deposited this cycle (fix H1)
+        // Yield & gacha fields
+        proportional_yield_earned: u64,  // Collateral yield entitlement (snapshot at end_pool)
+        leaderboard_score: u64,          // Score for gacha ticket calculation
+        gacha_claimed: bool,             // Already received gacha prize
     }
 
     /// The shared pool object — one per arisan group
@@ -93,9 +109,10 @@ module archa::arisan_pool {
         active_depositors_count: u64,   // How many deposited THIS cycle
 
         // Funds — separated as per audit fix D3
-        collateral_balance: Balance<CoinType>,  // Holds all collateral
-        pool_funds_balance: Balance<CoinType>,   // Holds all deposits (for yield)
-        yield_balance: Balance<CoinType>,        // Holds earned yield
+        collateral_balance: Balance<CoinType>,           // Holds all collateral
+        pool_funds_balance: Balance<CoinType>,            // Holds all deposits (for yield)
+        yield_balance: Balance<CoinType>,                 // Holds cumulative yield (from cycle deposits → gacha)
+        collateral_yield_balance: Balance<CoinType>,      // Holds yield from collateral (proportional)
 
         // Yield strategy reference (G3 Option A)
         strategy_id: Option<ID>,        // ID of YieldStrategy shared object
@@ -107,6 +124,9 @@ module archa::arisan_pool {
 
         // Seal randomness seed (optional, additive — does not affect existing logic)
         seal_seed: Option<vector<u8>>,
+
+        // Emergency pause flag — blocks all operations when set
+        paused: bool,
     }
 
     // ====== View Helper Struct ======
@@ -128,8 +148,10 @@ module archa::arisan_pool {
         total_collateral: u64,
         total_pool_funds: u64,
         total_yield: u64,
+        total_collateral_yield: u64,
         required_collateral: u64,
         active_depositors: u64,
+        gacha_winner: Option<address>,
     }
 
     // ====== Events ======
@@ -187,6 +209,22 @@ module archa::arisan_pool {
         pool_id: ID,
         total_cycles_completed: u64,
         total_yield_earned: u64,
+        total_collateral_yield: u64,
+        gacha_winner: Option<address>,
+        gacha_prize: u64,
+    }
+
+    public struct CollateralYieldDeposited has copy, drop {
+        pool_id: ID,
+        amount: u64,
+    }
+
+    public struct GachaDistributed has copy, drop {
+        pool_id: ID,
+        winner: address,
+        total_tickets: u64,
+        prize_amount: u64,
+        participant_count: u64,
     }
 
     public struct ParticipantRemoved has copy, drop {
@@ -227,12 +265,6 @@ module archa::arisan_pool {
         active_depositors: u64,
     }
 
-    public struct AllCyclesCompleted has copy, drop {
-        pool_id: ID,
-        total_cycles: u64,
-        total_yield: u64,
-    }
-
     // ====== View Functions ======
 
     /// Get required collateral amount based on config
@@ -250,9 +282,14 @@ module archa::arisan_pool {
         balance::value(&pool.pool_funds_balance)
     }
 
-    /// Get total yield earned
+    /// Get total yield earned (cumulative from cycle deposits)
     public fun total_yield<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         balance::value(&pool.yield_balance)
+    }
+
+    /// Get total collateral yield earned
+    public fun total_collateral_yield<CoinType>(pool: &ArisanPool<CoinType>): u64 {
+        balance::value(&pool.collateral_yield_balance)
     }
 
     /// Get current participant count
@@ -282,6 +319,9 @@ module archa::arisan_pool {
     public fun participant_has_payout(p: &Participant): bool { p.has_received_payout }
     public fun participant_is_active(p: &Participant): bool { p.is_active }
     public fun participant_joined_at(p: &Participant): u64 { p.joined_at_ms }
+    public fun participant_proportional_yield(p: &Participant): u64 { p.proportional_yield_earned }
+    public fun participant_leaderboard_score(p: &Participant): u64 { p.leaderboard_score }
+    public fun participant_gacha_claimed(p: &Participant): bool { p.gacha_claimed }
 
     /// Check if participant has deposited this cycle (fix H1)
     public fun has_deposited_this_cycle<CoinType>(pool: &ArisanPool<CoinType>, addr: address): bool {
@@ -310,6 +350,19 @@ module archa::arisan_pool {
 
     /// Get pool info as a single struct for frontend
     public fun pool_info<CoinType>(pool: &ArisanPool<CoinType>): PoolInfo {
+        // Find gacha winner by iterating participants
+        let mut gacha_winner: Option<address> = option::none();
+        let len = vector::length(&pool.participant_list);
+        let mut i = 0;
+        while (i < len) {
+            let addr = *vector::borrow(&pool.participant_list, i);
+            let p = table::borrow(&pool.participants, addr);
+            if (p.gacha_claimed) {
+                gacha_winner = option::some(addr);
+                break
+            };
+            i = i + 1;
+        };
         PoolInfo {
             creator: pool.creator,
             deposit_amount: pool.config.deposit_amount,
@@ -326,8 +379,10 @@ module archa::arisan_pool {
             total_collateral: balance::value(&pool.collateral_balance),
             total_pool_funds: balance::value(&pool.pool_funds_balance),
             total_yield: balance::value(&pool.yield_balance),
+            total_collateral_yield: balance::value(&pool.collateral_yield_balance),
             required_collateral: required_collateral(pool),
             active_depositors: pool.active_depositors_count,
+            gacha_winner,
         }
     }
 
@@ -351,6 +406,11 @@ module archa::arisan_pool {
     public fun info_total_collateral(i: &PoolInfo): u64 { i.total_collateral }
     public fun info_total_pool_funds(i: &PoolInfo): u64 { i.total_pool_funds }
     public fun info_total_yield(i: &PoolInfo): u64 { i.total_yield }
+    public fun info_total_collateral_yield(i: &PoolInfo): u64 { i.total_collateral_yield }
+    public fun info_required_collateral(i: &PoolInfo): u64 { i.required_collateral }
+    public fun info_active_depositors(i: &PoolInfo): u64 { i.active_depositors }
+    public fun info_last_winner(i: &PoolInfo): Option<address> { i.last_winner }
+    public fun info_gacha_winner(i: &PoolInfo): Option<address> { i.gacha_winner }
 
     /// Get winner for a specific cycle
     public fun get_cycle_winner<CoinType>(pool: &ArisanPool<CoinType>, cycle: u64): Option<address> {
@@ -377,7 +437,6 @@ module archa::arisan_pool {
         true
     }
 
-    #[allow(unused_function)]
     fun count_remaining_winners<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         let len = vector::length(&pool.participant_list);
         let mut count = 0u64;
@@ -477,6 +536,9 @@ module archa::arisan_pool {
                 joined_at_ms: 0, // will be set on start_pool
                 last_deposit_cycle: 0,
                 deposits_this_cycle: false,
+                proportional_yield_earned: 0,
+                leaderboard_score: 10,  // join bonus
+                gacha_claimed: false,
             },
         );
 
@@ -504,11 +566,13 @@ module archa::arisan_pool {
             collateral_balance: coin::into_balance(collateral),
             pool_funds_balance: balance::zero(),
             yield_balance: balance::zero(),
+            collateral_yield_balance: balance::zero(),
             strategy_id: option::none(),
             walrus_metadata_blob_id: metadata_blob_id,
             walrus_cycle_history_blob_id: string::utf8(b""),
             walrus_agreement_blob_id: string::utf8(b""),
             seal_seed: option::none(),
+            paused: false,
         };
 
         let pool_id = object::id(&pool);
@@ -544,6 +608,7 @@ module archa::arisan_pool {
         collateral: Coin<CoinType>,
         ctx: &mut TxContext,
     ) {
+        assert_not_paused(pool);
         let sender = ctx.sender();
 
         // Pre-conditions
@@ -571,6 +636,9 @@ module archa::arisan_pool {
                 joined_at_ms: 0,
                 last_deposit_cycle: 0,
                 deposits_this_cycle: false,
+                proportional_yield_earned: 0,
+                leaderboard_score: 10,
+                gacha_claimed: false,
             },
         );
 
@@ -601,6 +669,7 @@ module archa::arisan_pool {
         clock: &sui::clock::Clock,
         _ctx: &mut TxContext,
     ) {
+        assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(!pool.is_started, E_POOL_ALREADY_STARTED);
         assert!(!pool.is_ended, E_POOL_ENDED);
@@ -639,6 +708,7 @@ module archa::arisan_pool {
         deposit: Coin<CoinType>,
         ctx: &mut TxContext,
     ) {
+        assert_not_paused(pool);
         let sender = ctx.sender();
 
         // Pre-conditions
@@ -656,7 +726,20 @@ module archa::arisan_pool {
 
         // Mark deposited (fix H1)
         participant.deposits_this_cycle = true;
+
+        // Save old cycle for streak check before overwriting
+        let old_last = participant.last_deposit_cycle;
         participant.last_deposit_cycle = pool.current_cycle;
+
+        // Streak bonus: +2 if deposited last cycle consecutively
+        if (old_last > 0 && old_last + 1 == pool.current_cycle) {
+            participant.leaderboard_score = participant.leaderboard_score + 20 + 2;
+        } else {
+            participant.leaderboard_score = participant.leaderboard_score + 20;
+        };
+        if (participant.leaderboard_score > LEADERBOARD_MAX) {
+            participant.leaderboard_score = LEADERBOARD_MAX;
+        };
 
         pool.active_depositors_count = pool.active_depositors_count + 1;
 
@@ -679,8 +762,10 @@ module archa::arisan_pool {
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
         clock: &sui::clock::Clock,
+        random: &Random,
         ctx: &mut TxContext,
     ) {
+        assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(pool.is_active, E_POOL_NOT_ACTIVE);
         assert!(pool.is_started, E_POOL_NOT_STARTED);
@@ -735,18 +820,8 @@ module archa::arisan_pool {
         // Check if this is the final winner (all will have received payout after this)
         let all_won = check_all_received_payout_before_mark(pool);
 
-        // Yield bonus: if final winner, distribute ALL remaining yield;
-        // otherwise distribute proportionally (1/active_deps share per cycle)
-        let yield_value = balance::value(&pool.yield_balance);
-        let yield_bonus = if (yield_value > 0 && active_deps > 0) {
-            if (all_won) {
-                yield_value
-            } else {
-                yield_value / active_deps
-            }
-        } else {
-            0
-        };
+        // Yield bonus disabled — all yield accumulates for gacha distribution at pool end
+        let yield_bonus = 0;
 
         let total_payout = (((cycle_deposits as u128) + (yield_bonus as u128)) as u64);
 
@@ -775,7 +850,7 @@ module archa::arisan_pool {
         // Mark winner + check if all participants have won → end pool
         if (all_won) {
             participant.has_received_payout = true;
-            end_pool_internal(pool);
+            end_pool_internal(pool, random, ctx);
         } else {
             participant.has_received_payout = true;
             // Advance cycle
@@ -824,47 +899,143 @@ module archa::arisan_pool {
     }
 
     /// End the pool — requires PoolAdminCap (SEC-AC-1 fix)
-    /// - Sets is_ended flag, does NOT transfer coins internally
+    /// - Requires all active participants have received payout (prevents premature termination)
+    /// - Sets is_ended flag
     /// - Participants call claim_collateral() individually
     public fun end_pool<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
-        _ctx: &mut TxContext,
+        random: &Random,
+        ctx: &mut TxContext,
     ) {
+        assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
-        end_pool_internal(pool);
+        assert!(count_remaining_winners(pool) == 0, E_NO_WINNERS_LEFT);
+        end_pool_internal(pool, random, ctx);
     }
 
     /// Internal: end pool without cap check — called by select_winner() when all won
-    fun end_pool_internal<CoinType>(pool: &mut ArisanPool<CoinType>) {
+    /// Distributes collateral yield (proportional) + cumulative yield (gacha)
+    fun end_pool_internal<CoinType>(pool: &mut ArisanPool<CoinType>, random: &Random, ctx: &mut TxContext) {
         assert!(!pool.is_ended, E_POOL_ENDED);
 
         // Safety: cannot end pool while funds are deployed to yield strategy (H-04 fix)
         assert!(option::is_none(&pool.strategy_id), E_STRATEGY_ACTIVE);
 
+        // ====== STEP 1: Distribute collateral yield (proportional to collateral_amount) ======
+        let total_collateral_val = balance::value(&pool.collateral_balance);
+        let total_collateral_yield_val = balance::value(&pool.collateral_yield_balance);
+
+        if (total_collateral_val > 0 && total_collateral_yield_val > 0) {
+            let len = vector::length(&pool.participant_list);
+            let mut distributed: u128 = 0;
+            let mut last_active_idx: u64 = 0;
+            let mut i = 0;
+            while (i < len) {
+                let addr = *vector::borrow(&pool.participant_list, i);
+                let p = table::borrow_mut(&mut pool.participants, addr);
+                if (p.is_active && p.collateral_amount > 0) {
+                    let share = ((total_collateral_yield_val as u128) * (p.collateral_amount as u128) / (total_collateral_val as u128));
+                    p.proportional_yield_earned = (share as u64);
+                    distributed = distributed + share;
+                    last_active_idx = i;
+                };
+                i = i + 1;
+            };
+            // Award truncation dust to last active participant
+            let remainder = (total_collateral_yield_val as u128) - distributed;
+            if (remainder > 0) {
+                let addr = *vector::borrow(&pool.participant_list, last_active_idx);
+                let p = table::borrow_mut(&mut pool.participants, addr);
+                p.proportional_yield_earned = p.proportional_yield_earned + (remainder as u64);
+            };
+        };
+
+        // ====== STEP 2: Gacha draw for cumulative yield (weighted by leaderboard score) ======
+        let cumulative_yield_val = balance::value(&pool.yield_balance);
+        let mut gacha_winner: Option<address> = option::none();
+
+        if (cumulative_yield_val > 0) {
+            // Pass 1: count total tickets (weighted) and participants
+            let mut total_tickets: u64 = 0;
+            let mut participants_in_gacha: u64 = 0;
+            let len = vector::length(&pool.participant_list);
+            let mut i = 0;
+            while (i < len) {
+                let addr = *vector::borrow(&pool.participant_list, i);
+                let p = table::borrow(&pool.participants, addr);
+                if (p.is_active && p.leaderboard_score > 0) {
+                    participants_in_gacha = participants_in_gacha + 1;
+                    total_tickets = total_tickets + 1 + (p.leaderboard_score / TICKET_SCALE);
+                };
+                i = i + 1;
+            };
+
+            if (total_tickets > 0) {
+                // Pass 2: weighted random selection in O(n) — no physical ticket array
+                let mut gen = new_generator(random, ctx);
+                let pick = random::generate_u64_in_range(&mut gen, 0, total_tickets - 1);
+                let mut remaining = pick;
+                let mut winner: address = @0x0;
+                let mut found = false;
+                let mut i = 0;
+                while (i < len && !found) {
+                    let addr = *vector::borrow(&pool.participant_list, i);
+                    let p = table::borrow(&pool.participants, addr);
+                    if (p.is_active && p.leaderboard_score > 0) {
+                        let t = 1 + (p.leaderboard_score / TICKET_SCALE);
+                        if (remaining < t) {
+                            winner = addr;
+                            found = true;
+                        } else {
+                            remaining = remaining - t;
+                        };
+                    };
+                    i = i + 1;
+                };
+
+                // Transfer all cumulative yield to winner
+                let prize = coin::from_balance(balance::split(&mut pool.yield_balance, cumulative_yield_val), ctx);
+                transfer::public_transfer(prize, winner);
+
+                // Mark winner
+                let p = table::borrow_mut(&mut pool.participants, winner);
+                p.gacha_claimed = true;
+                gacha_winner = option::some(winner);
+
+                event::emit(GachaDistributed {
+                    pool_id: object::id(pool),
+                    winner,
+                    total_tickets,
+                    prize_amount: cumulative_yield_val,
+                    participant_count: participants_in_gacha,
+                });
+            };
+        };
+
+        // ====== STEP 3: Finalize pool ======
         pool.is_active = false;
         pool.is_ended = true;
 
         event::emit(PoolEnded {
             pool_id: object::id(pool),
             total_cycles_completed: pool.current_cycle,
-            total_yield_earned: balance::value(&pool.yield_balance),
-        });
-        event::emit(AllCyclesCompleted {
-            pool_id: object::id(pool),
-            total_cycles: pool.current_cycle,
-            total_yield: balance::value(&pool.yield_balance),
+            total_yield_earned: cumulative_yield_val,
+            total_collateral_yield: total_collateral_yield_val,
+            gacha_winner,
+            gacha_prize: cumulative_yield_val,
         });
     }
 
-    /// Claim collateral after pool ended (DES-FN-1 fix: PTB composable)
+    /// Claim collateral + proportional yield after pool ended
     /// - Pool must be ended
     /// - Caller must be an active participant with collateral
-    /// - Returns collateral Coin to caller
-    public fun claim_collateral<CoinType>(
+    /// - Returns collateral + proportional yield as a single Coin
+    public fun claim_final<CoinType>(
         pool: &mut ArisanPool<CoinType>,
         ctx: &mut TxContext,
     ): Coin<CoinType> {
+        assert_not_paused(pool);
         assert!(pool.is_ended, E_POOL_NOT_ENDED);
 
         let sender = ctx.sender();
@@ -874,18 +1045,35 @@ module archa::arisan_pool {
         assert!(participant.is_active, E_NOT_PARTICIPANT);
         assert!(participant.collateral_amount > 0, E_ALREADY_CLAIMED);
 
-        let return_amount = participant.collateral_amount;
+        let return_collateral = participant.collateral_amount;
+        let return_yield = participant.proportional_yield_earned;
         participant.collateral_amount = 0;
+        participant.proportional_yield_earned = 0;
 
-        let collateral_coin = coin::take(&mut pool.collateral_balance, return_amount, ctx);
+        // Take collateral first
+        let mut total_coin = coin::take(&mut pool.collateral_balance, return_collateral, ctx);
+
+        // Add proportional yield if available
+        if (return_yield > 0) {
+            let yield_part = coin::take(&mut pool.collateral_yield_balance, return_yield, ctx);
+            coin::join(&mut total_coin, yield_part);
+        };
 
         event::emit(CollateralClaimed {
             pool_id: object::id(pool),
             participant: sender,
-            amount: return_amount,
+            amount: return_collateral + return_yield,
         });
 
-        collateral_coin
+        total_coin
+    }
+
+    /// Claim collateral only (backward compatibility — for users who already claimed yield separately)
+    public fun claim_collateral<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
+        ctx: &mut TxContext,
+    ): Coin<CoinType> {
+        claim_final(pool, ctx)
     }
 
     /// Slash collateral from a participant who missed payment
@@ -900,6 +1088,7 @@ module archa::arisan_pool {
         clock: &sui::clock::Clock,
         ctx: &mut TxContext,
     ) {
+        assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(pool.is_active, E_POOL_NOT_ACTIVE);
         assert!(pool.is_started, E_POOL_NOT_STARTED);
@@ -910,25 +1099,30 @@ module archa::arisan_pool {
         // Cannot slash a participant who already deposited this cycle
         assert!(!table::borrow(&pool.participants, participant_addr).deposits_this_cycle, E_ALREADY_DEPOSITED);
 
-        // Read participant state first, then decide action
+        // Read participant state once, then decide action
         let slash_amount = pool.config.deposit_amount;
-        let current_collateral = table::borrow(&pool.participants, participant_addr).collateral_amount;
-        let is_active = table::borrow(&pool.participants, participant_addr).is_active;
+        let (current_collateral, is_active, current_missed, current_leaderboard) = {
+            let p = table::borrow(&pool.participants, participant_addr);
+            (p.collateral_amount, p.is_active, p.missed_payments, p.leaderboard_score)
+        };
         assert!(is_active, E_NOT_PARTICIPANT);
         assert!(current_collateral > 0, E_NOT_PARTICIPANT);
 
         let pool_id = object::id(pool);
+        let new_leaderboard = if (current_leaderboard >= LEADERBOARD_SLASH_PENALTY) {
+            current_leaderboard - LEADERBOARD_SLASH_PENALTY
+        } else { 1 };
 
         if (slash_amount >= current_collateral) {
             // Full depletion — deactivate participant
             let remaining = current_collateral;
-            let missed = table::borrow(&pool.participants, participant_addr).missed_payments + 1;
+            let missed = current_missed + 1;
 
-            // Update participant
             let participant = table::borrow_mut(&mut pool.participants, participant_addr);
             participant.collateral_amount = 0;
             participant.is_active = false;
             participant.missed_payments = missed;
+            participant.leaderboard_score = new_leaderboard;
 
             // Move remaining collateral to pool funds
             if (remaining > 0) {
@@ -944,11 +1138,12 @@ module archa::arisan_pool {
         } else {
             // Partial slash
             let new_collateral = current_collateral - slash_amount;
-            let missed = table::borrow(&pool.participants, participant_addr).missed_payments + 1;
+            let missed = current_missed + 1;
 
             let participant = table::borrow_mut(&mut pool.participants, participant_addr);
             participant.collateral_amount = new_collateral;
             participant.missed_payments = missed;
+            participant.leaderboard_score = new_leaderboard;
 
             let slashed_coin = coin::take(&mut pool.collateral_balance, slash_amount, ctx);
             balance::join(&mut pool.pool_funds_balance, coin::into_balance(slashed_coin));
@@ -961,6 +1156,48 @@ module archa::arisan_pool {
                 missed_payments: missed,
             });
         };
+    }
+
+    // ====== Collateral Yield Entry ======
+
+    /// Deposit yield earned from collateral deployment (e.g. lending protocol)
+    /// Yield is distributed proportionally to all participants at pool end
+    public fun deposit_collateral_yield<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
+        yield_coin: Coin<CoinType>,
+    ) {
+        assert_not_paused(pool);
+        assert!(!pool.is_ended, E_POOL_ENDED);
+        let amount = coin::value(&yield_coin);
+        balance::join(&mut pool.collateral_yield_balance, coin::into_balance(yield_coin));
+        event::emit(CollateralYieldDeposited {
+            pool_id: object::id(pool),
+            amount,
+        });
+    }
+
+    /// Get a participant's leaderboard score
+    public fun get_leaderboard_score<CoinType>(pool: &ArisanPool<CoinType>, addr: address): u64 {
+        if (!table::contains(&pool.participants, addr)) {
+            return 0
+        };
+        table::borrow(&pool.participants, addr).leaderboard_score
+    }
+
+    /// Get a participant's proportional yield entitlement
+    public fun get_proportional_yield<CoinType>(pool: &ArisanPool<CoinType>, addr: address): u64 {
+        if (!table::contains(&pool.participants, addr)) {
+            return 0
+        };
+        table::borrow(&pool.participants, addr).proportional_yield_earned
+    }
+
+    /// Check if participant has won gacha
+    public fun is_gacha_winner<CoinType>(pool: &ArisanPool<CoinType>, addr: address): bool {
+        if (!table::contains(&pool.participants, addr)) {
+            return false
+        };
+        table::borrow(&pool.participants, addr).gacha_claimed
     }
 
     // ====== Yield Integration Hooks (for DeepBook V3 / external yield modules) ======
@@ -982,6 +1219,7 @@ module archa::arisan_pool {
         pool: &mut ArisanPool<CoinType>,
         yield_balance: Balance<CoinType>,
     ) {
+        assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(!pool.is_ended, E_POOL_ENDED);
         balance::join(&mut pool.yield_balance, yield_balance);
@@ -1004,16 +1242,20 @@ module archa::arisan_pool {
     /// Returns (Coin, YieldWithdrawalReceipt) — receipt MUST be consumed in same PTB
     /// YieldWithdrawalReceipt has no abilities → tx aborts if not returned
     /// public(package) — only callable within archa package (S1-2/H-03 fix)
+    /// Sets strategy_id as sentinel to prevent ending pool while funds deployed
     public(package) fun withdraw_pool_funds_for_yield<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
         amount: u64,
         ctx: &mut TxContext,
     ): (Coin<CoinType>, YieldWithdrawalReceipt) {
+        assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(!pool.is_ended, E_POOL_ENDED);
         assert!(amount > 0, E_WRONG_DEPOSIT_AMOUNT);
         assert!(balance::value(&pool.pool_funds_balance) >= amount, E_INSUFFICIENT_FUNDS);
+        // Set strategy_id sentinel to block end_pool while funds deployed
+        pool.strategy_id = option::some(object::id(pool));
         let receipt = YieldWithdrawalReceipt {
             pool_id: object::id(pool),
             amount,
@@ -1028,6 +1270,7 @@ module archa::arisan_pool {
     /// Return pool funds after yield operation
     /// Splits principal → pool_funds_balance, profit → yield_balance
     /// Consumes YieldWithdrawalReceipt (hot potato) — enforces return in same PTB
+    /// Clears strategy_id sentinel to allow end_pool
     /// public(package) — only callable within archa package (S1-2/H-03 fix)
     public(package) fun return_pool_funds_from_yield<CoinType>(
         cap: &PoolAdminCap,
@@ -1040,6 +1283,8 @@ module archa::arisan_pool {
         assert!(receipt.pool_id == object::id(pool), E_WRONG_RECEIPT);
         assert!(!pool.is_ended, E_POOL_ENDED);
         assert!(coin::value(&coin) >= receipt.amount, E_INSUFFICIENT_FUNDS);
+        // Clear strategy_id sentinel — funds are back
+        pool.strategy_id = option::none();
         let profit = coin::value(&coin) - receipt.amount;
         let principal = coin::split(&mut coin, receipt.amount, ctx);
         balance::join(&mut pool.pool_funds_balance, coin::into_balance(principal));
@@ -1126,6 +1371,31 @@ module archa::arisan_pool {
         let ARISAN_POOL {} = otw;
     }
 
+    // ====== Emergency Pause (via PoolAdminCap) ======
+
+    /// Pause all pool operations — emergency stop
+    public fun pause_pool<CoinType>(cap: &PoolAdminCap, pool: &mut ArisanPool<CoinType>) {
+        assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
+        pool.paused = true;
+    }
+
+    /// Unpause pool operations — resume after emergency
+    public fun unpause_pool<CoinType>(cap: &PoolAdminCap, pool: &mut ArisanPool<CoinType>) {
+        assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
+        pool.paused = false;
+    }
+
+    /// Check if pool is paused
+    public fun is_paused<CoinType>(pool: &ArisanPool<CoinType>): bool {
+        pool.paused
+    }
+
+    // ====== Paused guard for entry functions ======
+
+    fun assert_not_paused<CoinType>(pool: &ArisanPool<CoinType>) {
+        assert!(!pool.paused, E_POOL_PAUSED);
+    }
+
     // ====== TEST HELPERS (only compiled in test) ======
 
     #[test_only]
@@ -1161,11 +1431,13 @@ module archa::arisan_pool {
             collateral_balance: balance::zero(),
             pool_funds_balance: balance::zero(),
             yield_balance: balance::zero(),
+            collateral_yield_balance: balance::zero(),
             strategy_id: option::none(),
             walrus_metadata_blob_id: string::utf8(b""),
             walrus_cycle_history_blob_id: string::utf8(b""),
             walrus_agreement_blob_id: string::utf8(b""),
             seal_seed: option::none(),
+            paused: false,
         };
         let cap = PoolAdminCap {
             id: object::new(ctx),
@@ -1178,7 +1450,7 @@ module archa::arisan_pool {
     /// Only works for empty pools (no participants, no funds)
     #[test_only]
     public fun test_cleanup_pool<CoinType>(pool: ArisanPool<CoinType>, cap: PoolAdminCap, _ctx: &mut TxContext) {
-        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
+        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
         // Drop empty containers
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
@@ -1189,6 +1461,7 @@ module archa::arisan_pool {
         balance::destroy_zero(collateral_balance);
         balance::destroy_zero(pool_funds_balance);
         balance::destroy_zero(yield_balance);
+        balance::destroy_zero(collateral_yield_balance);
         // Drop unused fields
         let PoolConfig { deposit_amount: _, max_participants: _, cycle_duration_ms: _, collateral_multiplier: _ } = config;
         let _ = creator;
@@ -1204,6 +1477,7 @@ module archa::arisan_pool {
         let _ = walrus_cycle_history_blob_id;
         let _ = walrus_agreement_blob_id;
         let _ = seal_seed;
+        let _ = paused;
         object::delete(id);
 
         // Destroy PoolAdminCap
@@ -1215,7 +1489,7 @@ module archa::arisan_pool {
     /// Use this for yield integration tests where pool has accumulated yield/funds
     #[test_only]
     public fun test_cleanup_pool_with_funds<CoinType>(pool: ArisanPool<CoinType>, cap: PoolAdminCap, _ctx: &mut TxContext) {
-        let ArisanPool<CoinType> { id, participants, cycle_winners, mut collateral_balance, mut pool_funds_balance, mut yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
+        let ArisanPool<CoinType> { id, participants, cycle_winners, mut collateral_balance, mut pool_funds_balance, mut yield_balance, mut collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
 
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
@@ -1240,6 +1514,14 @@ module archa::arisan_pool {
             balance::destroy_zero(yield_balance);
         };
 
+        // Drain collateral_yield_balance
+        if (balance::value(&collateral_yield_balance) > 0) {
+            let _coin = coin::from_balance(collateral_yield_balance, _ctx);
+            transfer::public_transfer(_coin, creator);
+        } else {
+            balance::destroy_zero(collateral_yield_balance);
+        };
+
         // Drain collateral_balance
         if (balance::value(&collateral_balance) > 0) {
             let _coin = coin::from_balance(collateral_balance, _ctx);
@@ -1262,6 +1544,7 @@ module archa::arisan_pool {
         let _ = walrus_cycle_history_blob_id;
         let _ = walrus_agreement_blob_id;
         let _ = seal_seed;
+        let _ = paused;
         object::delete(id);
 
         let PoolAdminCap { id: cap_id, pool_id: _ } = cap;
@@ -1285,7 +1568,7 @@ module archa::arisan_pool {
     /// Only works for empty pools (no participants, no funds)
     #[test_only]
     public fun test_destroy_pool_only<CoinType>(pool: ArisanPool<CoinType>, _ctx: &mut TxContext) {
-        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed } = pool;
+        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
         vector::destroy_empty(participant_list);
@@ -1295,6 +1578,7 @@ module archa::arisan_pool {
         balance::destroy_zero(collateral_balance);
         balance::destroy_zero(pool_funds_balance);
         balance::destroy_zero(yield_balance);
+        balance::destroy_zero(collateral_yield_balance);
         let PoolConfig { deposit_amount: _, max_participants: _, cycle_duration_ms: _, collateral_multiplier: _ } = config;
         let _ = creator;
         let _ = ai_optimizer;
@@ -1309,6 +1593,7 @@ module archa::arisan_pool {
         let _ = walrus_cycle_history_blob_id;
         let _ = walrus_agreement_blob_id;
         let _ = seal_seed;
+        let _ = paused;
         object::delete(id);
     }
 
@@ -1331,5 +1616,26 @@ module archa::arisan_pool {
     public fun test_set_ended<CoinType>(pool: &mut ArisanPool<CoinType>) {
         pool.is_ended = true;
         pool.is_active = false;
+    }
+
+    /// Test helper: set seal seed (for winner selection tests)
+    #[test_only]
+    public fun test_set_seal_seed<CoinType>(pool: &mut ArisanPool<CoinType>, seed: vector<u8>) {
+        pool.seal_seed = option::some(seed);
+    }
+
+    /// Test helper: create a dummy PoolAdminCap with wrong pool_id (for auth tests)
+    #[test_only]
+    public fun test_create_dummy_cap(ctx: &mut TxContext): PoolAdminCap {
+        PoolAdminCap {
+            id: object::new(ctx),
+            pool_id: object::id_from_address(@0xDEADBEEF),
+        }
+    }
+
+    /// Test helper: set a strategy_id on pool (for end_pool strategy-active tests)
+    #[test_only]
+    public fun test_set_strategy_id<CoinType>(pool: &mut ArisanPool<CoinType>) {
+        pool.strategy_id = option::some(object::id_from_address(@0xCAFE));
     }
 }

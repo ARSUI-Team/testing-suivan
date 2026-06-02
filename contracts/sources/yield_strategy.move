@@ -1,7 +1,13 @@
-/// Module: yield_strategy
+/// Module: yield_strategy (ORPHANED — FOR FUTURE INTEGRATION)
 /// Yield strategy for Archa — holds pool funds and tracks shares per depositor
 /// Real yield comes from DeepBook profits deposited as actual coins (C-02/M-03 fix)
 /// Invariant: total_deposits == balance::value(&funds) at all times
+///
+/// NOTE: This module is CORRECT but NOT YET INTEGRATED with arisan_pool.
+/// The `strategy_id` field in ArisanPool is never set to a YieldStrategy reference.
+/// Pool funds are currently managed via withdraw_pool_funds_for_yield hot potato pattern.
+/// When ready, integrate: deposit() from pool_funds_balance → YieldStrategy,
+/// withdraw() back to pool_funds_balance with profit.
 ///
 /// Bug fixes from audit:
 /// - C2: No owner bypass in withdraw() — everyone needs shares

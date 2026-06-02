@@ -6,7 +6,8 @@ import Footer from "@/components/Footer";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
 import { SUI_FACTORY_ID } from "@/config/sui";
-import { Zap } from "lucide-react";
+import { Zap, Database } from "lucide-react";
+import { useDeepBookPools, usePoolOrderbook, getPoolInfo, ALL_POOL_KEYS } from "@/hooks/useDeepBook";
 
 const YIELD_STEPS = [
   { id: 1, title: "Withdraw from Pool", desc: "Pool funds are withdrawn via hot potato receipt — if not returned, tx aborts.", icon: "⬆️" },
@@ -70,6 +71,19 @@ export default function YieldDemoPage() {
   const poolFundsDisplay = balances ? (balances.poolFunds / 1_000_000).toFixed(2) : "—";
   const yieldDisplay = balances ? (balances.yieldBalance / 1_000_000).toFixed(2) : "—";
   const collateralDisplay = balances ? (balances.collateralBalance / 1_000_000).toFixed(2) : "—";
+
+  const { data: dbPools } = useDeepBookPools();
+  const [selectedDbPool, setSelectedDbPool] = useState<string | null>("DEEP_SUI");
+  const { data: orderbook } = usePoolOrderbook(selectedDbPool);
+
+  const dbPoolInfo = selectedDbPool ? getPoolInfo(selectedDbPool) : null;
+  const bestBid = orderbook?.bids?.[0]?.price ?? 0;
+  const bestAsk = orderbook?.asks?.[0]?.price ?? 0;
+  const midPrice = bestBid && bestAsk ? (bestBid + bestAsk) / 2 : 0;
+  const spread = bestBid && bestAsk ? (((bestAsk - bestBid) / midPrice) * 100) : 0;
+  const bidDepth = orderbook?.bids?.reduce((s, l) => s + l.price * l.quantity, 0) ?? 0;
+  const askDepth = orderbook?.asks?.reduce((s, l) => s + l.price * l.quantity, 0) ?? 0;
+  const tvl = bidDepth + askDepth;
 
   const handleSimulateYield = () => {
     if (txStatus === "pending") return;
@@ -135,6 +149,95 @@ export default function YieldDemoPage() {
               <p className="protocol-font mt-2 text-4xl font-black text-[var(--foreground)]">${collateralDisplay}</p>
               <p className="mt-1 text-xs text-[var(--muted)]">Participant security deposits</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 pb-12 md:px-10 lg:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="overflow-hidden rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] shadow-[6px_6px_0_var(--border)]">
+            <div className="border-b-2 border-[var(--border)] p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="protocol-font text-lg font-black">
+                    <Database className="mr-2 inline-block size-5" />
+                    DeepBook Live Pools
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--muted)]">Real-time orderbook data from DeepBook V3 testnet</p>
+                </div>
+                <select
+                  value={selectedDbPool ?? ""}
+                  onChange={(e) => setSelectedDbPool(e.target.value || null)}
+                  className="protocol-font rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-black shadow-[3px_3px_0_var(--border)] outline-none"
+                >
+                  {ALL_POOL_KEYS.map((key) => (
+                    <option key={key} value={key}>{key.replace("_", "/")}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {dbPoolInfo && (
+              <div className="grid gap-4 p-6 md:grid-cols-4">
+                <div className="rounded-xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="protocol-font mb-1 text-[10px] font-black text-[var(--muted)]">Mid Price</p>
+                  <p className="protocol-font text-xl font-black text-[var(--foreground)]">
+                    {midPrice > 0 ? midPrice.toFixed(midPrice < 1 ? 6 : 4) : "—"}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--muted)]">{dbPoolInfo.quoteAsset}/{dbPoolInfo.baseAsset}</p>
+                </div>
+                <div className="rounded-xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="protocol-font mb-1 text-[10px] font-black text-[var(--muted)]">Spread</p>
+                  <p className={`protocol-font text-xl font-black ${spread < 1 ? "text-[var(--success)]" : "text-[var(--warn)]"}`}>
+                    {spread > 0 ? spread.toFixed(3) + "%" : "—"}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--muted)]">Bid-ask spread</p>
+                </div>
+                <div className="rounded-xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="protocol-font mb-1 text-[10px] font-black text-[var(--muted)]">Bid Depth</p>
+                  <p className="protocol-font text-xl font-black text-[var(--foreground)]">
+                    {bidDepth > 0 ? bidDepth.toFixed(2) : "—"}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--muted)]">{dbPoolInfo.quoteAsset}</p>
+                </div>
+                <div className="rounded-xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                  <p className="protocol-font mb-1 text-[10px] font-black text-[var(--muted)]">Ask Depth</p>
+                  <p className="protocol-font text-xl font-black text-[var(--foreground)]">
+                    {askDepth > 0 ? askDepth.toFixed(2) : "—"}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--muted)]">{dbPoolInfo.quoteAsset}</p>
+                </div>
+              </div>
+            )}
+
+            {orderbook && (
+              <div className="grid gap-0 border-t-2 border-[var(--border)] md:grid-cols-2">
+                <div className="border-b-2 border-[var(--border)] p-4 md:border-b-0 md:border-r-2">
+                  <p className="protocol-font mb-3 text-xs font-black text-[var(--success)]">Bids</p>
+                  <div className="space-y-1">
+                    {orderbook.bids.slice(0, 8).map((level, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-lg bg-[var(--background)] px-3 py-1.5 text-xs">
+                        <span className="font-bold text-[var(--success)]">{level.price.toFixed(dbPoolInfo?.quoteAsset === "DBUSDC" ? 4 : 6)}</span>
+                        <span className="text-[var(--muted)]">{level.quantity.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {orderbook.bids.length === 0 && <p className="text-xs text-[var(--muted)]">No bids</p>}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="protocol-font mb-3 text-xs font-black text-[var(--warn)]">Asks</p>
+                  <div className="space-y-1">
+                    {orderbook.asks.slice(0, 8).map((level, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-lg bg-[var(--background)] px-3 py-1.5 text-xs">
+                        <span className="font-bold text-[var(--warn)]">{level.price.toFixed(dbPoolInfo?.quoteAsset === "DBUSDC" ? 4 : 6)}</span>
+                        <span className="text-[var(--muted)]">{level.quantity.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {orderbook.asks.length === 0 && <p className="text-xs text-[var(--muted)]">No asks</p>}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

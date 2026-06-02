@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
+import { useProfileData } from "@/hooks/useProfileData";
 import {
   User,
   Wallet,
@@ -23,86 +24,16 @@ import {
   Zap,
 } from "lucide-react";
 
-interface Badge {
-  name: string;
-  description: string;
-  icon: typeof Shield;
-  color: string;
-  achieved: boolean;
-}
-
-const MOCK_BADGES: Badge[] = [
-  {
-    name: "Early Adopter",
-    description: "Joined Suivan during testnet",
-    icon: Sparkles,
-    color: "var(--success-soft)",
-    achieved: true,
-  },
-  {
-    name: "Pool Pioneer",
-    description: "Created 3+ pools",
-    icon: Users,
-    color: "var(--accent-soft)",
-    achieved: false,
-  },
-  {
-    name: "Cycle Champion",
-    description: "Won 5 cycles",
-    icon: Trophy,
-    color: "var(--warn-soft)",
-    achieved: false,
-  },
-  {
-    name: "Whale Watcher",
-    description: "Deposited 50k+ USDC",
-    icon: PiggyBank,
-    color: "var(--success-soft)",
-    achieved: false,
-  },
-  {
-    name: "Sui Native",
-    description: "Completed 10 cycles",
-    icon: Zap,
-    color: "var(--accent-soft)",
-    achieved: false,
-  },
-  {
-    name: "Community Pillar",
-    description: "Referred 5 members",
-    icon: Award,
-    color: "var(--purple-soft)",
-    achieved: false,
-  },
-];
-
-interface ActivityItem {
-  type: "join" | "win" | "create" | "badge";
-  label: string;
-  poolName: string;
-  time: string;
-}
-
-const MOCK_ACTIVITY: ActivityItem[] = [
-  {
-    type: "join",
-    label: "Joined pool",
-    poolName: "Arisan Ceria #12",
-    time: "2 hours ago",
-  },
-  {
-    type: "badge",
-    label: "Earned badge",
-    poolName: "Early Adopter",
-    time: "2 hours ago",
-  },
-];
+const BADGE_ICONS: Record<string, typeof Sparkles> = {
+  Sparkles, Users, Trophy, PiggyBank, Zap, Award,
+};
 
 export default function ProfilePage() {
   const { t } = useLanguage();
   const account = useCurrentAccount();
   const isConnected = !!account;
   const [copied, setCopied] = useState(false);
+  const { stats: profileStats, badges, activity, isLoading } = useProfileData(account?.address);
 
   const displayAddr = useMemo(() => {
     if (!account?.address) return "";
@@ -119,29 +50,46 @@ export default function ProfilePage() {
   const stats = [
     {
       label: t("profile.statsPools"),
-      value: "3",
+      value: String(profileStats.pools),
       icon: Users,
       color: "var(--accent-soft)",
     },
     {
       label: t("profile.statsWon"),
-      value: "1",
+      value: String(profileStats.won),
       icon: Trophy,
       color: "var(--warn-soft)",
     },
     {
       label: t("profile.statsSaved"),
-      value: "$2,400",
+      value: `$${profileStats.saved.toLocaleString()}`,
       icon: PiggyBank,
       color: "var(--success-soft)",
     },
     {
       label: t("profile.statsBadges"),
-      value: "1",
+      value: String(profileStats.badges),
       icon: Award,
       color: "var(--purple-soft)",
     },
   ];
+
+  if (isConnected && isLoading) {
+    return (
+      <main className="min-h-screen bg-[var(--brutal-bg)] text-[var(--brutal-ink)]">
+        <Header />
+        <section className="px-5 pt-36 pb-20 md:px-10 lg:px-12">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-center justify-center py-20">
+              <div className="h-12 w-12 animate-spin border-2 border-[var(--brutal-ink)] border-b-[var(--brutal-muted)]" />
+              <span className="protocol-font ml-4 text-sm font-black text-[var(--brutal-muted)]">Loading Profile</span>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[var(--brutal-bg)] text-[var(--brutal-ink)]">
@@ -265,13 +213,12 @@ export default function ProfilePage() {
                       {t("profile.activityTitle")}
                     </h2>
                   </div>
-                  {MOCK_ACTIVITY.length === 0 ? (
-                    <p className="py-8 text-center text-sm font-semibold text-[var(--brutal-muted)]">
-                      {t("profile.activityEmpty")}
-                    </p>
+                  {activity.length === 0 ? (
+
+                    <p className="col-span-full py-8 text-center text-sm font-semibold text-[var(--brutal-muted)]">{t("profile.noActivity")}</p>
                   ) : (
                     <div className="space-y-3">
-                      {MOCK_ACTIVITY.map((item, i) => {
+                      {activity.map((item, i) => {
                         const TypeIcon =
                           item.type === "join" || item.type === "create"
                             ? Users
@@ -314,8 +261,8 @@ export default function ProfilePage() {
                 {t("profile.nftTitle")}
               </p>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-                {MOCK_BADGES.map((badge) => {
-                  const Icon = badge.icon;
+                {badges.map((badge) => {
+                  const Icon = BADGE_ICONS[badge.icon] ?? Shield;
                   return (
                     <div
                       key={badge.name}
