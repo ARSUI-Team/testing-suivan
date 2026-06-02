@@ -135,7 +135,7 @@ export default function FaucetPage() {
 
     // Try direct wallet call
     claimUSDC(faucetId, {
-      onSuccess: () => onClaimSuccess(),
+      onSuccess: (digest) => onClaimSuccess(digest),
       onError: () => trySponsor(),
     });
   }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, successToast, errorToast, t, refetchBalance]);
@@ -350,23 +350,24 @@ export default function FaucetPage() {
                         <div className="grid size-10 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)]">
                           <Shield className="size-4 text-[var(--brutal-ink)]" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <p className="font-black text-sm tracking-tight" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
                             {rec.amount} USDC
                           </p>
                           <p className="text-[10px] font-semibold text-[var(--brutal-muted)]">
                             {formatDate(rec.time)} · {formatTime(rec.time)}
-                            {rec.txDigest && (
-                              <a
-                                href={`${SUISCAN_URL}/tx/${rec.txDigest}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ml-2 font-mono text-[9px] opacity-60 underline underline-offset-2 hover:opacity-100"
-                              >
-                                0x{rec.txDigest.slice(0, 8)}…
-                              </a>
-                            )}
                           </p>
+                          {rec.txDigest && (
+                            <a
+                              href={`${SUISCAN_URL}/tx/${rec.txDigest}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--brutal-muted)] underline underline-offset-2 decoration-dotted hover:text-[var(--brutal-ink)] hover:decoration-solid transition-colors"
+                            >
+                              <ExternalLink className="size-3 shrink-0" />
+                              {rec.txDigest.slice(0, 16)}…{rec.txDigest.slice(-4)}
+                            </a>
+                          )}
                         </div>
                         <CheckCircle2 className="size-4 shrink-0 text-[var(--success-soft)]" />
                       </div>
