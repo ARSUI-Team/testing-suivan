@@ -238,6 +238,10 @@ export default function PoolDetailPage() {
   const COLLATERAL_MULTIPLIER = 125;
 
   const handleJoinPool = () => {
+    if (!joinCoinId) {
+      errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
+      return;
+    }
     joinPool(poolAddress, Math.ceil(depositAmount * maxParticipants * COLLATERAL_MULTIPLIER / 100), joinCoinId);
   };
 
@@ -717,30 +721,23 @@ export default function PoolDetailPage() {
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Returned at the end of the cycle with yield bonus when available</p>
               </div>
 
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[var(--muted)]">USDC Coin</label>
-                {usdcCoins.length > 0 ? (
-                  <select
-                    value={joinCoinId}
-                    onChange={(e) => setJoinCoinId(e.target.value)}
-                    className="min-h-[44px] w-full rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none focus:bg-[var(--accent-soft)]"
+              {usdcBalance > 0 ? (
+                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                  <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">USDC Balance</p>
+                  <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{usdcBalance.toFixed(2)} USDC</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
+                  <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Insufficient USDC</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Get free test USDC from the Faucet page before joining.</p>
+                  <Link
+                    href="/faucet"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-2 text-xs font-black shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
                   >
-                    {usdcCoins.map((c) => (
-                      <option key={c.coinObjectId} value={c.coinObjectId}>
-                        {c.coinObjectId.slice(0, 10)}... ({c.balance.toFixed(2)} USDC)
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={joinCoinId}
-                    onChange={(e) => setJoinCoinId(e.target.value)}
-                    placeholder="0x... (no USDC coins found)"
-                    className="min-h-[44px] w-full rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none focus:bg-[var(--accent-soft)]"
-                  />
-                )}
-              </div>
+                    Go to Faucet →
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -811,30 +808,23 @@ export default function PoolDetailPage() {
                 <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{currentCycle} of {maxParticipants}</p>
               </div>
 
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[var(--muted)]">USDC Coin</label>
-                {usdcCoins.length > 0 ? (
-                  <select
-                    value={depositCoinId}
-                    onChange={(e) => setDepositCoinId(e.target.value)}
-                    className="min-h-[44px] w-full rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none focus:bg-[var(--accent-soft)]"
+              {usdcBalance > 0 ? (
+                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                  <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">USDC Balance</p>
+                  <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{usdcBalance.toFixed(2)} USDC</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
+                  <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Insufficient USDC</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Get free test USDC from the Faucet page first.</p>
+                  <Link
+                    href="/faucet"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-2 text-xs font-black shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
                   >
-                    {usdcCoins.map((c) => (
-                      <option key={c.coinObjectId} value={c.coinObjectId}>
-                        {c.coinObjectId.slice(0, 10)}... ({c.balance.toFixed(2)} USDC)
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={depositCoinId}
-                    onChange={(e) => setDepositCoinId(e.target.value)}
-                    placeholder="0x... (no USDC coins found)"
-                    className="min-h-[44px] w-full rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none focus:bg-[var(--accent-soft)]"
-                  />
-                )}
-              </div>
+                    Go to Faucet →
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">

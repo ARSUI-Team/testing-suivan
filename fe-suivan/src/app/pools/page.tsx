@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCurrentAccount } from "@mysten/dapp-kit";
@@ -57,6 +58,7 @@ export default function PoolsPage() {
   const { createPool, isPending: creating, isSuccess: createSuccess, txResponse: createTxResponse, hash: createHash } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
   const [pendingBlobId, setPendingBlobId] = useState<string | null>(null);
   const [creatingWithMeta, setCreatingWithMeta] = useState(false);
 
@@ -93,6 +95,13 @@ export default function PoolsPage() {
     }
   }, [createSuccess, createTxResponse, createHash, pendingBlobId, linkMetadata, refetchPools, successToast]);
 
+  // Auto-populate coin when modals open
+  useEffect(() => {
+    if (selectedPool && usdcCoins.length > 0 && !joinCoinId) {
+      setJoinCoinId(usdcCoins[0].coinObjectId);
+    }
+  }, [selectedPool, usdcCoins, joinCoinId]);
+
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)
     : [];
@@ -120,13 +129,22 @@ export default function PoolsPage() {
   const COLLATERAL_MULTIPLIER = 125;
 
   const handleJoinPool = () => {
-    if (selectedPool) {
-      const collateralAmt = Math.ceil(selectedPool.depositAmount * selectedPool.maxParticipants * COLLATERAL_MULTIPLIER / 100);
-      joinPool(selectedPool.address, collateralAmt, joinCoinId);
+    if (!selectedPool) return;
+    if (!joinCoinId) {
+      errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
+      return;
     }
+    const collateralAmt = Math.ceil(selectedPool.depositAmount * selectedPool.maxParticipants * COLLATERAL_MULTIPLIER / 100);
+    joinPool(selectedPool.address, collateralAmt, joinCoinId);
   };
 
   const handleCreatePool = async () => {
+    if (!createForm.usdcCoinId) {
+      errorToast("Validation", "Please select a USDC coin first");
+      setCreatingWithMeta(false);
+      return;
+    }
+
     setCreatingWithMeta(true);
 
     // 1. Publish metadata to Walrus if name is provided
@@ -233,7 +251,12 @@ export default function PoolsPage() {
 
             {isConnected ? (
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => {
+                  if (usdcCoins.length > 0 && !createForm.usdcCoinId) {
+                    setCreateForm(f => ({ ...f, usdcCoinId: usdcCoins[0].coinObjectId }));
+                  }
+                  setShowCreateModal(true);
+                }}
                 className="brutal-btn"
               >
                 + {t("pools.create")}
@@ -409,30 +432,25 @@ export default function PoolsPage() {
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>{selectedPool.apy}%</p>
               </div>
 
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.coinLabel")}</label>
-                {usdcCoins.length > 0 ? (
-                  <select
-                    value={joinCoinId}
-                    onChange={(e) => setJoinCoinId(e.target.value)}
-                    className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
+              {usdcBalance > 0 ? (
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-muted)" }}>USDC Balance</p>
+                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
+                    {usdcBalance.toFixed(2)} USDC
+                  </p>
+                </div>
+              ) : (
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-muted)" }}>Insufficient USDC</p>
+                  <p className="mt-1 text-sm font-semibold" style={{ color: "var(--brutal-muted)" }}>Get free test USDC from the Faucet page before joining.</p>
+                  <Link
+                    href="/faucet"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
-                    {usdcCoins.map((c) => (
-                      <option key={c.coinObjectId} value={c.coinObjectId}>
-                        {c.coinObjectId.slice(0, 10)}... ({c.balance.toFixed(2)} USDC)
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={joinCoinId}
-                    onChange={(e) => setJoinCoinId(e.target.value)}
-                    placeholder="0x... (no USDC coins found)"
-                    className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
-                  />
-                )}
-              </div>
+                    Go to Faucet →
+                  </Link>
+                </div>
+              )}
             </div>
 
             <button
@@ -554,30 +572,42 @@ export default function PoolsPage() {
                 />
               </div>
 
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.coinLabel")}</label>
-                {usdcCoins.length > 0 ? (
-                  <select
-                    value={createForm.usdcCoinId}
-                    onChange={(e) => setCreateForm({ ...createForm, usdcCoinId: e.target.value })}
-                    className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
+              {usdcBalance > 0 ? (
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-muted)" }}>USDC Balance</p>
+                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
+                    {usdcBalance.toFixed(2)} USDC
+                  </p>
+                </div>
+              ) : (
+                <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
+                  <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-muted)" }}>No USDC Balance</p>
+                  <p className="mt-1 text-sm font-semibold" style={{ color: "var(--brutal-muted)" }}>Get free test USDC first to create a pool.</p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("/api/sponsor", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: "claim_usdc", userAddress: account?.address }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          successToast("10,000 TEST_USDC minted!");
+                          setTimeout(() => refetchPools(), 1000);
+                        } else {
+                          errorToast(data.error || "Faucet failed");
+                        }
+                      } catch (e) {
+                        errorToast(e instanceof Error ? e.message : "Faucet error");
+                      }
+                    }}
+                    className="protocol-font mt-3 w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
-                    {usdcCoins.map((c) => (
-                      <option key={c.coinObjectId} value={c.coinObjectId}>
-                        {c.coinObjectId.slice(0, 10)}... ({c.balance.toFixed(2)} USDC)
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={createForm.usdcCoinId}
-                    onChange={(e) => setCreateForm({ ...createForm, usdcCoinId: e.target.value })}
-                    placeholder="0x... (no USDC coins found)"
-                    className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
-                  />
-                )}
-              </div>
+                    Get 10,000 USDC from Faucet →
+                  </button>
+                </div>
+              )}
 
               <div className="space-y-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
                 <div className="flex justify-between text-sm">
