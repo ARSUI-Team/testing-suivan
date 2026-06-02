@@ -262,30 +262,39 @@ export function useParticipantInfo(poolAddress: string | undefined, participantA
     queryFn: async () => {
       if (!poolAddress || !participantAddress) return null;
 
-      // Get dynamic field for participant
+      // Get the participants table ID from the pool object
+      const poolObj = await client.getObject({
+        id: poolAddress,
+        options: { showContent: true },
+      });
+      const fields = (poolObj.data?.content as { fields?: Record<string, unknown> })?.fields;
+      const tableId = (fields?.participants as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+      if (!tableId) return null;
+
+      // Get participant dynamic field from the table
       const obj = await client.getDynamicFieldObject({
-        parentId: poolAddress,
+        parentId: tableId,
         name: {
           type: "address",
           value: participantAddress,
         },
       });
 
-      const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields?.value as Record<string, unknown> | undefined;
-      if (!fields) return null;
+      const pVal = (obj.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
+      if (!pVal) return null;
 
       return {
         addr: participantAddress,
-        collateralAmount: Number(fields.collateral_amount || 0) / 1_000_000,
-        missedPayments: Number(fields.missed_payments || 0),
-        hasReceivedPayout: Boolean(fields.has_received_payout),
-        isActive: Boolean(fields.is_active),
-        joinedAtMs: Number(fields.joined_at_ms || 0),
-        lastDepositCycle: Number(fields.last_deposit_cycle || 0),
-        depositsThisCycle: Boolean(fields.deposits_this_cycle),
-        proportionalYieldEarned: Number(fields.proportional_yield_earned || 0) / 1_000_000,
-        leaderboardScore: Number(fields.leaderboard_score || 0),
-        gachaClaimed: Boolean(fields.gacha_claimed),
+        collateralAmount: Number(pVal.collateral_amount || 0) / 1_000_000,
+        missedPayments: Number(pVal.missed_payments || 0),
+        hasReceivedPayout: Boolean(pVal.has_received_payout),
+        isActive: Boolean(pVal.is_active),
+        joinedAtMs: Number(pVal.joined_at_ms || 0),
+        lastDepositCycle: Number(pVal.last_deposit_cycle || 0),
+        depositsThisCycle: Boolean(pVal.deposits_this_cycle),
+        proportionalYieldEarned: Number(pVal.proportional_yield_earned || 0) / 1_000_000,
+        leaderboardScore: Number(pVal.leaderboard_score || 0),
+        gachaClaimed: Boolean(pVal.gacha_claimed),
       } as ParticipantInfo;
     },
     enabled: !!poolAddress && !!participantAddress,
@@ -306,8 +315,10 @@ export function useParticipantList(poolAddress: string | undefined) {
         options: { showContent: true },
       });
       const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
-      const raw = fields?.participant_list as { fields?: { value: { fields?: unknown }[] } } | undefined;
-      const addresses = raw?.fields?.value?.map((v: unknown) => String((v as { fields?: { value?: string } }).fields?.value)) ?? [];
+      const raw = fields?.participant_list as string[] | { fields?: { value?: unknown[] } } | undefined;
+      const addresses: string[] = Array.isArray(raw)
+        ? raw
+        : ((raw as { fields?: { value?: { fields?: { value?: string } }[] } })?.fields?.value?.map((v) => String((v as { fields?: { value?: string } })?.fields?.value || v)) ?? []);
       return { addresses, count: addresses.length };
     },
     enabled: !!poolAddress,
