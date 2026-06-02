@@ -194,6 +194,25 @@ export default function FaucetPage() {
 
       <section className="px-5 pb-20 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">
+
+          {isConnected && (
+            <div className="mb-8 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-5 shadow-[4px_4px_0_var(--brutal-ink)]">
+              <p className="protocol-font mb-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--brutal-muted)]">
+                How it works
+              </p>
+              <ol className="space-y-2 text-sm font-semibold text-[var(--brutal-ink)]">
+                <li className="flex items-start gap-3">
+                  <span className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] text-xs font-black">1</span>
+                  <span>Get free <strong>SUI</strong> from the testnet faucet → this pays for transaction fees</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] text-xs font-black">2</span>
+                  <span>Claim <strong>500 USDC</strong> below → use it to join or create pools</span>
+                </li>
+              </ol>
+            </div>
+          )}
+
           {!isConnected ? (
             <div className="mx-auto max-w-md border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-10 text-center shadow-[8px_8px_0_var(--brutal-ink)]">
               <div className="mx-auto mb-6 grid size-16 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)]">
