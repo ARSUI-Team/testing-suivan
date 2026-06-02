@@ -117,29 +117,18 @@ export function useAllPools() {
       const allPoolsTableId = (factoryFields?.all_pools as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
       if (!allPoolsTableId) return [];
 
-      // Fetch all pool IDs from the all_pools Table via dynamic fields
-      const dynamicFields = await client.getDynamicFields({
-        parentId: allPoolsTableId,
-        limit: poolCount,
-      });
-
-      const poolIds: string[] = dynamicFields.data
-        .map((f) => (f.name.value as string) || "")
-        .filter(Boolean);
-
-      // If dynamic fields returned nothing, fallback: iterate by index
-      if (poolIds.length === 0) {
-        for (let i = 0; i < poolCount; i++) {
-          try {
-            const entry = await client.getDynamicFieldObject({
-              parentId: allPoolsTableId,
-              name: { type: "u64", value: String(i) },
-            });
-            const value = (entry.data?.content as { fields?: { value?: string } })?.fields?.value;
-            if (value) poolIds.push(value);
-          } catch {
-            // skip missing entries
-          }
+      // Fetch each pool ID from the all_pools Table by index
+      const poolIds: string[] = [];
+      for (let i = 0; i < poolCount; i++) {
+        try {
+          const entry = await client.getDynamicFieldObject({
+            parentId: allPoolsTableId,
+            name: { type: "u64", value: String(i) },
+          });
+          const value = (entry.data?.content as { fields?: { value?: string } })?.fields?.value;
+          if (value) poolIds.push(value);
+        } catch {
+          // skip missing entries
         }
       }
       return poolIds;
