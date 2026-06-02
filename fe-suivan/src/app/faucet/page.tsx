@@ -361,7 +361,9 @@ export default function FaucetPage() {
                     ) : cooldownActive ? (
                       <span className="inline-flex items-center gap-2">
                         <Clock className="size-3.5" />
-                        Wait {cooldown}s
+                        {String(Math.floor(cooldown / 3600)).padStart(2, "0")}:
+                        {String(Math.floor((cooldown % 3600) / 60)).padStart(2, "0")}:
+                        {String(cooldown % 60).padStart(2, "0")}
                       </span>
                     ) : (
                       <span>Claim 500 USDC →</span>
@@ -376,7 +378,7 @@ export default function FaucetPage() {
                 </div>
                 {cooldownActive && (
                   <p className="mt-3 text-center text-[10px] font-semibold text-[var(--brutal-muted)]">
-                    Next claim available in <strong className="text-[var(--brutal-ink)]">{cooldown}s</strong>. Need more USDC? Get SUI first above, then claim again.
+                    Next claim available in <strong className="text-[var(--brutal-ink)]">{String(Math.floor(cooldown / 3600)).padStart(2, "0")}:{String(Math.floor((cooldown % 3600) / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</strong>. Need more USDC? Get SUI first above, then claim again.
                   </p>
                 )}
               </div>
