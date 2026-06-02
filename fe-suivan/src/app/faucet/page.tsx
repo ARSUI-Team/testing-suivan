@@ -151,10 +151,23 @@ export default function FaucetPage() {
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
-    return d.toLocaleTimeString("en-US", {
+    const time = d.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
+      hour12: false,
+    });
+    const timezone = Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
+      .formatToParts(d)
+      .find(p => p.type === "timeZoneName")?.value || "UTC";
+    return `${time} ${timezone}`;
+  };
+
+  const formatDate = (ts: number) => {
+    const d = new Date(ts);
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -328,15 +341,15 @@ export default function FaucetPage() {
                             {rec.amount} USDC
                           </p>
                           <p className="text-[10px] font-semibold text-[var(--brutal-muted)]">
-                            {formatTime(rec.time)}
+                            {formatDate(rec.time)} · {formatTime(rec.time)}
                             {rec.txDigest && (
                               <a
                                 href={`${SUISCAN_URL}/tx/${rec.txDigest}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="ml-3 font-mono text-[9px] opacity-60 underline underline-offset-2 hover:opacity-100"
+                                className="ml-2 font-mono text-[9px] opacity-60 underline underline-offset-2 hover:opacity-100"
                               >
-                                tx: 0x{rec.txDigest.slice(0, 8)}...
+                                0x{rec.txDigest.slice(0, 8)}…
                               </a>
                             )}
                           </p>
