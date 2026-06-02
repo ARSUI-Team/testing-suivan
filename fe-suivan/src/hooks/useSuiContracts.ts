@@ -58,19 +58,26 @@ export interface ParticipantInfo {
 
 function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
   try {
-    const id = String((fields?.id as { fields?: { id?: { fields?: { id?: string } } } })?.fields?.id?.fields?.id || fields?.id || "");
+    const id = ((fields?.id as { id?: string })?.id) || String(fields?.id || "");
+
     const config = (fields?.config as { fields?: Record<string, unknown> })?.fields;
     const depositAmount = Number((config?.deposit_amount as string) || 0) / 1_000_000;
     const maxParticipants = Number((config?.max_participants as string) || 0);
-    const participantList = (fields?.participant_list as { fields?: { value?: unknown[] } })?.fields?.value ?? [];
-    const poolFundsBalance = Number(((fields?.pool_funds_balance as { fields?: { value?: string } })?.fields?.value) || 0) / 1_000_000;
-    const yieldBalance = Number(((fields?.yield_balance as { fields?: { value?: string } })?.fields?.value) || 0) / 1_000_000;
-    const collateralYieldBalance = Number(((fields?.collateral_yield_balance as { fields?: { value?: string } })?.fields?.value) || 0) / 1_000_000;
 
-    // Read gacha winner from PoolInfo event or pool fields
-    const gachaWinner = fields?.gacha_winner
-      ? (fields.gacha_winner as { fields?: { vec?: string[] } })?.fields?.vec?.[0] ?? null
-      : null;
+    // participant_list can be a plain array or { fields: { value: [...] } }
+    const rawList = fields?.participant_list;
+    const participantList: unknown[] = Array.isArray(rawList)
+      ? rawList
+      : ((rawList as { fields?: { value?: unknown[] } })?.fields?.value ?? []);
+
+    // Balance fields can be a plain string or { fields: { value: "..." } }
+    const readBalance = (val: unknown): number => {
+      if (typeof val === "string" || typeof val === "number") return Number(val || 0);
+      return Number(((val as { fields?: { value?: string } })?.fields?.value) || 0);
+    };
+    const poolFundsBalance = readBalance(fields?.pool_funds_balance) / 1_000_000;
+    const yieldBalance = readBalance(fields?.yield_balance) / 1_000_000;
+    const collateralYieldBalance = readBalance(fields?.collateral_yield_balance) / 1_000_000;
 
     return {
       id,
@@ -84,8 +91,8 @@ function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
       totalFunds: poolFundsBalance,
       yield: yieldBalance,
       collateralYield: collateralYieldBalance,
-      gachaWinner,
-      gachaPrize: yieldBalance, // cumulative yield becomes gacha pool
+      gachaWinner: null as string | null,
+      gachaPrize: yieldBalance,
       walrusMetadataBlobId: String((fields?.walrus_metadata_blob_id as string) || ""),
     };
   } catch {
