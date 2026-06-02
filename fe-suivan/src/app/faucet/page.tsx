@@ -80,6 +80,14 @@ export default function FaucetPage() {
     });
   }, []);
 
+  const deleteFromHistory = useCallback((index: number) => {
+    setClaimHistory((h) => {
+      const next = h.filter((_, i) => i !== index);
+      saveClaimHistory(next);
+      return next;
+    });
+  }, []);
+
   const cooldownActive = cooldown > 0;
 
   useEffect(() => {
@@ -346,7 +354,7 @@ export default function FaucetPage() {
                 ) : (
                   <div className="divide-y-[3px] divide-[var(--brutal-ink)]">
                     {claimHistory.map((rec, i) => (
-                      <div key={i} className="flex items-center gap-4 p-4">
+                      <div key={i} className="group flex items-center gap-4 p-4">
                         <div className="grid size-10 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)]">
                           <Shield className="size-4 text-[var(--brutal-ink)]" />
                         </div>
@@ -370,6 +378,16 @@ export default function FaucetPage() {
                           )}
                         </div>
                         <CheckCircle2 className="size-4 shrink-0 text-[var(--success-soft)]" />
+                        <button
+                          onClick={() => deleteFromHistory(i)}
+                          className="grid size-6 shrink-0 place-items-center border-[2px] border-transparent text-[var(--brutal-muted)] opacity-0 transition-all hover:border-[var(--brutal-ink)] hover:text-[var(--brutal-ink)] group-hover:opacity-100"
+                          title="Remove"
+                        >
+                          <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
                       </div>
                     ))}
                   </div>
