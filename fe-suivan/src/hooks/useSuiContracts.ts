@@ -510,7 +510,7 @@ export function useCreatePool() {
   ) => {
     const tx = new Transaction();
 
-    const requiredCollateral = Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100);
+    const requiredCollateral = Math.ceil(depositAmount * maxParticipants * COLLATERAL_MULTIPLIER / 100);
     const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
 
     tx.moveCall({

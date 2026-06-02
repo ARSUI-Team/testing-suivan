@@ -121,7 +121,7 @@ export default function PoolsPage() {
 
   const handleJoinPool = () => {
     if (selectedPool) {
-      const collateralAmt = Math.ceil(selectedPool.depositAmount * COLLATERAL_MULTIPLIER / 100);
+      const collateralAmt = Math.ceil(selectedPool.depositAmount * selectedPool.maxParticipants * COLLATERAL_MULTIPLIER / 100);
       joinPool(selectedPool.address, collateralAmt, joinCoinId);
     }
   };
@@ -399,7 +399,7 @@ export default function PoolsPage() {
               <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
                 <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.collateral")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                  {Math.ceil(selectedPool.depositAmount * 125 / 100)} USDC
+                  {Math.ceil(selectedPool.depositAmount * selectedPool.maxParticipants * 125 / 100)} USDC
                 </p>
                 <p className="mt-1 text-xs font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.collateralDesc")}</p>
               </div>
@@ -595,7 +595,7 @@ export default function PoolsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.requiredCollateral")}</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                    {Math.ceil(createForm.depositAmount * 125 / 100)} USDC
+                    {Math.ceil(createForm.depositAmount * createForm.maxParticipants * 125 / 100)} USDC
                   </span>
                 </div>
               </div>
