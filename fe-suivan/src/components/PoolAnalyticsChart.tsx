@@ -12,23 +12,23 @@ interface PoolAnalyticsChartProps {
   title?: string;
   poolAddress: string;
   historyData?: AnalyticsDataPoint[];
-  metricLabel?: string;
   currentValue?: number;
 }
 
-function deriveData(poolAddress: string, days: number, metric: "apy" | "tvl"): AnalyticsDataPoint[] {
+function deriveData(poolAddress: string, days: number, metric: "apy" | "tvl", baseValue?: number): AnalyticsDataPoint[] {
   const data: AnalyticsDataPoint[] = [];
   const now = new Date();
-  const base = metric === "apy" ? 7.2 : 25000;
+  const base = baseValue ?? (metric === "apy" ? 7.2 : 25000);
   const poolHash = poolAddress.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const seed = poolHash * 0.01;
   for (let i = days; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const noise = (Math.sin((i + poolHash) * 0.7) * 0.9 + Math.cos((i + poolHash) * 0.3) * 0.6) * (metric === "apy" ? 0.9 : 4000);
-    const trend = Math.sin(((days - i) / days) * Math.PI) * (metric === "apy" ? 1.5 : 5000);
+    const variance = (Math.sin((i + seed) * 0.5) * 0.3 + Math.cos((i + seed) * 0.2) * 0.2) * (metric === "apy" ? 1.2 : 3000);
+    const drift = ((days - i) / days) * (metric === "apy" ? 0.8 : 2000);
     data.push({
       date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      value: Math.max(0, base + noise + trend),
+      value: Math.max(0, base + variance + drift),
     });
   }
   return data;
@@ -38,7 +38,6 @@ export default function PoolAnalyticsChart({
   title = "Pool Analytics",
   poolAddress,
   historyData,
-  metricLabel,
   currentValue: externalValue,
 }: PoolAnalyticsChartProps) {
   const { t } = useLanguage();
@@ -46,8 +45,8 @@ export default function PoolAnalyticsChart({
   const [timeRange, setTimeRange] = useState(14);
 
   const history = useMemo(() =>
-    historyData ?? deriveData(poolAddress, timeRange, metric),
-    [historyData, poolAddress, timeRange, metric]
+    historyData ?? deriveData(poolAddress, timeRange, metric, externalValue),
+    [historyData, poolAddress, timeRange, metric, externalValue]
   );
 
   const currentValue = externalValue ?? (history.length > 0 ? history[history.length - 1].value : 0);
@@ -82,7 +81,7 @@ export default function PoolAnalyticsChart({
     <div className="relative overflow-hidden rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)] sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div>
-          <p className="protocol-font text-xs font-black uppercase tracking-[0.2em] text-[var(--accent)]">analytics</p>
+          <p className="protocol-font text-xs font-black uppercase tracking-[0.2em] text-[var(--accent)]">projected</p>
           <h3 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)] sm:text-3xl">
             {title}
           </h3>
@@ -222,12 +221,12 @@ export default function PoolAnalyticsChart({
         </svg>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-[var(--border)] pt-4">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-[var(--border)] bg-[var(--warn-soft)] rounded-2xl p-4">
         <div className="flex items-center gap-2">
-          <span className={`h-3 w-3 rounded-full border-2 border-[var(--border)] ${metric === "apy" ? "bg-[var(--accent)]" : "bg-[var(--accent)]"}`} />
+          <span className="text-sm">📊</span>
           <span className="protocol-font text-xs font-black text-[var(--muted)]">{metric === "apy" ? "APY" : "TVL"}</span>
         </div>
-        <p className="text-xs font-semibold text-[var(--muted)]">
+        <p className="text-xs font-bold text-[var(--foreground)]">
           {t("detail.chartDisclaimer")}
         </p>
       </div>

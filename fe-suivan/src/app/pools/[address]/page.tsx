@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SharePool from "@/components/SharePool";
 import SuiFeeProfile from "@/components/SuiFeeProfile";
-import PoolAnalyticsChart, { type AnalyticsDataPoint } from "@/components/PoolAnalyticsChart";
+import PoolAnalyticsChart from "@/components/PoolAnalyticsChart";
 import { SuccessCelebration } from "@/components/Confetti";
 import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import ConnectSuiWallet from "@/components/ConnectSuiWallet";
@@ -25,6 +25,7 @@ import {
   useUSDCBalance,
   useUserUSDCcoins,
   useLinkPoolMetadata,
+  useClaimFinal,
 } from "@/hooks/useSuiContracts";
 import { SUI_PACKAGE_ID } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
@@ -73,9 +74,10 @@ export default function PoolDetailPage() {
   const { metadata: walrusMeta, refetch: refetchWalrusMeta } = usePoolWalrusMetadata(poolInfo?.walrusMetadataBlobId);
 
   // Actions
-  const { joinPool, isPending: joining, isSuccess: joinSuccess, error: joinError } = useJoinPool();
-  const { makeDeposit, isPending: depositing, isSuccess: depositSuccess, error: depositError } = useMakeDeposit();
+  const { joinPool, isPending: joining, isSuccess: joinSuccess, error: joinError, hash: joinHash } = useJoinPool();
+  const { makeDeposit, isPending: depositing, isSuccess: depositSuccess, error: depositError, hash: depositHash } = useMakeDeposit();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
+  const { claimFinal, isPending: claiming, isSuccess: claimSuccess, hash: claimHash, error: claimError } = useClaimFinal();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -173,27 +175,29 @@ export default function PoolDetailPage() {
   useEffect(() => {
     if (joinSuccess) {
       setShowJoinModal(false);
-      setSuccessMessage({ title: "Successfully Joined", message: "Welcome to the ROSCA pool. Your collateral and cycle status are now tracked." });
+      const txMsg = joinHash ? `\nTx: ${joinHash.slice(0, 10)}…${joinHash.slice(-4)}` : "";
+      setSuccessMessage({ title: "Successfully Joined", message: `Welcome to the ROSCA pool.${txMsg}` });
       setShowSuccessCelebration(true);
       refetchPool();
       refetchParticipant();
-      successToast("Joined Pool", "You are now a participant in this ROSCA.");
+      successToast("Joined Pool", `You are now a participant.${txMsg}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [joinSuccess]);
+  }, [joinSuccess, joinHash]);
 
   // Handle deposit success
   useEffect(() => {
     if (depositSuccess) {
       setShowDepositModal(false);
-      setSuccessMessage({ title: "Deposit Complete", message: "Your cycle contribution has been submitted successfully." });
+      const txMsg = depositHash ? `\nTx: ${depositHash.slice(0, 10)}…${depositHash.slice(-4)}` : "";
+      setSuccessMessage({ title: "Deposit Complete", message: `Your cycle contribution has been submitted.${txMsg}` });
       setShowSuccessCelebration(true);
       refetchPool();
       refetchParticipant();
-      successToast("Deposit Complete", "Your contribution has been submitted on-chain.");
+      successToast("Deposit Complete", `Contribution submitted on-chain.${txMsg}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [depositSuccess]);
+  }, [depositSuccess, depositHash]);
 
   // Handle join error
   useEffect(() => {
@@ -204,6 +208,24 @@ export default function PoolDetailPage() {
   useEffect(() => {
     if (depositError) errorToast("Deposit Failed", depositError?.message || "Transaction failed");
   }, [depositError, errorToast]);
+
+  // Handle claim success
+  useEffect(() => {
+    if (claimSuccess) {
+      const txMsg = claimHash ? `\nTx: ${claimHash.slice(0, 10)}…${claimHash.slice(-4)}` : "";
+      setSuccessMessage({ title: "Claim Complete", message: `Collateral + yield returned to your wallet.${txMsg}` });
+      setShowSuccessCelebration(true);
+      refetchPool();
+      refetchParticipant();
+      successToast("Claim Complete", `Funds returned to your wallet.${txMsg}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claimSuccess, claimHash]);
+
+  // Handle claim error
+  useEffect(() => {
+    if (claimError && !claimSuccess) errorToast("Claim Failed", claimError?.message || "Transaction failed");
+  }, [claimError, claimSuccess, errorToast]);
 
   // Auto-populate coin ID when modals open
   if (showJoinModal && defaultCoinId && !joinCoinId) {
@@ -391,7 +413,6 @@ export default function PoolDetailPage() {
                 title={`${poolName} Performance`}
                 poolAddress={poolAddress}
                 currentValue={liveApy}
-                metricLabel="APY"
               />
 
               {/* Participants List */}
@@ -517,10 +538,20 @@ export default function PoolDetailPage() {
                             </p>
                           )}
                           <button
-                            onClick={() => {/* claim_final tx will go here */}}
-                            className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                            onClick={() => claimFinal(poolAddress)}
+                            disabled={claiming}
+                            className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                              claiming
+                                ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                                : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                            }`}
                           >
-                            Claim Collateral + Yield
+                            {claiming ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                                Claiming...
+                              </span>
+                            ) : "Claim Collateral + Yield"}
                           </button>
                         </div>
                       )}
@@ -570,7 +601,7 @@ export default function PoolDetailPage() {
                     <div className="space-y-3">
                       {walrusMeta ? (
                         <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-3">
-                          <p className="protocol-font text-xs font-black">"{walrusMeta.name}"</p>
+                          <p className="protocol-font text-xs font-black">&quot;{walrusMeta.name}&quot;</p>
                           {walrusMeta.description && (
                             <p className="mt-1 text-xs text-[var(--muted)] line-clamp-2">{walrusMeta.description}</p>
                           )}

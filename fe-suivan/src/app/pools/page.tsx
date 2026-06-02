@@ -54,7 +54,7 @@ export default function PoolsPage() {
   const { balance: usdcBalance } = useUSDCBalance(account?.address);
 
   const { joinPool, isPending: joining, isSuccess: joinSuccess } = useJoinPool();
-  const { createPool, isPending: creating, isSuccess: createSuccess, txResponse: createTxResponse } = useCreatePool();
+  const { createPool, isPending: creating, isSuccess: createSuccess, txResponse: createTxResponse, hash: createHash } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const successToast = useSuccessToast();
   const [pendingBlobId, setPendingBlobId] = useState<string | null>(null);
@@ -88,9 +88,10 @@ export default function PoolsPage() {
       }
       setPendingBlobId(null);
       setCreatingWithMeta(false);
-      successToast("Pool Created", "Your ROSCA pool is now live and open for participants.");
+      const poolTxMsg = createHash ? `\nTx: ${createHash.slice(0, 10)}…${createHash.slice(-4)}` : "";
+      successToast("Pool Created", `Your ROSCA pool is now live.${poolTxMsg}`);
     }
-  }, [createSuccess, createTxResponse, pendingBlobId, linkMetadata, refetchPools, successToast]);
+  }, [createSuccess, createTxResponse, createHash, pendingBlobId, linkMetadata, refetchPools, successToast]);
 
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)
