@@ -88,7 +88,7 @@ export default function PoolDetailPage() {
   const [adminCapId, setAdminCapId] = useState("");
   const [publishingMeta, setPublishingMeta] = useState(false);
 
-  // Auto-fill admin cap from owned objects
+  // Auto-fill admin cap from owned objects — match by pool_id
   const client = useSuiClient();
   useEffect(() => {
     if (!account?.address || adminCapId) return;
@@ -99,14 +99,17 @@ export default function PoolDetailPage() {
           filter: { StructType: `${SUI_PACKAGE_ID}::arisan_pool::PoolAdminCap` },
           options: { showContent: true },
         });
-        const cap = objs.data?.[0];
-        if (cap?.data?.objectId) {
-          setAdminCapId(cap.data.objectId);
+        const matching = objs.data?.find((cap) => {
+          const fields = (cap.data?.content as { fields?: Record<string, unknown> })?.fields;
+          return fields?.pool_id === poolAddress;
+        });
+        if (matching?.data?.objectId) {
+          setAdminCapId(matching.data.objectId);
         }
       } catch { /* ignore */ }
     };
     findAdminCap();
-  }, [account?.address, adminCapId, client]);
+  }, [account?.address, adminCapId, client, poolAddress]);
 
   // Update form when walrus metadata loads
   useEffect(() => {
