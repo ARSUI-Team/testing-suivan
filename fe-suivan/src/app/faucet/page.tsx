@@ -18,7 +18,6 @@ import {
   ArrowRight,
   ExternalLink,
   Shield,
-  Zap,
 } from "lucide-react";
 
 type ClaimStatus = "idle" | "loading" | "success" | "error";
@@ -27,7 +26,6 @@ const FAUCET_COOLDOWN_S = 86400;
 const LS_KEY = "suivan_faucet_claim";
 const LS_HISTORY_KEY = "suivan_faucet_history";
 const SUISCAN_URL = "https://suiscan.xyz/testnet";
-const SUI_FAUCET_API = "https://faucet.testnet.sui.io/v1/gas";
 
 function getLastClaimTime(): number {
   if (typeof window === "undefined") return 0;
@@ -70,7 +68,6 @@ export default function FaucetPage() {
   const { claimUSDC, isPending: isWalletClaiming, hash: txHash, error: claimError } = useClaimUSDC();
 
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
-  const [suiStatus, setSuiStatus] = useState<ClaimStatus>("idle");
   const [cooldown, setCooldown] = useState(0);
   const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>(loadClaimHistory);
   const lastSavedHash = useRef<string | undefined>(undefined);
@@ -167,32 +164,6 @@ export default function FaucetPage() {
     claimUSDC(faucetId);
   }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, errorToast]);
 
-  const handleClaimSui = useCallback(async () => {
-    if (!address || suiStatus === "loading") return;
-    setSuiStatus("loading");
-    try {
-      const res = await fetch(SUI_FAUCET_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ FixedAmountRequest: { recipient: address } }),
-      });
-      if (res.status === 429) {
-        setSuiStatus("error");
-        errorToast("Testnet faucet is rate-limited. Use the external faucet instead.");
-        return;
-      }
-      if (!res.ok) throw new Error(`Faucet API returned ${res.status}`);
-      const data = await res.json();
-      setSuiStatus("success");
-      successToast("SUI sent! Check your wallet.");
-      setTimeout(() => setSuiStatus("idle"), 3000);
-    } catch (err) {
-      setSuiStatus("error");
-      errorToast(err instanceof Error ? err.message : "SUI faucet request failed");
-      setTimeout(() => setSuiStatus("idle"), 3000);
-    }
-  }, [address, successToast, errorToast]);
-
   const formatTime = (ts: number) => {
     const d = new Date(ts);
     const time = d.toLocaleTimeString("en-US", {
@@ -282,23 +253,14 @@ export default function FaucetPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleClaimSui}
-                    disabled={suiStatus === "loading"}
-                    className={`flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
-                      suiStatus === "success"
-                        ? "bg-[var(--success-soft)]"
-                        : suiStatus === "error"
-                        ? "bg-[var(--error-soft)]"
-                        : "bg-[var(--accent-soft)] hover:bg-[var(--brutal-ink)]"
-                    }`}
+                  <a
+                    href="https://faucet.testnet.sui.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
                     <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)]">
-                      {suiStatus === "loading" ? (
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-                      ) : (
-                        <Zap className="size-5 text-[var(--brutal-ink)]" />
-                      )}
+                      <ExternalLink className="size-5 text-[var(--brutal-ink)]" />
                     </div>
                     <div className="text-left">
                       <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
@@ -308,26 +270,10 @@ export default function FaucetPage() {
                         className="text-sm font-black tracking-tight"
                         style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
                       >
-                        {suiStatus === "loading"
-                          ? "Requesting..."
-                          : suiStatus === "success"
-                          ? "SUI sent!"
-                          : suiStatus === "error"
-                          ? "Rate-limited — try external faucet"
-                          : "Get free SUI →"}
+                        Get free SUI →
                       </p>
                     </div>
-                  </button>
-                  {suiStatus === "error" && (
-                    <a
-                      href="https://faucet.testnet.sui.io"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 block text-center text-[10px] font-semibold text-[var(--brutal-muted)] underline underline-offset-2 hover:text-[var(--brutal-ink)]"
-                    >
-                      Open external SUI faucet →
-                    </a>
-                  )}
+                  </a>
                 </div>
               </div>
 
