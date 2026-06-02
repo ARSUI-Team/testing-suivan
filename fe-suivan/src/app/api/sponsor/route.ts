@@ -24,7 +24,8 @@ const SPONSOR_SECRET_KEY = process.env.SPONSOR_SECRET_KEY || "";
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825";
 
 const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825::test_usdc::TEST_USDC";
-const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0x3dc30bab44e1d2f6ed75503ff701c3a406cf2144ac3b2e21d8b53947be9d2819";
+const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xe2587c933fdd1f4fa4bab04655a773a23d896bab18738e0efafdc6c6f36f5558";
+const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0xc7ab25a1c78d708441bf311929782fc95d32a9521027d4c3f868debdcfac46b4";
 
 interface SponsorRequest {
   action: "claim_usdc" | "join_pool" | "create_pool" | "make_deposit";
