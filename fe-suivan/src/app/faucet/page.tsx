@@ -24,6 +24,7 @@ type ClaimStatus = "idle" | "loading" | "success" | "error";
 
 const FAUCET_COOLDOWN_S = 30;
 const LS_KEY = "suivan_faucet_claim";
+const LS_HISTORY_KEY = "suivan_faucet_history";
 const SUI_TESTNET_FAUCET = "https://faucet.testnet.sui.io";
 
 function getLastClaimTime(): number {
@@ -35,6 +36,22 @@ function getLastClaimTime(): number {
 function setLastClaimTime() {
   if (typeof window !== "undefined") {
     localStorage.setItem(LS_KEY, String(Date.now()));
+  }
+}
+
+function loadClaimHistory(): ClaimRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(LS_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveClaimHistory(history: ClaimRecord[]) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
   }
 }
 
@@ -52,7 +69,15 @@ export default function FaucetPage() {
 
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
   const [cooldown, setCooldown] = useState(0);
-  const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>([]);
+  const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>(loadClaimHistory);
+
+  const addToHistory = useCallback((record: ClaimRecord) => {
+    setClaimHistory((h) => {
+      const next = [record, ...h.slice(0, 9)];
+      saveClaimHistory(next);
+      return next;
+    });
+  }, []);
 
   const cooldownActive = cooldown > 0;
 
@@ -88,10 +113,7 @@ export default function FaucetPage() {
           setClaimStatus("success");
           setLastClaimTime();
           setCooldown(FAUCET_COOLDOWN_S);
-          setClaimHistory((h) => [
-            { token: "usdc", amount: "500", time: Date.now() },
-            ...h.slice(0, 9),
-          ]);
+          addToHistory({ token: "usdc", amount: "500", time: Date.now() });
           successToast(t("faucet.success"));
           resolve();
         }, 1500);
@@ -109,10 +131,7 @@ export default function FaucetPage() {
         setClaimStatus("success");
         setLastClaimTime();
         setCooldown(FAUCET_COOLDOWN_S);
-        setClaimHistory((h) => [
-          { token: "usdc", amount: "500", time: Date.now(), txDigest: digest },
-          ...h.slice(0, 9),
-        ]);
+        addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest });
         successToast(t("faucet.success"));
       } catch (fallbackErr) {
         setClaimStatus("error");
