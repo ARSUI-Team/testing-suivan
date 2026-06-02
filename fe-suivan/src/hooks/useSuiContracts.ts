@@ -389,6 +389,7 @@ export function useUSDCBalance(address: string | undefined) {
       return total / 1_000_000;
     },
     enabled: !!address,
+    refetchInterval: 5000,
   });
   return { balance: data ?? 0, isLoading };
 }
