@@ -53,26 +53,34 @@ export function useProfileData(userAddress: string | undefined) {
           const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
           if (!fields) continue;
 
-          const rawParticipants = fields?.participants as { fields?: { value: { fields?: Record<string, unknown> }[] } } | undefined;
-          const participantEntries = rawParticipants?.fields?.value ?? [];
+          // participant_list is a plain array of addresses
+          const participantList = (fields?.participant_list as string[]) ?? [];
+          if (!participantList.includes(userAddress)) continue;
 
-          for (const entry of participantEntries) {
-            const pFields = entry.fields;
-            if (!pFields) continue;
-            const addr = String(pFields.key || "");
-            if (addr !== userAddress) continue;
+          userPoolCount++;
 
-            const value = pFields.value as Record<string, unknown> | undefined;
-            if (!value) continue;
-
-            userPoolCount++;
-            const hasReceivedPayout = Boolean(value.has_received_payout);
-            if (hasReceivedPayout) winCount++;
-
-            const collateralAmount = Number(value.collateral_amount || 0);
-            const poolFunds = Number(fields?.pool_funds_balance || 0);
-            const depositAmount = Number(fields?.deposit_amount || 0);
-            totalSaved += (collateralAmount + poolFunds + depositAmount) / 1_000_000;
+          // Read participants Table ID to fetch participant detail
+          const participantsTableId = (fields?.participants as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+          if (participantsTableId) {
+            try {
+              const entry = await client.getDynamicFieldObject({
+                parentId: participantsTableId,
+                name: {
+                  type: "address",
+                  value: userAddress,
+                },
+              });
+              const pVal = (entry.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
+              if (pVal) {
+                const hasReceivedPayout = Boolean(pVal.has_received_payout);
+                if (hasReceivedPayout) winCount++;
+                const collateralAmount = Number(pVal.collateral_amount || 0);
+                const poolFunds = Number((fields?.pool_funds_balance as string) || 0);
+                totalSaved += (collateralAmount + poolFunds) / 1_000_000;
+              }
+            } catch {
+              // dynamic field not found → participant detail unavailable
+            }
           }
         } catch {
           continue;

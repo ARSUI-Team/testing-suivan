@@ -151,6 +151,7 @@ const en: Record<string, string> = {
   "pools.totalValue": "Total Pool Value",
   "pools.poolDuration": "Pool Duration",
   "pools.requiredCollateral": "Required Collateral (125%)",
+
   "detail.back": "Back to Pools",
   "detail.poolInfo": "Pool Information",
   "detail.deposit": "DEPOSIT",
@@ -347,6 +348,7 @@ const en: Record<string, string> = {
   "profile.nftEmpty": "No badges yet. Join a pool to earn your first Suivan achievement NFT.",
   "profile.activityTitle": "Recent Activity",
   "profile.activityEmpty": "No recent activity. Your pool joins, cycle wins, and badge claims will appear here.",
+  "profile.noActivity": "No activity yet. Join a pool to get started!",
   "profile.infoTitle": "Account Info",
   "profile.infoAddress": "Wallet Address",
   "profile.infoMemberSince": "Member Since",
@@ -493,6 +495,7 @@ const id: Record<string, string> = {
   "pools.totalValue": "Total Nilai Pool",
   "pools.poolDuration": "Durasi Pool",
   "pools.requiredCollateral": "Jaminan Diperlukan (125%)",
+
   "detail.back": "Kembali ke Pool",
   "detail.poolInfo": "Informasi Pool",
   "detail.deposit": "SETORAN",
@@ -689,6 +692,7 @@ const id: Record<string, string> = {
   "profile.nftEmpty": "Belum ada lencana. Gabung pool untuk dapatkan NFT pencapaian Suivan pertama Anda.",
   "profile.activityTitle": "Aktivitas Terbaru",
   "profile.activityEmpty": "Belum ada aktivitas. Join pool, menang siklus, dan klaim badge akan muncul di sini.",
+  "profile.noActivity": "Belum ada aktivitas. Gabung pool untuk memulai!",
   "profile.infoTitle": "Info Akun",
   "profile.infoAddress": "Alamat Dompet",
   "profile.infoMemberSince": "Anggota Sejak",
