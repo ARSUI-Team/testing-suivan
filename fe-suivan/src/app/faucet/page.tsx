@@ -65,7 +65,7 @@ export default function FaucetPage() {
   const errorToast = useErrorToast();
   const faucetId = useFaucetId();
 
-  const { balance: usdcBalance } = useUSDCBalance(address);
+  const { balance: usdcBalance, refetch: refetchBalance } = useUSDCBalance(address);
   const { claimUSDC, isPending: isWalletClaiming } = useClaimUSDC();
 
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
@@ -115,6 +115,7 @@ export default function FaucetPage() {
           setLastClaimTime();
           setCooldown(FAUCET_COOLDOWN_S);
           addToHistory({ token: "usdc", amount: "500", time: Date.now() });
+          refetchBalance();
           successToast(t("faucet.success"));
           resolve();
         }, 1500);
@@ -133,6 +134,7 @@ export default function FaucetPage() {
         setLastClaimTime();
         setCooldown(FAUCET_COOLDOWN_S);
         addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest });
+        refetchBalance();
         successToast(t("faucet.success"));
       } catch (fallbackErr) {
         setClaimStatus("error");
@@ -143,7 +145,7 @@ export default function FaucetPage() {
         setClaimStatus((s) => (s === "loading" ? "idle" : s));
       }, 2500);
     }
-  }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, successToast, errorToast, t]);
+  }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, successToast, errorToast, t, refetchBalance]);
 
   const handleOpenSuiFaucet = () => {
     window.open(SUI_TESTNET_FAUCET, "_blank", "noopener");

@@ -374,7 +374,7 @@ export function useCurrentYield(poolAddress: string | undefined) {
 
 export function useUSDCBalance(address: string | undefined) {
   const client = useSuiClient();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["suivan", "usdcBalance", address],
     queryFn: async () => {
       if (!address) return 0;
@@ -389,9 +389,12 @@ export function useUSDCBalance(address: string | undefined) {
       return total / 1_000_000;
     },
     enabled: !!address,
-    refetchInterval: 5000,
+    staleTime: 0,
+    refetchInterval: 3000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
-  return { balance: data ?? 0, isLoading };
+  return { balance: data ?? 0, isLoading, refetch };
 }
 
 export function useSUIBalance(address: string | undefined) {
