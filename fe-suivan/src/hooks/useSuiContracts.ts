@@ -16,10 +16,13 @@ export interface SuiPoolInfo {
   cycle: number;
   started: boolean;
   active: boolean;
+  isFull: boolean;
   isEnded: boolean;
   totalFunds: number;
+  collateralBalance: number;
   yield: number;
   collateralYield: number;
+  cycleDurationMs: number;
   gachaWinner: string | null;
   gachaPrize: number;
   walrusMetadataBlobId: string;
@@ -34,6 +37,7 @@ export interface FormattedPool {
   currentParticipants: number;
   cycleDuration: number;
   totalFunds: number;
+  collateralBalance: number;
   status: "open" | "active" | "completed";
   apy: number;
   currentCycle: number;
@@ -76,8 +80,11 @@ function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
       return Number(((val as { fields?: { value?: string } })?.fields?.value) || 0);
     };
     const poolFundsBalance = readBalance(fields?.pool_funds_balance) / 1_000_000;
+    const collateralBalance = readBalance(fields?.collateral_balance) / 1_000_000;
     const yieldBalance = readBalance(fields?.yield_balance) / 1_000_000;
     const collateralYieldBalance = readBalance(fields?.collateral_yield_balance) / 1_000_000;
+
+    const cycleDurationMs = Number((config?.cycle_duration_ms as string) || 0);
 
     return {
       id,
@@ -87,10 +94,13 @@ function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
       cycle: Number((fields?.current_cycle as string) || 0),
       started: Boolean(fields?.is_started),
       active: Boolean(fields?.is_active),
+      isFull: Boolean(fields?.is_full),
       isEnded: Boolean(fields?.is_ended),
       totalFunds: poolFundsBalance,
+      collateralBalance,
       yield: yieldBalance,
       collateralYield: collateralYieldBalance,
+      cycleDurationMs,
       gachaWinner: null as string | null,
       gachaPrize: yieldBalance,
       walrusMetadataBlobId: String((fields?.walrus_metadata_blob_id as string) || ""),
@@ -206,16 +216,22 @@ export function useAllPoolsWithInfo() {
 }
 
 function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
+  const totalLocked = pool.totalFunds + pool.collateralBalance;
   const apy = pool.totalFunds > 0 ? (pool.yield / pool.totalFunds) * 100 * 12 : 8.5;
   let status: "open" | "active" | "completed" = "open";
   if (pool.started && pool.active) status = "active";
   else if (pool.started && !pool.active) status = "completed";
+  else if (pool.isFull && !pool.started) status = "active";
   else if (pool.currentParticipants < pool.maxParticipants) status = "open";
 
   let name = "Custom Pool";
   if (pool.depositAmount === 10) name = "Small Pool";
   else if (pool.depositAmount === 50) name = "Medium Pool";
   else if (pool.depositAmount === 100) name = "Large Pool";
+
+  const cycleDurationDays = pool.cycleDurationMs > 0
+    ? Math.round(pool.cycleDurationMs / 86400000)
+    : 30;
 
   return {
     id: index + 1,
@@ -224,8 +240,9 @@ function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
     depositAmount: pool.depositAmount,
     maxParticipants: pool.maxParticipants,
     currentParticipants: pool.currentParticipants,
-    cycleDuration: 30,
-    totalFunds: pool.totalFunds,
+    cycleDuration: cycleDurationDays,
+    totalFunds: totalLocked,
+    collateralBalance: pool.collateralBalance,
     status,
     apy: Math.round(apy * 10) / 10,
     currentCycle: pool.cycle,
@@ -500,20 +517,20 @@ export function useCreatePool() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [txResponse, setTxResponse] = useState<any>(null);
 
-  const COLLATERAL_MULTIPLIER = 125;
+    const COLLATERAL_MULTIPLIER = 125;
 
-  const createPool = (
-    depositAmount: number,
-    maxParticipants: number,
-    cycleDurationDays: number,
-    usdcCoinId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess?: (response: any) => void,
-  ) => {
-    const tx = new Transaction();
+    const createPool = (
+      depositAmount: number,
+      maxParticipants: number,
+      cycleDurationDays: number,
+      usdcCoinId: string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onSuccess?: (response: any) => void,
+    ) => {
+      const tx = new Transaction();
 
-    const requiredCollateral = Math.ceil(depositAmount * maxParticipants * COLLATERAL_MULTIPLIER / 100);
-    const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
+      const requiredCollateral = Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100);
+      const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
 
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::arisan_factory::create_custom_pool`,
@@ -581,6 +598,140 @@ export function useMakeDeposit() {
   };
 }
 
+export function useStartPool() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const startPool = (poolId: string, poolAdminCapId: string) => {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::start_pool`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.object(poolId),
+        tx.object(SUI_CLOCK_ID),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    startPool,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+export function useSelectWinner() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const selectWinner = (poolId: string, poolAdminCapId: string) => {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::select_winner`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.object(poolId),
+        tx.object(SUI_CLOCK_ID),
+        tx.object("0x8"), // Random object on Sui testnet/mainnet
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    selectWinner,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+export function useEndPool() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const endPool = (poolId: string, poolAdminCapId: string) => {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::end_pool`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.object(poolId),
+        tx.object("0x8"),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    endPool,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+export function useSlashCollateral() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const slashCollateral = (poolId: string, poolAdminCapId: string, participantAddress: string) => {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::slash_collateral`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.object(poolId),
+        tx.pure.address(participantAddress),
+        tx.object(SUI_CLOCK_ID),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    slashCollateral,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
 export function useLinkPoolMetadata() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
@@ -605,6 +756,39 @@ export function useLinkPoolMetadata() {
 
   return {
     linkMetadata,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+export function useSetPoolSealSeed() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const setPoolSealSeed = (poolId: string, poolAdminCapId: string, seed: number[]) => {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.object(poolId),
+        tx.pure("vector<u8>", seed),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    setPoolSealSeed,
     hash: txData?.digest,
     isPending,
     isSuccess: !!txData,

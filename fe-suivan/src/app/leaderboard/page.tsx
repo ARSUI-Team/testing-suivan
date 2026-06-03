@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useLeaderboardData } from "@/hooks/useLeaderboardData";
+import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
 import {
   Trophy,
   Medal,
@@ -66,14 +67,14 @@ const TIER_CONFIG: Record<
     labelKey: "leaderboard.tierSilver",
     minPoints: 100,
     icon: Medal,
-    color: "var(--brutal-surface)",
+    color: "var(--brutal-card)",
     multiplier: 1.1,
   },
   bronze: {
     labelKey: "leaderboard.tierBronze",
     minPoints: 0,
     icon: Circle,
-    color: "var(--danger-soft)",
+    color: "#f5e0c0",
     multiplier: 1.0,
   },
 };
@@ -101,6 +102,7 @@ export default function LeaderboardPage() {
   const isConnected = !!account;
   const [showRules, setShowRules] = useState(false);
   const { participants, isLoading } = useLeaderboardData();
+  const { pools, isLoading: poolsLoading } = useAllPoolsWithInfo();
 
   const tierInfo = useMemo(() => {
     const tiers = (Object.keys(TIER_CONFIG) as Tier[]).map((key) => ({
@@ -119,12 +121,12 @@ export default function LeaderboardPage() {
   }, [account, participants]);
 
   const stats = useMemo(() => {
-    const totalPools = participants.reduce((s, p) => s + p.activePools, 0);
-    const totalMembers = participants.length || 15;
+    const totalPools = pools?.length || 0;
+    const totalMembers = participants.length || (pools && pools.length > 0 ? 15 : 0);
     const totalYieldDistributed = participants.reduce((s, p) => s + p.totalYield, 0);
     const avgApy = 12.4;
     return { totalPools, totalMembers, totalYieldDistributed, avgApy };
-  }, [participants]);
+  }, [participants, pools]);
 
   if (isLoading) {
     return (
@@ -262,6 +264,13 @@ export default function LeaderboardPage() {
             ))}
           </div>
 
+          {stats.totalYieldDistributed === 0 && participants.length === 0 && (
+            <p className="mt-2 text-xs font-semibold text-[var(--brutal-muted)] text-center">
+              Testnet metrics &mdash; pools must complete cycles for yield to accrue.
+              {!poolsLoading && pools?.length === 0 && " Connect wallet and create a pool to get started."}
+            </p>
+          )}
+
           {isConnected && userRank && (
             <div className="mt-8 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-6 shadow-[4px_4px_0_var(--brutal-ink)]">
               <div className="mb-4 flex items-center gap-2">
@@ -328,88 +337,105 @@ export default function LeaderboardPage() {
               <Users className="size-5 text-[var(--brutal-ink)]" />
               <h2 className="protocol-font text-sm font-black uppercase tracking-[0.18em]">Leaderboard</h2>
             </div>
-            <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[6px_6px_0_var(--brutal-ink)]">
-              <div className="hidden border-b-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-4 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px]">
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.rank")}</span>
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.member")}</span>
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.tier")}</span>
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.points")}</span>
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.onTime")}</span>
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.yield")}</span>
-                <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.pools")}</span>
-              </div>
-              {participants.map((p) => {
-                const TierIcon = TIER_CONFIG[p.tier].icon;
-                return (
-                  <div
-                    key={p.address}
-                    className="border-b-[3px] border-[var(--brutal-ink)] p-4 last:border-b-0 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px] md:items-center md:gap-3"
-                  >
-                    <div className="mb-2 flex items-center justify-between md:mb-0">
-                      <span className="protocol-font flex size-7 items-center justify-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] text-xs font-black md:static">
-                        {p.rank}
-                      </span>
-                      <div className="flex items-center gap-2 md:hidden">
+            {participants.length > 0 ? (
+              <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[6px_6px_0_var(--brutal-ink)]">
+                <div className="hidden border-b-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-4 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px]">
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.rank")}</span>
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.member")}</span>
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.tier")}</span>
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.points")}</span>
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.onTime")}</span>
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.yield")}</span>
+                  <span className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">{t("leaderboard.pools")}</span>
+                </div>
+                {participants.map((p) => {
+                  const TierIcon = TIER_CONFIG[p.tier].icon;
+                  return (
+                    <div
+                      key={p.address}
+                      className="border-b-[3px] border-[var(--brutal-ink)] p-4 last:border-b-0 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px] md:items-center md:gap-3"
+                    >
+                      <div className="mb-2 flex items-center justify-between md:mb-0">
+                        <span className="protocol-font flex size-7 items-center justify-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] text-xs font-black md:static">
+                          {p.rank}
+                        </span>
+                        <div className="flex items-center gap-2 md:hidden">
+                          <div
+                            className="grid size-5 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)]"
+                            style={{ background: TIER_CONFIG[p.tier].color }}
+                          >
+                            <TierIcon className="size-3 text-[var(--brutal-ink)]" />
+                          </div>
+                          <span className="protocol-font text-xs font-black">{p.points} pts</span>
+                        </div>
+                      </div>
+                      <div className="mb-2 md:mb-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="protocol-font text-sm font-bold text-[var(--brutal-ink)]">
+                            {p.address}
+                          </span>
+                          {isConnected && p.rank <= 5 && (
+                            <span className="border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] px-1.5 py-0.5 text-[8px] font-black uppercase">Top</span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[var(--brutal-muted)] md:hidden">
+                          <span>Yield: <strong className="text-[var(--success)]">${p.totalYield}</strong></span>
+                          <span>On-time: <strong>{p.onTimeRate}%</strong></span>
+                          <span>Pools: <strong>{p.activePools}</strong></span>
+                        </div>
+                      </div>
+                      <div className="hidden items-center gap-1.5 md:flex">
                         <div
-                          className="grid size-5 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)]"
+                          className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)]"
                           style={{ background: TIER_CONFIG[p.tier].color }}
                         >
                           <TierIcon className="size-3 text-[var(--brutal-ink)]" />
                         </div>
-                        <span className="protocol-font text-xs font-black">{p.points} pts</span>
-                      </div>
-                    </div>
-                    <div className="mb-2 md:mb-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="protocol-font text-sm font-bold text-[var(--brutal-ink)]">
-                          {p.address}
+                        <span
+                          className="text-sm font-black"
+                          style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
+                        >
+                          {t(TIER_CONFIG[p.tier].labelKey)}
                         </span>
-                        {isConnected && p.rank <= 5 && (
-                          <span className="border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] px-1.5 py-0.5 text-[8px] font-black uppercase">Top</span>
-                        )}
                       </div>
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[var(--brutal-muted)] md:hidden">
-                        <span>Yield: <strong className="text-[var(--success)]">${p.totalYield}</strong></span>
-                        <span>On-time: <strong>{p.onTimeRate}%</strong></span>
-                        <span>Pools: <strong>{p.activePools}</strong></span>
-                      </div>
-                    </div>
-                    <div className="hidden items-center gap-1.5 md:flex">
-                      <div
-                        className="grid size-6 shrink-0 place-items-center border-[2px] border-[var(--brutal-ink)]"
-                        style={{ background: TIER_CONFIG[p.tier].color }}
-                      >
-                        <TierIcon className="size-3 text-[var(--brutal-ink)]" />
-                      </div>
+                      <span className="hidden text-sm font-black text-[var(--brutal-ink)] md:block">{p.points}</span>
                       <span
-                        className="text-sm font-black"
-                        style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
+                        className={`hidden items-center gap-1 border-[2px] border-[var(--brutal-ink)] px-2 py-0.5 text-[10px] font-black md:inline-flex ${
+                          p.onTimeRate >= 100
+                            ? "bg-[var(--success-soft)]"
+                            : p.onTimeRate >= 70
+                              ? "bg-[var(--warn-soft)]"
+                              : "bg-[var(--danger-soft)]"
+                        }`}
                       >
-                        {t(TIER_CONFIG[p.tier].labelKey)}
+                        {p.onTimeRate}%
+                      </span>
+                      <span className="hidden text-sm font-black text-[var(--success)] md:block">
+                        ${p.totalYield}
+                      </span>
+                      <span className="hidden text-[11px] text-[var(--brutal-muted)] md:block">
+                        {p.activePools}
                       </span>
                     </div>
-                    <span className="hidden text-sm font-black text-[var(--brutal-ink)] md:block">{p.points}</span>
-                    <span
-                      className={`hidden items-center gap-1 border-[2px] border-[var(--brutal-ink)] px-2 py-0.5 text-[10px] font-black md:inline-flex ${
-                        p.onTimeRate >= 100
-                          ? "bg-[var(--success-soft)]"
-                          : p.onTimeRate >= 70
-                            ? "bg-[var(--warn-soft)]"
-                            : "bg-[var(--danger-soft)]"
-                      }`}
-                    >
-                      {p.onTimeRate}%
-                    </span>
-                    <span className="hidden text-sm font-black text-[var(--success)] md:block">
-                      ${p.totalYield}
-                    </span>
-                    <span className="hidden text-[11px] text-[var(--brutal-muted)] md:block">
-                      {p.activePools}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-10 text-center shadow-[6px_6px_0_var(--brutal-ink)]">
+                <Trophy className="mx-auto mb-4 size-10 text-[var(--brutal-muted)]" />
+                <h3 className="text-2xl font-black text-[var(--brutal-ink)]">No Participants Yet</h3>
+                <p className="mt-2 font-semibold text-[var(--brutal-muted)] max-w-md mx-auto">
+                  The leaderboard will populate as members join pools, make deposits, and earn yields. Be the first to join!
+                </p>
+                <Link
+                  href="/pools"
+                  className="protocol-font mt-6 inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] px-6 py-3 text-sm font-black text-[var(--brutal-ink)] shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                >
+                  Join a Pool
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="mt-8">

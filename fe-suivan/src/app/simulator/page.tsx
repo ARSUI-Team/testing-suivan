@@ -160,7 +160,10 @@ export default function SimulatorPage() {
                   <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
                     <p className="protocol-font text-xs font-black uppercase tracking-[0.1em] text-[var(--brutal-muted)]">{t("simulator.collateral")}</p>
                     <p className="protocol-font mt-1 text-2xl font-black">{collateral} USDC</p>
-                    <p className="mt-1 text-[10px] font-semibold text-[var(--brutal-muted)]">{t("simulator.collateralNote")}</p>
+                     <p className="mt-1 text-[10px] font-semibold text-[var(--brutal-muted)]">{t("simulator.collateralNote")}</p>
+                     <div className="mt-2 rounded border-[2px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-2 text-[9px] font-semibold leading-relaxed text-[var(--brutal-muted)]">
+                       Collateral protects all members. If you miss a payment, the deposit is deducted from your collateral. Unused collateral + proportional yield is returned when the pool ends.
+                     </div>
                   </div>
                   <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
                     <p className="protocol-font text-xs font-black uppercase tracking-[0.1em] text-[var(--brutal-muted)]">{t("simulator.gas")}</p>

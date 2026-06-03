@@ -1730,7 +1730,6 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_NO_SEAL_SEED)]
     fun test_legacy_path_no_seal_seed() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();

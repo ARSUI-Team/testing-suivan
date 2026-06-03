@@ -12,6 +12,7 @@ export interface ProfileBadge {
   icon: string;
   color: string;
   achieved: boolean;
+  progress?: string;
 }
 
 export interface ProfileActivity {
@@ -101,6 +102,7 @@ export function useProfileData(userAddress: string | undefined) {
           icon: "Users",
           color: "var(--accent-soft)",
           achieved: userPoolCount >= 3,
+          progress: `${userPoolCount}/3 pools`,
         },
         {
           name: "Cycle Champion",
@@ -108,6 +110,7 @@ export function useProfileData(userAddress: string | undefined) {
           icon: "Trophy",
           color: "var(--warn-soft)",
           achieved: winCount >= 5,
+          progress: `${winCount}/5 wins`,
         },
         {
           name: "Whale Watcher",
@@ -115,6 +118,7 @@ export function useProfileData(userAddress: string | undefined) {
           icon: "PiggyBank",
           color: "var(--success-soft)",
           achieved: totalSaved >= 50000,
+          progress: `$${Math.min(totalSaved, 50000).toLocaleString()}/50,000 USDC`,
         },
         {
           name: "Sui Native",
@@ -122,6 +126,7 @@ export function useProfileData(userAddress: string | undefined) {
           icon: "Zap",
           color: "var(--accent-soft)",
           achieved: winCount >= 10,
+          progress: `${winCount}/10 cycles`,
         },
         {
           name: "Community Pillar",

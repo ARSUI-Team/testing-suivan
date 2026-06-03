@@ -21,6 +21,8 @@ import {
   useParticipantList,
   useJoinPool,
   useMakeDeposit,
+  useStartPool,
+  useSelectWinner,
   useCurrentYield,
   useUSDCBalance,
   useUserUSDCcoins,
@@ -76,6 +78,8 @@ export default function PoolDetailPage() {
   // Actions
   const { joinPool, isPending: joining, isSuccess: joinSuccess, error: joinError, hash: joinHash } = useJoinPool();
   const { makeDeposit, isPending: depositing, isSuccess: depositSuccess, error: depositError, hash: depositHash } = useMakeDeposit();
+  const { startPool, isPending: starting, isSuccess: startSuccess, error: startError } = useStartPool();
+  const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError } = useSelectWinner();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const { claimFinal, isPending: claiming, isSuccess: claimSuccess, hash: claimHash, error: claimError } = useClaimFinal();
   const successToast = useSuccessToast();
@@ -160,8 +164,10 @@ export default function PoolDetailPage() {
 
   // Determine pool status
   let status: "open" | "active" | "completed" = "open";
+  const isFull = poolInfo?.isFull || false;
   if (isStarted && isActive) status = "active";
   else if (isStarted && !isActive) status = "completed";
+  else if (isFull && !isStarted) status = "active"; // "ready to start" shows as active
 
   // Pool name from Walrus metadata or fallback
   let poolName = walrusMeta?.name || "Custom Pool";
@@ -202,6 +208,29 @@ export default function PoolDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depositSuccess, depositHash]);
 
+  // Handle start pool success
+  useEffect(() => {
+    if (startSuccess) {
+      const txMsg = poolAddress ? `Pool started` : "";
+      setSuccessMessage({ title: "Pool Started", message: `The ROSCA pool is now active. Participants can make deposits.` });
+      setShowSuccessCelebration(true);
+      refetchPool();
+      refetchParticipant();
+      successToast("Pool Started", txMsg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startSuccess]);
+
+  // Handle select winner success
+  useEffect(() => {
+    if (selectSuccess) {
+      refetchPool();
+      refetchParticipant();
+      successToast("Winner Selected", "The winner has been selected and paid out.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectSuccess]);
+
   // Handle join error
   useEffect(() => {
     if (joinError) errorToast("Join Failed", joinError?.message || "Transaction failed");
@@ -211,6 +240,15 @@ export default function PoolDetailPage() {
   useEffect(() => {
     if (depositError) errorToast("Deposit Failed", depositError?.message || "Transaction failed");
   }, [depositError, errorToast]);
+
+  // Handle start/select errors
+  useEffect(() => {
+    if (startError) errorToast("Start Failed", startError?.message || "Transaction failed");
+  }, [startError, errorToast]);
+
+  useEffect(() => {
+    if (selectError) errorToast("Select Winner Failed", selectError?.message || "Transaction failed");
+  }, [selectError, errorToast]);
 
   // Handle claim success
   useEffect(() => {
@@ -245,7 +283,7 @@ export default function PoolDetailPage() {
       errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
-    joinPool(poolAddress, Math.ceil(depositAmount * maxParticipants * COLLATERAL_MULTIPLIER / 100), joinCoinId);
+    joinPool(poolAddress, Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100), joinCoinId);
   };
 
   const handleMakeDeposit = () => {
@@ -410,7 +448,7 @@ export default function PoolDetailPage() {
                   </div>
                   <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.collateral")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * maxParticipants * 125 / 100)} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                   </div>
                 </div>
               </div>
@@ -517,13 +555,53 @@ export default function PoolDetailPage() {
                         </div>
                       </div>
 
+                      {/* Start Pool Button — show when pool is full but not started */}
+                      {isFull && !isStarted && adminCapId && (
+                        <button
+                          onClick={() => startPool(poolAddress, adminCapId)}
+                          disabled={starting}
+                          className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                            starting
+                              ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                              : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {starting ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                              Starting Pool...
+                            </span>
+                          ) : "Start Pool"}
+                        </button>
+                      )}
+
                       {/* Deposit Button for Active Pool */}
-                      {status === "active" && (
+                      {status === "active" && isStarted && (
                         <button
                           onClick={() => setShowDepositModal(true)}
                           className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
                         >
                           {t("detail.makeDeposit")}
+                        </button>
+                      )}
+
+                      {/* Select Winner Button — show when pool is started, cycle active, and adminCap available */}
+                      {isStarted && isActive && adminCapId && currentCycle > 0 && (
+                        <button
+                          onClick={() => selectWinner(poolAddress, adminCapId)}
+                          disabled={selecting}
+                          className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                            selecting
+                              ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                              : "bg-[var(--yellow)] text-black shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {selecting ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                              Selecting Winner...
+                            </span>
+                          ) : "Select Winner"}
                         </button>
                       )}
 
@@ -569,7 +647,7 @@ export default function PoolDetailPage() {
                         <p className="font-semibold text-[var(--muted)]">{t("detail.notParticipant")}</p>
                       </div>
 
-                      {status === "open" && (
+                      {status === "open" && !isFull && (
                         <button
                           onClick={() => setShowJoinModal(true)}
                           className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
@@ -720,7 +798,7 @@ export default function PoolDetailPage() {
 
               <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("pools.collateral")}</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * maxParticipants * 125 / 100)} USDC</p>
+                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Returned at the end of the cycle with yield bonus when available</p>
               </div>
 

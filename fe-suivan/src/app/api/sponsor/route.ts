@@ -28,7 +28,7 @@ const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xe2587c933fdd1f4fa4ba
 const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0xc7ab25a1c78d708441bf311929782fc95d32a9521027d4c3f868debdcfac46b4";
 
 interface SponsorRequest {
-  action: "claim_usdc" | "join_pool" | "create_pool" | "make_deposit";
+  action: "claim_usdc" | "join_pool" | "create_pool" | "make_deposit" | "start_pool" | "select_winner" | "end_pool" | "slash_collateral";
   userAddress: string;
   poolId?: string;
   usdcCoinId?: string;
@@ -37,6 +37,8 @@ interface SponsorRequest {
   cycleDurationDays?: number;
   collateralAmount?: number;
   amount?: number;
+  poolAdminCapId?: string;
+  participantAddress?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
         if (!body.usdcCoinId || !body.depositAmount || !body.maxParticipants || !body.cycleDurationDays) {
           return NextResponse.json({ error: "Missing create_pool params: usdcCoinId, depositAmount, maxParticipants, cycleDurationDays" }, { status: 400 });
         }
-        const requiredCollateral = Math.ceil(body.depositAmount * (body.maxParticipants - 1) * 1.25);
+        const requiredCollateral = Math.ceil(body.depositAmount * 1.25);
         const [collateralCoin] = tx.splitCoins(tx.object(body.usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
         tx.moveCall({
           target: `${PACKAGE_ID}::arisan_factory::create_custom_pool`,
@@ -113,8 +115,74 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "start_pool": {
+        if (!body.poolId || !body.poolAdminCapId) {
+          return NextResponse.json({ error: "Missing start_pool params: poolId, poolAdminCapId" }, { status: 400 });
+        }
+        tx.moveCall({
+          target: `${PACKAGE_ID}::arisan_pool::start_pool`,
+          arguments: [
+            tx.object(body.poolAdminCapId),
+            tx.object(body.poolId),
+            tx.object("0x6"),
+          ],
+          typeArguments: [USDC_TYPE],
+        });
+        break;
+      }
+
+      case "select_winner": {
+        if (!body.poolId || !body.poolAdminCapId) {
+          return NextResponse.json({ error: "Missing select_winner params: poolId, poolAdminCapId" }, { status: 400 });
+        }
+        tx.moveCall({
+          target: `${PACKAGE_ID}::arisan_pool::select_winner`,
+          arguments: [
+            tx.object(body.poolAdminCapId),
+            tx.object(body.poolId),
+            tx.object("0x6"),
+            tx.object("0x8"),
+          ],
+          typeArguments: [USDC_TYPE],
+        });
+        break;
+      }
+
+      case "end_pool": {
+        if (!body.poolId || !body.poolAdminCapId) {
+          return NextResponse.json({ error: "Missing end_pool params: poolId, poolAdminCapId" }, { status: 400 });
+        }
+        tx.moveCall({
+          target: `${PACKAGE_ID}::arisan_pool::end_pool`,
+          arguments: [
+            tx.object(body.poolAdminCapId),
+            tx.object(body.poolId),
+            tx.object("0x8"),
+          ],
+          typeArguments: [USDC_TYPE],
+        });
+        break;
+      }
+
+      case "slash_collateral": {
+        if (!body.poolId || !body.poolAdminCapId || !body.participantAddress) {
+          return NextResponse.json({ error: "Missing slash_collateral params: poolId, poolAdminCapId, participantAddress" }, { status: 400 });
+        }
+        tx.moveCall({
+          target: `${PACKAGE_ID}::arisan_pool::slash_collateral`,
+          arguments: [
+            tx.object(body.poolAdminCapId),
+            tx.object(body.poolId),
+            tx.pure.address(body.participantAddress),
+            tx.object("0x6"),
+          ],
+          typeArguments: [USDC_TYPE],
+        });
+        break;
+      }
+
       default:
-        return NextResponse.json({ error: `Unknown action: ${action}. Supported: claim_usdc, create_pool, join_pool, make_deposit` }, { status: 400 });
+        return NextResponse.json({ error: `Unknown action: ${action}. Supported: claim_usdc, create_pool, join_pool, make_deposit, start_pool, select_winner, end_pool, slash_collateral` }, { status: 400 });
     }
 
     tx.setSender(userAddress);

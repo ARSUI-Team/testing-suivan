@@ -102,6 +102,18 @@ export default function FaucetPage() {
     return () => clearInterval(id);
   }, [cooldownActive, cooldown]);
 
+  // Restore cooldown from localStorage on mount
+  useEffect(() => {
+    const last = getLastClaimTime();
+    if (last) {
+      const elapsed = Date.now() - last;
+      const remaining = Math.max(0, FAUCET_COOLDOWN_S - Math.floor(elapsed / 1000));
+      if (remaining > 0) {
+        setCooldown(remaining);
+      }
+    }
+  }, []);
+
   const onClaimSuccess = useCallback((digest?: string) => {
     setClaimStatus("success");
     setLastClaimTime();
@@ -257,22 +269,26 @@ export default function FaucetPage() {
                     href="https://faucet.testnet.sui.io"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                    className="group flex items-center gap-4 border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[var(--brutal-accent)]"
                   >
-                    <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)]">
+                    <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] transition group-hover:bg-[var(--brutal-accent)]">
                       <ExternalLink className="size-5 text-[var(--brutal-ink)]" />
                     </div>
-                    <div className="text-left">
+                    <div className="flex-1 text-left">
                       <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em] text-[var(--brutal-muted)]">
-                        SUI for gas
+                        Get free SUI for gas
                       </p>
                       <p
-                        className="text-sm font-black tracking-tight"
+                        className="text-lg font-black tracking-tight"
                         style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}
                       >
-                        Get free SUI →
+                        Open Sui Faucet
+                      </p>
+                      <p className="text-[11px] font-semibold text-[var(--brutal-muted)]">
+                        Covers gas fees on testnet
                       </p>
                     </div>
+                    <ExternalLink className="size-5 shrink-0 text-[var(--brutal-muted)] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </a>
                 </div>
               </div>

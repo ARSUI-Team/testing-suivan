@@ -135,7 +135,7 @@ export default function PoolsPage() {
       errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
-    const collateralAmt = Math.ceil(selectedPool.depositAmount * selectedPool.maxParticipants * COLLATERAL_MULTIPLIER / 100);
+    const collateralAmt = Math.ceil(selectedPool.depositAmount * COLLATERAL_MULTIPLIER / 100);
     joinPool(selectedPool.address, collateralAmt, joinCoinId);
   };
 
@@ -287,10 +287,10 @@ export default function PoolsPage() {
                   key={pool.address}
                   className="border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[6px_6px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_var(--brutal-ink)]"
                 >
-                  <div className="border-b-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] p-5">
+                  <div className="border-b-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-5">
                     <div className="mb-3 flex items-start justify-between">
                       <div>
-                        <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-ink)" }}>object::pool</p>
+                        <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-ink)" }}>ROSCA Pool</p>
                         <h3 className="mt-2 text-2xl font-black tracking-[-0.03em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}><PoolName blobId={pool.walrusMetadataBlobId} fallback={pool.name} /></h3>
                         <p className="protocol-font mt-1 text-[10px] font-bold" style={{ color: "var(--brutal-ink)" }}>
                           {pool.address.slice(0, 6)}...{pool.address.slice(-4)}
@@ -343,10 +343,18 @@ export default function PoolsPage() {
                           ${pool.totalFunds.toFixed(2)}
                         </span>
                       </div>
+                      {pool.totalFunds === 0 && (
+                        <p className="protocol-font mt-1 text-[9px] font-semibold" style={{ color: "var(--brutal-muted)" }}>
+                          Testnet — no deposits yet
+                        </p>
+                      )}
+                      <p className="protocol-font mt-1 text-[8px]" style={{ color: "var(--brutal-muted)" }}>
+                        debug: totalFunds={pool.totalFunds} collateralBalance={(pool as any).collateralBalance}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      {pool.status === "open" && (
+                      {pool.status === "open" && pool.currentParticipants < pool.maxParticipants && (
                         <button
                           onClick={() => setSelectedPool(pool)}
                           disabled={!isConnected}
@@ -423,7 +431,7 @@ export default function PoolsPage() {
               <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
                 <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.collateral")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                  {Math.ceil(selectedPool.depositAmount * selectedPool.maxParticipants * 125 / 100)} USDC
+                  {Math.ceil(selectedPool.depositAmount * 125 / 100)} USDC
                 </p>
                 <p className="mt-1 text-xs font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.collateralDesc")}</p>
               </div>
@@ -594,7 +602,7 @@ export default function PoolsPage() {
                         });
                         const data = await res.json();
                         if (data.success) {
-                          successToast("10,000 TEST_USDC minted!");
+                          successToast("500 TEST_USDC minted!");
                           setTimeout(() => refetchPools(), 1000);
                         } else {
                           errorToast(data.error || "Faucet failed");
@@ -605,7 +613,7 @@ export default function PoolsPage() {
                     }}
                     className="protocol-font mt-3 w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
-                    Get 10,000 USDC from Faucet →
+                    Get 500 USDC from Faucet →
                   </button>
                 </div>
               )}
@@ -626,7 +634,7 @@ export default function PoolsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.requiredCollateral")}</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                    {Math.ceil(createForm.depositAmount * createForm.maxParticipants * 125 / 100)} USDC
+                    {Math.ceil(createForm.depositAmount * 125 / 100)} USDC
                   </span>
                 </div>
               </div>
@@ -675,12 +683,12 @@ function FaucetButton({ userAddress, refetchPools }: { userAddress: string; refe
       const res = await fetch("/api/sponsor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "mint_faucet", userAddress }),
+        body: JSON.stringify({ action: "claim_usdc", userAddress }),
       });
       const data = await res.json();
       if (data.success) {
         setStatus("success");
-        successToast("10,000 TEST_USDC minted to your wallet!");
+        successToast("500 TEST_USDC minted to your wallet!");
         setTimeout(() => refetchPools(), 2000);
       } else {
         setStatus("error");
@@ -708,7 +716,7 @@ function FaucetButton({ userAddress, refetchPools }: { userAddress: string; refe
           Minting...
         </>
       ) : status === "success" ? (
-        "10,000 USDC Minted!"
+        "500 USDC Minted!"
       ) : (
         "Get Test USDC"
       )}

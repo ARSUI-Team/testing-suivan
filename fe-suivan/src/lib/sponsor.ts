@@ -30,7 +30,43 @@ export interface SponsorMakeDepositParams {
   usdcCoinId: string;
 }
 
-type SponsorParams = SponsorJoinPoolParams | SponsorCreatePoolParams | SponsorMakeDepositParams;
+export interface SponsorStartPoolParams {
+  action: "start_pool";
+  userAddress: string;
+  poolId: string;
+  poolAdminCapId: string;
+}
+
+export interface SponsorSelectWinnerParams {
+  action: "select_winner";
+  userAddress: string;
+  poolId: string;
+  poolAdminCapId: string;
+}
+
+export interface SponsorEndPoolParams {
+  action: "end_pool";
+  userAddress: string;
+  poolId: string;
+  poolAdminCapId: string;
+}
+
+export interface SponsorSlashCollateralParams {
+  action: "slash_collateral";
+  userAddress: string;
+  poolId: string;
+  poolAdminCapId: string;
+  participantAddress: string;
+}
+
+type SponsorParams =
+  | SponsorJoinPoolParams
+  | SponsorCreatePoolParams
+  | SponsorMakeDepositParams
+  | SponsorStartPoolParams
+  | SponsorSelectWinnerParams
+  | SponsorEndPoolParams
+  | SponsorSlashCollateralParams;
 
 export async function executeSponsoredTransaction(params: SponsorParams): Promise<SponsorResult> {
   try {

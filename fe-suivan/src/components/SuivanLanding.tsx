@@ -83,7 +83,7 @@ export default function SuivanLanding() {
       const progress = Math.min(100, ((p.currentCycle || 1) / p.maxParticipants) * 100);
       const cycleLabel = `cycle ${String(p.currentCycle || 1).padStart(2, "0")} / ${p.maxParticipants}`;
       return {
-        name: p.name || `Pool #${String(p.address).slice(0, 6)}...`,
+        name: p.name && p.name !== "Custom Pool" ? p.name : `Pool ${String(p.address).slice(0, 6)}...`,
         members: `${p.currentParticipants} members`,
         cycle: cycleLabel,
         apy: `${(p.apy || 0).toFixed(1)}%`,
@@ -260,9 +260,10 @@ export default function SuivanLanding() {
                       ));
                     })()}
                   </div>
-                  <p className="mt-8 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--brutal-muted)] text-center">
-                    Live from DeFiLlama · Hover to pause
-                  </p>
+                  <div className="mt-8 flex items-center justify-center gap-2">
+                    <span className="border-[2px] border-[var(--brutal-ink)] bg-[#00e060] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] shadow-[2px_2px_0_var(--brutal-ink)]" style={{ color: "var(--brutal-ink)" }}>LIVE</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brutal-muted)]">Data from DeFiLlama · Hover to pause</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -572,17 +573,23 @@ function YieldCardSkeleton() {
   );
 }
 
-function CylinderCard({ p, t }: { p: any; t: (key: string, params?: Record<string, string | number>) => string }) {
+  function CylinderCard({ p, t }: { p: any; t: (key: string, params?: Record<string, string | number>) => string }) {
   const init = p.name.charAt(0).toUpperCase();
   const apyFormatted = (typeof p.apy === "number" ? p.apy : parseFloat(p.apy)).toFixed(1);
   const tvlFormatted = p.tvl >= 1_000_000_000 ? `$${(p.tvl / 1_000_000_000).toFixed(1)}B` : p.tvl >= 1_000_000 ? `$${(p.tvl / 1_000_000).toFixed(1)}M` : p.tvl >= 1_000 ? `$${(p.tvl / 1_000).toFixed(1)}K` : `$${p.tvl}`;
   const riskLabel = p.riskScore <= 2 ? "Low" : p.riskScore <= 4 ? "Mid" : "High";
   const riskColor = p.riskScore <= 2 ? "#00e060" : p.riskScore <= 4 ? "#f6c85f" : "#e8180a";
   const defiSlug = p.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const isLive = p.source === "defillama";
 
   return (
     <div className="prof-card-can">
       <div className="prof-header-can">
+        {isLive && (
+          <div className="absolute -right-1 -top-1 z-10 border-[2px] border-[var(--brutal-ink)] bg-[#00e060] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] shadow-[2px_2px_0_var(--brutal-ink)]" style={{ color: "var(--brutal-ink)" }}>
+            LIVE
+          </div>
+        )}
         <div className="prof-header-num-can">{apyFormatted.split(".")[0]}</div>
         <div className="prof-avatar-can">{init}</div>
         <div className="prof-badge-can" style={{ background: riskColor, color: "var(--brutal-ink)" }}>

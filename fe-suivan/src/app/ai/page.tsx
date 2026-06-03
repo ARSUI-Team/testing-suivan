@@ -144,7 +144,7 @@ export default function YieldSignalsPage() {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {data.protocols.map((p) => (
+                  {[...data.protocols].sort((a, b) => b.apy - a.apy).map((p) => (
                     <div key={p.name} className="flex items-center justify-between border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-4 transition hover:-translate-x-0.5 hover:-translate-y-0.5">
                       <div className="flex items-center gap-3">
                         <div>
@@ -164,6 +164,11 @@ export default function YieldSignalsPage() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold text-[var(--brutal-muted)]">
+                  <span className="border-[2px] border-[var(--brutal-ink)] bg-[var(--success-soft)] px-2 py-0.5">L1–L3 Low Risk</span>
+                  <span className="border-[2px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] px-2 py-0.5">L4–L5 Medium Risk</span>
+                  <span className="border-[2px] border-[var(--brutal-ink)] bg-[var(--danger-soft)] px-2 py-0.5">L6+ High Risk</span>
+                </div>
               </div>
 
               <div className="gsap-up mt-8 grid gap-4 md:grid-cols-2">
@@ -172,7 +177,13 @@ export default function YieldSignalsPage() {
                   <div className="mt-4 space-y-3">
                     <div className="flex justify-between">
                       <span className="protocol-font font-semibold tracking-[0.1em] text-[var(--brutal-muted)]">{t("ai.volatilityIndex")}</span>
-                      <span className="protocol-font font-black text-[var(--brutal-ink)]">{data.market.volatilityIndex}/100</span>
+                      <span className="protocol-font inline-flex items-center gap-1.5 font-black text-[var(--brutal-ink)]">
+                        <span className={`inline-block size-2 rounded-full ${data.market.volatilityIndex <= 30 ? 'bg-[var(--success-soft)]' : data.market.volatilityIndex <= 60 ? 'bg-[var(--warn-soft)]' : 'bg-[var(--danger-soft)]'}`} />
+                        {data.market.volatilityIndex}/100
+                        <span className="text-xs text-[var(--brutal-muted)]">
+                          {data.market.volatilityIndex <= 30 ? "Low" : data.market.volatilityIndex <= 60 ? "Mid" : "High"}
+                        </span>
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="protocol-font font-semibold tracking-[0.1em] text-[var(--brutal-muted)]">{t("ai.gasPrice")}</span>
@@ -187,7 +198,7 @@ export default function YieldSignalsPage() {
                 <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] p-5 shadow-[4px_4px_0_var(--brutal-ink)]">
                   <p className="protocol-font text-xs font-black uppercase tracking-[0.1em] text-[var(--brutal-muted)]">{t("ai.yieldRecommendation")}</p>
                   <p className="mt-4 text-lg font-black text-[var(--brutal-ink)]">
-                    {t("ai.topProtocol")}: {data.protocols[0]?.name || "N/A"} — {data.protocols[0]?.apy.toFixed(2) || "0"}%
+                    {t("ai.topProtocol")}: {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.name || "N/A"} — {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.apy.toFixed(2) || "0"}%
                   </p>
                   {recommendation ? (
                     <div className="mt-4 space-y-2">

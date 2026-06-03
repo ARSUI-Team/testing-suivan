@@ -157,6 +157,12 @@ export default function ProfilePage() {
                 })}
               </div>
 
+              {(profileStats.pools === 0 && profileStats.won === 0 && profileStats.saved === 0) && (
+                <p className="mt-3 text-center text-xs font-semibold text-[var(--brutal-muted)]">
+                  Testnet profile — join a pool or create one to see your stats populate.
+                </p>
+              )}
+
               <div className="mb-8 mt-8 grid gap-8 lg:grid-cols-2">
                 <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-6 shadow-[4px_4px_0_var(--brutal-ink)]">
                   <div className="mb-5 flex items-center gap-2">
@@ -287,6 +293,9 @@ export default function ProfilePage() {
                         {badge.name}
                       </p>
                       <p className="mt-1 text-[9px] font-semibold text-[var(--brutal-muted)]">{badge.description}</p>
+                      {!badge.achieved && badge.progress && (
+                        <p className="mt-1 text-[8px] font-bold text-[var(--brutal-ink)]">{badge.progress}</p>
+                      )}
                     </div>
                   );
                 })}

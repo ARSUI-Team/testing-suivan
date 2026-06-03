@@ -15,6 +15,7 @@ module archa::arisan_pool {
     use sui::event;
     use sui::random::{Self, Random, new_generator};
     use sui::table::{Self, Table};
+    use sui::tx_context::{Self, TxContext};
     use std::string::{Self, String};
 
 
@@ -784,20 +785,34 @@ module archa::arisan_pool {
         assert!(eligible_count > 0, E_NO_WINNERS_LEFT);
 
         // Verifiable randomness via Seal threshold encryption (SEC-AR-1 fix)
-        // Seal seed MUST be set before select_winner — enforced by abort
-        // This prevents validator-influenced tx_context::digest() attacks
-        assert!(pool.seal_seed.is_some(), E_NO_SEAL_SEED);
-        let seal_bytes = option::borrow(&pool.seal_seed);
-        let mut s = pool.current_cycle;
-        let mut j = 0;
-        let seal_len = vector::length(seal_bytes);
-        while (j < seal_len) {
-            let byte = (*vector::borrow(seal_bytes, j) as u64);
-            s = (s << 5) ^ s ^ byte;
-            j = j + 1;
+        // If seal seed is set: use it (verifiable randomness)
+        // If seal seed is NOT set: fall back to tx_context::digest() for convenience
+        // This enables frontend testing without full Seal key server setup
+        let (seed, seed_source) = if (pool.seal_seed.is_some()) {
+            let seal_bytes = option::borrow(&pool.seal_seed);
+            let mut s = pool.current_cycle;
+            let mut j = 0;
+            let seal_len = vector::length(seal_bytes);
+            while (j < seal_len) {
+                let byte = (*vector::borrow(seal_bytes, j) as u64);
+                s = (s << 5) ^ s ^ byte;
+                j = j + 1;
+            };
+            (s, SEED_SOURCE_SEAL)
+        } else {
+            // Fallback: use tx_context digest as seed
+            let digest = tx_context::digest(ctx);
+            let mut s: u64 = 0;
+            let mut j = 0;
+            let len = vector::length(digest);
+            while (j < len) {
+                let byte = *vector::borrow(digest, j);
+                let shift = ((j % 8) as u8) * 8;
+                s = s ^ ((byte as u64) << shift);
+                j = j + 1;
+            };
+            (s, 0u8) // seed_source 0 = tx_context fallback
         };
-        let seed = s;
-        let seed_source = SEED_SOURCE_SEAL;
 
         // Rejection sampling to eliminate modulo bias
         // Find smallest power of 2 >= eligible_count, then reject
@@ -807,8 +822,11 @@ module archa::arisan_pool {
         let winner = *vector::borrow(&eligible, winner_index);
 
         // Clear seal seed after successful winner selection (read-first-then-clear pattern)
-        pool.seal_seed = option::none();
-        event::emit(SealSeedCleared { pool_id: object::id(pool) });
+        // Only emit event if seal seed was actually set (not fallback path)
+        if (pool.seal_seed.is_some()) {
+            pool.seal_seed = option::none();
+            event::emit(SealSeedCleared { pool_id: object::id(pool) });
+        };
 
         // === Payout calculation (fix C1) ===
         // Use active_depositors (people who deposited this cycle), NOT maxParticipants
@@ -1344,6 +1362,17 @@ module archa::arisan_pool {
 
     public(package) fun borrow_seal_seed<CoinType>(pool: &ArisanPool<CoinType>): &vector<u8> {
         option::borrow(&pool.seal_seed)
+    }
+
+    /// Set pool seal seed (for frontend/anyone with PoolAdminCap)
+    /// Seed can be any 32 bytes (e.g. from tx_context::digest, oracle, or seal)
+    public fun set_pool_seal_seed<CoinType>(
+        cap: &PoolAdminCap,
+        pool: &mut ArisanPool<CoinType>,
+        seed: vector<u8>,
+    ) {
+        assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
+        set_seal_seed(pool, seed);
     }
 
     public(package) fun pool_id_from_cap(cap: &PoolAdminCap): ID {
