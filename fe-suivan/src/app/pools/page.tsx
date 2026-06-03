@@ -281,108 +281,279 @@ export default function PoolsPage() {
 
           {/* Pool Grid */}
           {!poolsLoading && (
-            <div className="gsap-up grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {filteredPools.map((pool) => (
-                <div
-                  key={pool.address}
-                  className="border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] shadow-[6px_6px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_var(--brutal-ink)]"
-                >
-                  <div className="border-b-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)] p-5">
-                    <div className="mb-3 flex items-start justify-between">
-                      <div>
-                        <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-ink)" }}>ROSCA Pool</p>
-                        <h3 className="mt-2 text-2xl font-black tracking-[-0.03em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}><PoolName blobId={pool.walrusMetadataBlobId} fallback={pool.name} /></h3>
-                        <p className="protocol-font mt-1 text-[10px] font-bold" style={{ color: "var(--brutal-ink)" }}>
-                          {pool.address.slice(0, 6)}...{pool.address.slice(-4)}
-                        </p>
+            <div className="gsap-up grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredPools.map((pool) => {
+                const init = (pool.name || "?")[0].toUpperCase();
+                const statusBg = pool.status === "active" ? "#00e060" : pool.status === "open" ? "#f6c85f" : "#a8a49a";
+                const memberRatio = pool.currentParticipants / pool.maxParticipants;
+                return (
+                  <div
+                    key={pool.address}
+                    className="card-profile"
+                    style={{
+                      background: "#f5f5f0",
+                      border: "5px solid var(--brutal-ink)",
+                      boxShadow: "8px 8px 0 var(--brutal-ink)",
+                      width: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      transition: "transform 0.15s, box-shadow 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-2px, -2px)"; e.currentTarget.style.boxShadow = "10px 10px 0 var(--brutal-ink)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "8px 8px 0 var(--brutal-ink)"; }}
+                  >
+                    {/* Photo header */}
+                    <div
+                      className="prof-photo"
+                      style={{
+                        height: 150,
+                        background: "#38bdf8",
+                        borderBottom: "5px solid var(--brutal-ink)",
+                        position: "relative",
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "flex-end",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "repeating-linear-gradient(45deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      <div
+                        className="prof-photo-num"
+                        style={{
+                          fontFamily: "'Bebas Neue', system-ui, sans-serif",
+                          fontSize: "6rem",
+                          lineHeight: 0.85,
+                          color: "rgba(0,0,0,0.08)",
+                          position: "absolute",
+                          right: -8,
+                          bottom: -10,
+                          letterSpacing: "-0.02em",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {Math.floor(pool.apy)}
                       </div>
-                      <span className={`protocol-font border-[3px] border-[var(--brutal-ink)] px-3 py-1 text-[10px] font-black shadow-[3px_3px_0_var(--brutal-ink)] ${getStatusColor(pool.status)}`}>
+                      <div
+                        className="prof-avatar"
+                        style={{
+                          width: 64,
+                          height: 64,
+                          background: "var(--brutal-ink)",
+                          border: "5px solid var(--brutal-ink)",
+                          borderBottom: "none",
+                          borderLeft: "none",
+                          marginLeft: 18,
+                          position: "relative",
+                          zIndex: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontFamily: "'Bebas Neue', system-ui, sans-serif",
+                          fontSize: "1.8rem",
+                          color: "#38bdf8",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {init}
+                      </div>
+                      <div
+                        className="prof-status-badge"
+                        style={{
+                          position: "absolute",
+                          top: 12,
+                          right: 12,
+                          zIndex: 2,
+                          background: statusBg,
+                          border: "3px solid var(--brutal-ink)",
+                          boxShadow: "3px 3px 0 var(--brutal-ink)",
+                          fontSize: "0.5rem",
+                          fontWeight: 800,
+                          letterSpacing: "0.18em",
+                          padding: "3px 8px",
+                          textTransform: "uppercase",
+                          color: "var(--brutal-ink)",
+                        }}
+                      >
                         {getStatusText(pool.status)}
-                      </span>
-                    </div>
-                    <div className="flex w-fit items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] px-3 py-2 shadow-[3px_3px_0_var(--brutal-ink)]">
-                      <span className="protocol-font text-xs font-black tracking-[0.05em]" style={{ color: "var(--brutal-ink)" }}>{pool.apy}% APY</span>
-                      <span className="protocol-font text-[10px] font-black tracking-[0.12em]" style={{ color: "var(--brutal-muted)" }}>Yield signal</span>
-                    </div>
-                    {pool.walrusMetadataBlobId && (
-                      <div className="mt-2 flex w-fit items-center gap-1.5 border-[3px] border-[var(--brutal-ink)] bg-[var(--success-soft)] px-2 py-1 shadow-[2px_2px_0_var(--brutal-ink)]">
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="var(--brutal-ink)"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                        <span className="protocol-font text-[9px] font-black tracking-[0.12em]" style={{ color: "var(--brutal-ink)" }}>Walrus</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-4 p-5">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="protocol-font mb-1 text-xs font-black tracking-[0.1em]" style={{ color: "var(--brutal-muted)" }}>{t("pools.deposit")}</p>
-                        <p className="text-lg font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>{pool.depositAmount} USDC</p>
-                      </div>
-                      <div>
-                        <p className="protocol-font mb-1 text-xs font-black tracking-[0.1em]" style={{ color: "var(--brutal-muted)" }}>CYCLE</p>
-                        <p className="text-lg font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>{pool.cycleDuration} days</p>
                       </div>
                     </div>
 
-                    <div>
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="protocol-font text-xs font-black tracking-[0.1em]" style={{ color: "var(--brutal-muted)" }}>Participants</span>
-                        <span className="text-sm font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                          {pool.currentParticipants}/{pool.maxParticipants}
-                        </span>
-                      </div>
-                      <div className="h-3 w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-surface)]">
-                        <div className="h-full bg-[var(--brutal-accent)] transition-all duration-500" style={{ width: `${(pool.currentParticipants / pool.maxParticipants) * 100}%` }} />
-                      </div>
-                    </div>
-
-                    <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] p-3 shadow-[3px_3px_0_var(--brutal-ink)]">
-                      <div className="flex items-center justify-between">
-                        <span className="protocol-font text-xs font-black tracking-[0.1em]" style={{ color: "var(--brutal-muted)" }}>Total Pool Funds</span>
-                        <span className="text-lg font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                          ${pool.totalFunds.toFixed(2)}
-                        </span>
-                      </div>
-                      {pool.totalFunds === 0 && (
-                        <p className="protocol-font mt-1 text-[9px] font-semibold" style={{ color: "var(--brutal-muted)" }}>
-                          Testnet — no deposits yet
-                        </p>
-                      )}
-                      <p className="protocol-font mt-1 text-[8px]" style={{ color: "var(--brutal-muted)" }}>
-                        debug: totalFunds={pool.totalFunds} collateralBalance={(pool as any).collateralBalance}
+                    {/* Body */}
+                    <div className="prof-body" style={{ padding: "14px 16px 0", flex: 1 }}>
+                      <p
+                        className="prof-handle"
+                        style={{
+                          fontSize: "0.5rem",
+                          fontWeight: 700,
+                          letterSpacing: "0.2em",
+                          color: "var(--brutal-muted)",
+                          textTransform: "uppercase",
+                          marginBottom: 1,
+                          fontFamily: "var(--font-mono)",
+                        }}
+                      >
+                        {pool.address.slice(0, 6)}...{pool.address.slice(-4)}
+                      </p>
+                      <h3
+                        className="prof-name"
+                        style={{
+                          fontFamily: "'Bebas Neue', system-ui, sans-serif",
+                          fontSize: "2rem",
+                          lineHeight: 0.9,
+                          color: "var(--brutal-ink)",
+                          letterSpacing: "-0.01em",
+                          marginBottom: 8,
+                        }}
+                      >
+                        <PoolName blobId={pool.walrusMetadataBlobId} fallback={pool.name} />
+                      </h3>
+                      <p
+                        className="prof-bio"
+                        style={{
+                          fontSize: "0.68rem",
+                          fontWeight: 500,
+                          color: "var(--brutal-ink)",
+                          borderLeft: "4px solid #e8180a",
+                          paddingLeft: 8,
+                          lineHeight: 1.55,
+                          marginBottom: 10,
+                        }}
+                      >
+                        {pool.depositAmount} USDC deposit &middot; {pool.cycleDuration}-day cycles &middot; {pool.apy}% APY
+                        {pool.walrusMetadataBlobId && (
+                          <span style={{ color: "#14b8a6", marginLeft: 6 }}>+Walrus</span>
+                        )}
                       </p>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* Stats */}
+                    <div
+                      className="prof-stats"
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr 1fr",
+                        borderTop: "3px solid var(--brutal-ink)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {[
+                        { value: `${pool.depositAmount}`, label: "Deposit", sub: "USDC" },
+                        { value: `${pool.currentParticipants}/${pool.maxParticipants}`, label: "Members", sub: `${Math.round(memberRatio * 100)}%` },
+                        { value: `${pool.cycleDuration}d`, label: "Cycle", sub: `$${pool.totalFunds.toFixed(0)}` },
+                      ].map((stat, si) => (
+                        <div
+                          key={stat.label}
+                          className="pstat"
+                          style={{
+                            padding: "10px 8px",
+                            borderRight: si < 2 ? "3px solid var(--brutal-ink)" : "none",
+                            textAlign: "center",
+                          }}
+                        >
+                          <span
+                            className="psv"
+                            style={{
+                              fontFamily: "'Bebas Neue', system-ui, sans-serif",
+                              fontSize: "1.5rem",
+                              lineHeight: 1,
+                              color: "var(--brutal-ink)",
+                              display: "block",
+                            }}
+                          >
+                            {stat.value}
+                          </span>
+                          <span
+                            className="psl"
+                            style={{
+                              fontSize: "0.45rem",
+                              fontWeight: 700,
+                              letterSpacing: "0.15em",
+                              color: "var(--brutal-muted)",
+                              textTransform: "uppercase",
+                              display: "block",
+                              marginTop: 1,
+                            }}
+                          >
+                            {stat.label}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "0.4rem",
+                              fontWeight: 600,
+                              color: "var(--brutal-muted)",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.1em",
+                            }}
+                          >
+                            {stat.sub}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Buttons */}
+                    <div style={{ flexShrink: 0 }}>
                       {pool.status === "open" && pool.currentParticipants < pool.maxParticipants && (
                         <button
                           onClick={() => setSelectedPool(pool)}
                           disabled={!isConnected}
-                          className={`w-full border-[3px] border-[var(--brutal-ink)] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_var(--brutal-ink)] ${
-                            isConnected
-                              ? "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:-translate-x-0.5 hover:-translate-y-0.5"
-                              : "cursor-not-allowed bg-[var(--brutal-surface)] text-[var(--brutal-muted)] opacity-50"
-                          }`}
+                          className="prof-btn"
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            padding: "11px",
+                            background: isConnected ? "#38bdf8" : "var(--brutal-surface)",
+                            color: isConnected ? "var(--brutal-ink)" : "var(--brutal-muted)",
+                            border: "none",
+                            borderTop: "3px solid var(--brutal-ink)",
+                            fontFamily: "'Bebas Neue', system-ui, sans-serif",
+                            fontSize: "1rem",
+                            letterSpacing: "0.2em",
+                            cursor: isConnected ? "pointer" : "not-allowed",
+                            textAlign: "center",
+                            opacity: isConnected ? 1 : 0.5,
+                            transition: "background 0.15s, color 0.15s",
+                          }}
+                          onMouseEnter={(e) => { if (isConnected) { e.currentTarget.style.background = "var(--brutal-ink)"; e.currentTarget.style.color = "#38bdf8"; }}}
+                          onMouseLeave={(e) => { if (isConnected) { e.currentTarget.style.background = "#38bdf8"; e.currentTarget.style.color = "var(--brutal-ink)"; }}}
                         >
-                          {isConnected ? t("pools.join") : "Connect Wallet to Join"}
+                          {isConnected ? t("pools.join") : "Connect Wallet"}
                         </button>
                       )}
                       <a
                         href={`/pools/${pool.address}`}
-                        className={`block w-full border-[3px] border-[var(--brutal-ink)] py-3 text-center text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_var(--brutal-ink)] ${
-                          pool.status === "open"
-                            ? "bg-[var(--brutal-bg)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-surface)]"
-                            : pool.status === "active"
-                            ? "bg-[var(--accent-soft)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-card)]"
-                            : "bg-[var(--brutal-surface)] text-[var(--brutal-muted)] hover:bg-[var(--accent-soft)]"
-                        }`}
+                        className="prof-btn"
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          padding: "11px",
+                          background: "var(--brutal-ink)",
+                          color: "#38bdf8",
+                          border: "none",
+                          borderTop: "3px solid var(--brutal-ink)",
+                          fontFamily: "'Bebas Neue', system-ui, sans-serif",
+                          fontSize: "1rem",
+                          letterSpacing: "0.2em",
+                          cursor: "pointer",
+                          textAlign: "center",
+                          transition: "background 0.15s, color 0.15s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#38bdf8"; e.currentTarget.style.color = "var(--brutal-ink)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--brutal-ink)"; e.currentTarget.style.color = "#38bdf8"; }}
                       >
                         {t("pools.viewDetails")}
                       </a>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
