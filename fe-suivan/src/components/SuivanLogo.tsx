@@ -12,13 +12,19 @@ export default function SuivanLogo({
   priority = false,
 }: SuivanLogoProps) {
   return (
-    <Image
-      alt="Suivan"
-      className={`object-cover ${className}`}
-      height={size}
-      priority={priority}
-      src="/suivan-logo.jpeg"
-      width={size}
-    />
+    <span
+      className={`relative block overflow-hidden ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <Image
+        alt="Suivan"
+        className="object-cover"
+        fill
+        loading={priority ? "eager" : "lazy"}
+        preload={priority}
+        sizes={`${size}px`}
+        src="/suivan-logo.jpeg"
+      />
+    </span>
   );
 }

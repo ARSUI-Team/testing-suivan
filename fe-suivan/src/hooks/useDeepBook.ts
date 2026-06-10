@@ -78,10 +78,6 @@ const DEEPBOOK_POOLS: DeepBookPoolInfo[] = [
   },
 ];
 
-function formatDecimal(value: number, decimals: number): number {
-  return value / Math.pow(10, decimals);
-}
-
 export function useDeepBookPools() {
   return useQuery({
     queryKey: ["deepbook", "pools"],

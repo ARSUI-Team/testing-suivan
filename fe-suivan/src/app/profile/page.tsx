@@ -15,7 +15,6 @@ import {
   PiggyBank,
   Award,
   Activity,
-  ExternalLink,
   Copy,
   CheckCircle2,
   ArrowRight,

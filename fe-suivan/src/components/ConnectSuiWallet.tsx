@@ -6,17 +6,19 @@ import { useCurrentAccount, useConnectWallet, useDisconnectWallet, useWallets } 
 interface ConnectSuiWalletProps {
   variant?: "default" | "header";
   scrolled?: boolean;
+  initialModalOpen?: boolean;
 }
 
-export default function ConnectSuiWallet({ variant = "default", scrolled }: ConnectSuiWalletProps) {
+export default function ConnectSuiWallet({ variant = "default", scrolled, initialModalOpen = false }: ConnectSuiWalletProps) {
   const account = useCurrentAccount();
   const { mutate: connect } = useConnectWallet();
   const { mutate: disconnect } = useDisconnectWallet();
   const wallets = useWallets();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(initialModalOpen);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonPadding = variant === "header" ? "px-3 py-2" : "px-4 py-3";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -35,7 +37,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled }: Conn
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className={`inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] px-4 py-2 text-xs font-black text-[var(--brutal-ink)] shadow-[4px_4px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)] ${
+          className={`inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] ${buttonPadding} text-xs font-black text-[var(--brutal-ink)] shadow-[4px_4px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)] ${
             scrolled ? "opacity-90" : ""
           }`}
         >
@@ -66,7 +68,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled }: Conn
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className={`inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] px-4 py-2 text-xs font-black text-[var(--brutal-ink)] shadow-[4px_4px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]`}
+        className={`inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] ${buttonPadding} text-xs font-black text-[var(--brutal-ink)] shadow-[4px_4px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-ink)] hover:text-[var(--brutal-accent)]`}
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -143,7 +145,11 @@ export default function ConnectSuiWallet({ variant = "default", scrolled }: Conn
                   className="flex w-full items-center gap-3 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-3 text-left text-sm font-bold text-[var(--brutal-ink)] shadow-[4px_4px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)]"
                 >
                   {wallet.icon && (
-                    <img src={wallet.icon} alt={wallet.name} className="h-6 w-6 border-[2px] border-[var(--brutal-ink)]" />
+                    <span
+                      aria-hidden="true"
+                      className="h-6 w-6 shrink-0 border-[2px] border-[var(--brutal-ink)] bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url(${wallet.icon})` }}
+                    />
                   )}
                   <span>{wallet.name}</span>
                 </button>

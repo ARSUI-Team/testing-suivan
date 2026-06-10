@@ -6,6 +6,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID } from "@/config/sui";
 
+export type TransactionResult = {
+  digest: string;
+  objectChanges?: Array<{
+    type: string;
+    objectType?: string;
+    objectId?: string;
+  }>;
+};
+
+const CHAIN_POLL_INTERVAL_MS = 15_000;
+
 // ─── Types ────────────────────────────────────────────────────────
 
 export interface SuiPoolInfo {
@@ -151,6 +162,7 @@ export function useAllPools() {
       return poolIds;
     },
     enabled: !!SUI_FACTORY_ID,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
 
   return { poolAddresses: data, isLoading, error, refetch };
@@ -171,6 +183,7 @@ export function usePoolInfo(poolAddress: string | undefined) {
       return parsePoolFields(fields ?? {});
     },
     enabled: !!poolAddress,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
 
   return { poolInfo: data, isLoading, error, refetch };
@@ -201,6 +214,7 @@ export function useAllPoolsWithInfo() {
         .filter((p): p is FormattedPool => p !== null);
     },
     enabled: !!poolAddresses?.length,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
 
   const refetch = async () => {
@@ -315,6 +329,7 @@ export function useParticipantInfo(poolAddress: string | undefined, participantA
       } as ParticipantInfo;
     },
     enabled: !!poolAddress && !!participantAddress,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
   return { participantInfo: data, isLoading, refetch };
 }
@@ -339,6 +354,7 @@ export function useParticipantList(poolAddress: string | undefined) {
       return { addresses, count: addresses.length };
     },
     enabled: !!poolAddress,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
 
   return {
@@ -387,6 +403,7 @@ export function useCurrentYield(poolAddress: string | undefined) {
       return { cumulative, collateral, total: cumulative + collateral };
     },
     enabled: !!poolAddress,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
   return { currentYield: data ?? { cumulative: 0, collateral: 0, total: 0 }, isLoading, refetch };
 }
@@ -471,6 +488,7 @@ export function useLastWinner(poolAddress: string | undefined) {
       return fields?.last_winner as string | undefined;
     },
     enabled: !!poolAddress,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
   });
   return { lastWinner: data, isLoading };
 }
@@ -481,7 +499,12 @@ export function useJoinPool() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
 
-  const joinPool = (poolId: string, collateralAmount: number, usdcCoinId: string) => {
+  const joinPool = (
+    poolId: string,
+    collateralAmount: number,
+    usdcCoinId: string,
+    onSuccess?: (response: TransactionResult) => void,
+  ) => {
     const tx = new Transaction();
 
     const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(collateralAmount * 1_000_000)]);
@@ -496,8 +519,9 @@ export function useJoinPool() {
     });
 
     signAndExecute({ transaction: tx }, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         queryClient.invalidateQueries({ queryKey: ["suivan"] });
+        onSuccess?.(response);
       },
     });
   };
@@ -514,8 +538,7 @@ export function useJoinPool() {
 export function useCreatePool() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [txResponse, setTxResponse] = useState<any>(null);
+  const [txResponse, setTxResponse] = useState<TransactionResult | null>(null);
 
     const COLLATERAL_MULTIPLIER = 125;
 
@@ -524,8 +547,7 @@ export function useCreatePool() {
       maxParticipants: number,
       cycleDurationDays: number,
       usdcCoinId: string,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onSuccess?: (response: any) => void,
+      onSuccess?: (response: TransactionResult) => void,
     ) => {
       const tx = new Transaction();
 
@@ -691,6 +713,38 @@ export function useEndPool() {
 
   return {
     endPool,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
+export function useTransferAdminCap() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const transferAdminCap = (poolAdminCapId: string, newOwnerAddress: string) => {
+    const tx = new Transaction();
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::transfer_admin_cap`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.pure.address(newOwnerAddress),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    transferAdminCap,
     hash: txData?.digest,
     isPending,
     isSuccess: !!txData,

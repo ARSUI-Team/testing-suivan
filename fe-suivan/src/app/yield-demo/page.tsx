@@ -83,7 +83,7 @@ export default function YieldDemoPage() {
   const spread = bestBid && bestAsk ? (((bestAsk - bestBid) / midPrice) * 100) : 0;
   const bidDepth = orderbook?.bids?.reduce((s, l) => s + l.price * l.quantity, 0) ?? 0;
   const askDepth = orderbook?.asks?.reduce((s, l) => s + l.price * l.quantity, 0) ?? 0;
-  const tvl = bidDepth + askDepth;
+  const orderbookDepth = bidDepth + askDepth;
 
   const handleSimulateYield = () => {
     if (txStatus === "pending") return;
@@ -163,7 +163,9 @@ export default function YieldDemoPage() {
                     <Database className="mr-2 inline-block size-5" />
                     DeepBook Live Pools
                   </h2>
-                  <p className="mt-1 text-xs text-[var(--muted)]">Real-time orderbook data from DeepBook V3 testnet</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">
+                    {dbPools?.length ?? ALL_POOL_KEYS.length} live pools - depth {orderbookDepth > 0 ? orderbookDepth.toFixed(2) : "pending"}
+                  </p>
                 </div>
                 <select
                   value={selectedDbPool ?? ""}

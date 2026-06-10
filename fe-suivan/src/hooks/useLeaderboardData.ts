@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
-import { SUI_FACTORY_ID, SUI_PACKAGE_ID } from "@/config/sui";
 import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
 
 export interface LeaderboardEntry {
