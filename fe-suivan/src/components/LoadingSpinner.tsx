@@ -69,6 +69,7 @@ export default function LoadingSpinner({
               alt="Suivan"
               fill
               className="object-cover"
+              sizes="80px"
               priority
             />
           </div>

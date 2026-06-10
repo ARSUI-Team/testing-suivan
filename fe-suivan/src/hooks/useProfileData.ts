@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
-import { SUI_FACTORY_ID } from "@/config/sui";
 import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
 
 export interface ProfileBadge {
@@ -43,8 +42,6 @@ export function useProfileData(userAddress: string | undefined) {
       let userPoolCount = 0;
       let winCount = 0;
       let totalSaved = 0;
-      const now = Date.now();
-
       for (const pool of pools) {
         try {
           const obj = await client.getObject({

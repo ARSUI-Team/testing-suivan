@@ -25,19 +25,6 @@ import {
 
 type Tier = "diamond" | "platinum" | "gold" | "silver" | "bronze";
 
-interface Participant {
-  rank: number;
-  address: string;
-  tier: Tier;
-  points: number;
-  onTimeRate: number;
-  totalYield: number;
-  monthlyYield: number;
-  collateralYield: number;
-  lastPaymentDay: number;
-  activePools: number;
-}
-
 const TIER_CONFIG: Record<
   Tier,
   { labelKey: string; minPoints: number; icon: typeof Star; color: string; multiplier: number }

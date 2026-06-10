@@ -27,6 +27,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://suivan.vercel.app"),
   title: "Suivan - Community Wealth Protocol on Sui",
   description: "A Sui-native frontend for global ROSCA communities, rotating savings cycles, pool state, APY signals, and transparent member progress.",
   keywords: ["Suivan", "ROSCA", "Arisan", "Sui", "community finance", "rotating savings"],
@@ -57,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/suivan-logo.jpeg" type="image/jpeg" />
         <link rel="apple-touch-icon" href="/suivan-logo.jpeg" />
@@ -65,6 +66,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <ThemeProvider>
           <ClientProviders>

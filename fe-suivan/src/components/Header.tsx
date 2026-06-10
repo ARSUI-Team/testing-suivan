@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Menu, X, Moon, Sun } from "lucide-react";
-import ConnectSuiWallet from "./ConnectSuiWallet";
+import DeferredConnectSuiWallet from "./DeferredConnectSuiWallet";
 import SuivanLogo from "./SuivanLogo";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
+
+const ConnectSuiWallet = dynamic(() => import("./ConnectSuiWallet"), { ssr: false });
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -28,6 +31,12 @@ export default function Header() {
   }, [pathname]);
 
   const isActive = (href: string) => pathname === href;
+  const needsWalletProvider = (
+    pathname.startsWith("/pools") ||
+    pathname.startsWith("/faucet") ||
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/leaderboard")
+  );
 
   const navItems = [
     { label: t("nav.pools"), href: "/pools" },
@@ -35,6 +44,7 @@ export default function Header() {
     { label: t("nav.simulator"), href: "/simulator" },
     { label: t("nav.yield"), href: "/ai" },
     { label: t("nav.leaderboard"), href: "/leaderboard" },
+    { label: "Demo", href: "/demo-video" },
     { label: t("nav.profile"), href: "/profile" },
     { label: t("nav.faq"), href: "/faq" },
   ];
@@ -93,7 +103,11 @@ export default function Header() {
           >
             {language === "en" ? "ID" : "EN"}
           </button>
-          <ConnectSuiWallet variant="header" />
+          {needsWalletProvider ? (
+            <ConnectSuiWallet variant="header" />
+          ) : (
+            <DeferredConnectSuiWallet scrolled={scrolled} />
+          )}
           <button
             aria-label="Toggle navigation menu"
             className="grid size-9 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] text-[var(--brutal-ink)] shadow-[3px_3px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)] lg:hidden"

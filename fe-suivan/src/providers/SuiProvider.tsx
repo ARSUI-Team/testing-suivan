@@ -26,13 +26,19 @@ export function SuiProvider({ children }: { children: ReactNode }) {
         defaultNetwork={(process.env.NEXT_PUBLIC_SUI_NETWORK as "testnet" | "mainnet") || "testnet"}
         createClient={(_, config) => new SuiJsonRpcClient({ url: config.url ?? "", network: config.network ?? "testnet" })}
       >
-        <WalletProvider
-          autoConnect={true}
-          preferredWallets={["Slush", "Sui Wallet", "Surf Wallet", "Nightly"]}
-        >
-          {children}
-        </WalletProvider>
+        {children}
       </SuiClientProvider>
     </QueryClientProvider>
+  );
+}
+
+export function SuiWalletProvider({ children }: { children: ReactNode }) {
+  return (
+    <WalletProvider
+      autoConnect={false}
+      preferredWallets={["Slush", "Sui Wallet", "Surf Wallet", "Nightly"]}
+    >
+      {children}
+    </WalletProvider>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -8,9 +8,25 @@ import { useLanguage } from "@/context/LanguageContext";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { ArrowUpRight, Sparkles, Shield, Users, Coins, Globe, Wallet, Zap, Database, BarChart3, Droplets } from "lucide-react";
-import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
+import { usePublicPoolsWithInfo, type PublicPool } from "@/hooks/usePublicPools";
 
 gsap.registerPlugin(ScrollTrigger);
+
+type YieldProtocol = {
+  name: string;
+  apy: number | string;
+  tvl: number;
+  riskScore: number;
+  chain?: string;
+  source?: string;
+};
+
+type YieldResponse = {
+  success?: boolean;
+  data?: {
+    protocols?: YieldProtocol[];
+  };
+};
 
 const features = [
   { title: "feature1Title", desc: "feature1Desc", Icon: Wallet, gradient: "from-[#38bdf8] to-[#818cf8]", bg: "bg-[var(--accent-soft)]" },
@@ -35,18 +51,18 @@ const trustPillars = [
 export default function SuivanLanding() {
   const rootRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
-  const [yieldProtocols, setYieldProtocols] = useState<any[]>([]);
+  const [yieldProtocols, setYieldProtocols] = useState<YieldProtocol[]>([]);
   const [yieldError, setYieldError] = useState(false);
-  const { pools: poolsData, isLoading: poolsLoading } = useAllPoolsWithInfo();
+  const { pools: poolsData, isLoading: poolsLoading } = usePublicPoolsWithInfo();
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/yields")
       .then((r) => r.json())
-      .then((data) => {
+      .then((data: YieldResponse) => {
         if (cancelled) return;
-        if (data.success) {
-          const sorted = [...data.data.protocols].sort((a: any, b: any) => b.apy - a.apy);
+        if (data.success && data.data?.protocols) {
+          const sorted = [...data.data.protocols].sort((a, b) => Number(b.apy) - Number(a.apy));
           setYieldProtocols(sorted.slice(0, 7));
         } else {
           setYieldError(true);
@@ -79,7 +95,7 @@ export default function SuivanLanding() {
 
   const realPools = useMemo(() => {
     if (!poolsData) return [];
-    return poolsData.slice(0, 4).map((p: any) => {
+    return poolsData.slice(0, 4).map((p: PublicPool) => {
       const progress = Math.min(100, ((p.currentCycle || 1) / p.maxParticipants) * 100);
       const cycleLabel = `cycle ${String(p.currentCycle || 1).padStart(2, "0")} / ${p.maxParticipants}`;
       return {
@@ -94,9 +110,9 @@ export default function SuivanLanding() {
 
   const stats = useMemo(() => {
     if (!poolsData) return { tvl: 0, activePools: 0, participants: 0, cycles: 0 };
-    const tvl = poolsData.reduce((sum: number, p: any) => sum + (p.totalFunds || 0), 0);
-    const participants = poolsData.reduce((sum: number, p: any) => sum + (p.currentParticipants || 0), 0);
-    const cycles = poolsData.reduce((sum: number, p: any) => sum + (p.currentCycle || 0), 0);
+    const tvl = poolsData.reduce((sum: number, p: PublicPool) => sum + (p.totalFunds || 0), 0);
+    const participants = poolsData.reduce((sum: number, p: PublicPool) => sum + (p.currentParticipants || 0), 0);
+    const cycles = poolsData.reduce((sum: number, p: PublicPool) => sum + (p.currentCycle || 0), 0);
     return { tvl, activePools: poolsData.length, participants, cycles };
   }, [poolsData]);
 
@@ -127,15 +143,21 @@ export default function SuivanLanding() {
           onComplete: () => markDone(".suivan-card"),
         });
 
-        gsap.to(".suivan-mascot", {
-          y: -20, rotate: 1.5, ease: "none",
-          scrollTrigger: { trigger: ".suivan-hero", start: "top top", end: "bottom top", scrub: 0.5 },
-        });
+        const mascot = rootRef.current?.querySelector(".suivan-mascot");
+        if (mascot) {
+          gsap.to(mascot, {
+            y: -20, rotate: 1.5, ease: "none",
+            scrollTrigger: { trigger: ".suivan-hero", start: "top top", end: "bottom top", scrub: 0.5 },
+          });
+        }
 
-        gsap.to(".suivan-float-bg", {
-          y: -40, ease: "none",
-          scrollTrigger: { trigger: ".suivan-hero", start: "top top", end: "bottom top", scrub: 0.8 },
-        });
+        const floatingBg = rootRef.current?.querySelector(".suivan-float-bg");
+        if (floatingBg) {
+          gsap.to(floatingBg, {
+            y: -40, ease: "none",
+            scrollTrigger: { trigger: ".suivan-hero", start: "top top", end: "bottom top", scrub: 0.8 },
+          });
+        }
 
         gsap.utils.toArray<HTMLElement>(".suivan-reveal").forEach((el) => {
           gsap.from(el, {
@@ -253,7 +275,7 @@ export default function SuivanLanding() {
                     {(() => {
                       const count = yieldProtocols.length;
                       const angleStep = 360 / count;
-                      return yieldProtocols.map((p: any, i: number) => (
+                      return yieldProtocols.map((p, i) => (
                         <div key={p.name} className="cylinder-face" style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${window.innerWidth < 1024 ? 180 : 300}px)` }}>
                           <CylinderCard p={p} t={t} />
                         </div>
@@ -573,7 +595,7 @@ function YieldCardSkeleton() {
   );
 }
 
-  function CylinderCard({ p, t }: { p: any; t: (key: string, params?: Record<string, string | number>) => string }) {
+  function CylinderCard({ p, t }: { p: YieldProtocol; t: (key: string, params?: Record<string, string | number>) => string }) {
   const init = p.name.charAt(0).toUpperCase();
   const apyFormatted = (typeof p.apy === "number" ? p.apy : parseFloat(p.apy)).toFixed(1);
   const tvlFormatted = p.tvl >= 1_000_000_000 ? `$${(p.tvl / 1_000_000_000).toFixed(1)}B` : p.tvl >= 1_000_000 ? `$${(p.tvl / 1_000_000).toFixed(1)}M` : p.tvl >= 1_000 ? `$${(p.tvl / 1_000).toFixed(1)}K` : `$${p.tvl}`;
@@ -599,7 +621,7 @@ function YieldCardSkeleton() {
       <div className="prof-body-can">
         <p className="prof-handle-can">{p.name.toUpperCase().replace(" PROTOCOL", "").replace(" FINANCE", "")}::YIELD</p>
         <h3 className="prof-name-can">{p.name}</h3>
-        <p className="prof-bio-can">{t("landing.cylinderDesc", { chain: p.chain })}</p>
+        <p className="prof-bio-can">{t("landing.cylinderDesc", { chain: p.chain || "DeFi" })}</p>
       </div>
       <div className="prof-stats-can">
         <div className="pstat-can">

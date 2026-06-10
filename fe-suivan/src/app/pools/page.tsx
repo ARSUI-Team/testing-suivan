@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,6 +16,7 @@ import {
   useUSDCBalance,
   useLinkPoolMetadata,
   FormattedPool,
+  type TransactionResult,
 } from "@/hooks/useSuiContracts";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
@@ -26,6 +27,12 @@ import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 
 type PoolStatus = "all" | "open" | "active" | "completed";
+
+function findCreatedObject(response: TransactionResult, objectType: string) {
+  return response.objectChanges?.find((change) =>
+    change.type === "created" && change.objectType?.includes(objectType)
+  );
+}
 
 export default function PoolsPage() {
   const account = useCurrentAccount();
@@ -55,66 +62,15 @@ export default function PoolsPage() {
   const { coins: usdcCoins } = useUserUSDCcoins(account?.address);
   const { balance: usdcBalance } = useUSDCBalance(account?.address);
 
-  const { joinPool, isPending: joining, isSuccess: joinSuccess } = useJoinPool();
-  const { createPool, isPending: creating, isSuccess: createSuccess, txResponse: createTxResponse, hash: createHash } = useCreatePool();
-  const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
+  const { joinPool, isPending: joining } = useJoinPool();
+  const { createPool, isPending: creating } = useCreatePool();
+  const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
-  const [pendingBlobId, setPendingBlobId] = useState<string | null>(null);
-  const [creatingWithMeta, setCreatingWithMeta] = useState(false);
-
-  useEffect(() => {
-    if (joinSuccess) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedPool(null);
-      setJoinCoinId("");
-      refetchPools();
-      successToast("Joined Pool", "You are now a participant. Your collateral is locked.");
-    }
-  }, [joinSuccess, refetchPools, successToast]);
-  useEffect(() => {
-    if (createSuccess && createTxResponse) {
-      setShowCreateModal(false);
-      refetchPools();
-
-      if (pendingBlobId) {
-        const changes = createTxResponse.objectChanges || [];
-        const poolChange = changes.find((c: any) =>
-          c.type === "created" && c.objectType?.includes("::ArisanPool")
-        );
-        const capChange = changes.find((c: any) =>
-          c.type === "created" && c.objectType?.includes("::PoolAdminCap")
-        );
-        if (poolChange?.objectId && capChange?.objectId) {
-          linkMetadata(poolChange.objectId, pendingBlobId, capChange.objectId);
-        }
-      }
-      setPendingBlobId(null);
-      setCreatingWithMeta(false);
-      const poolTxMsg = createHash ? `\nTx: ${createHash.slice(0, 10)}…${createHash.slice(-4)}` : "";
-      successToast("Pool Created", `Your ROSCA pool is now live.${poolTxMsg}`);
-    }
-  }, [createSuccess, createTxResponse, createHash, pendingBlobId, linkMetadata, refetchPools, successToast]);
-
-  // Auto-populate coin when modals open
-  useEffect(() => {
-    if (selectedPool && usdcCoins.length > 0 && !joinCoinId) {
-      setJoinCoinId(usdcCoins[0].coinObjectId);
-    }
-  }, [selectedPool, usdcCoins, joinCoinId]);
 
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)
     : [];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "open": return "bg-[var(--success-soft)]";
-      case "active": return "bg-[var(--accent-soft)]";
-      case "completed": return "bg-[var(--brutal-surface)]";
-      default: return "bg-[var(--brutal-surface)]";
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -131,22 +87,26 @@ export default function PoolsPage() {
 
   const handleJoinPool = () => {
     if (!selectedPool) return;
-    if (!joinCoinId) {
+    const coinId = joinCoinId || usdcCoins[0]?.coinObjectId || "";
+    if (!coinId) {
       errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
     const collateralAmt = Math.ceil(selectedPool.depositAmount * COLLATERAL_MULTIPLIER / 100);
-    joinPool(selectedPool.address, collateralAmt, joinCoinId);
+    joinPool(selectedPool.address, collateralAmt, coinId, (response) => {
+      setSelectedPool(null);
+      setJoinCoinId("");
+      refetchPools();
+      const txMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
+      successToast("Joined Pool", `You are now a participant. Your collateral is locked.${txMsg}`);
+    });
   };
 
   const handleCreatePool = async () => {
     if (!createForm.usdcCoinId) {
       errorToast("Validation", "Please select a USDC coin first");
-      setCreatingWithMeta(false);
       return;
     }
-
-    setCreatingWithMeta(true);
 
     // 1. Publish metadata to Walrus if name is provided
     let blobId: string | null = null;
@@ -158,14 +118,27 @@ export default function PoolsPage() {
         "",
       );
     }
-    setPendingBlobId(blobId);
-
     // 2. Create pool on-chain
     createPool(
       createForm.depositAmount,
       createForm.maxParticipants,
       createForm.cycleDuration,
       createForm.usdcCoinId,
+      (response) => {
+        setShowCreateModal(false);
+        refetchPools();
+
+        if (blobId) {
+          const poolChange = findCreatedObject(response, "::ArisanPool");
+          const capChange = findCreatedObject(response, "::PoolAdminCap");
+          if (poolChange?.objectId && capChange?.objectId) {
+            linkMetadata(poolChange.objectId, blobId, capChange.objectId);
+          }
+        }
+
+        const poolTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
+        successToast("Pool Created", `Your ROSCA pool is now live.${poolTxMsg}`);
+      },
     );
   };
 
