@@ -3,6 +3,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { fromHex, fromBase64 } from "@mysten/sui/utils";
+import { randomBytes } from "crypto";
 import { getRequiredCollateralAmount } from "@/lib/poolMath";
 import { checkRateLimit, checkReplayAttack, validateSponsorRequest } from "@/lib/rateLimiter";
 
@@ -154,6 +155,16 @@ export async function POST(req: NextRequest) {
       }
 
       case "select_winner": {
+        const seed = new Uint8Array(randomBytes(16));
+        tx.moveCall({
+          target: `${PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,
+          arguments: [
+            tx.object(body.poolAdminCapId!),
+            tx.object(body.poolId!),
+            tx.pure(seed),
+          ],
+          typeArguments: [USDC_TYPE],
+        });
         tx.moveCall({
           target: `${PACKAGE_ID}::arisan_pool::select_winner`,
           arguments: [

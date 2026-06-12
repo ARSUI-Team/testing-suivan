@@ -713,13 +713,26 @@ export function useSelectWinner() {
   const selectWinner = (poolId: string, poolAdminCapId: string) => {
     const tx = new Transaction();
 
+    const seed = new Uint8Array(16);
+    crypto.getRandomValues(seed);
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,
+      arguments: [
+        tx.object(poolAdminCapId),
+        tx.object(poolId),
+        tx.pure(seed),
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::arisan_pool::select_winner`,
       arguments: [
         tx.object(poolAdminCapId),
         tx.object(poolId),
         tx.object(SUI_CLOCK_ID),
-        tx.object("0x8"), // Random object on Sui testnet/mainnet
+        tx.object("0x8"),
       ],
       typeArguments: [SUI_USDC_TYPE],
     });
