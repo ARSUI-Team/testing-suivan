@@ -15,9 +15,11 @@ import {
   useUserUSDCcoins,
   useUSDCBalance,
   useLinkPoolMetadata,
+  useClaimUSDC,
   FormattedPool,
   type TransactionResult,
 } from "@/hooks/useSuiContracts";
+import { useFaucetId } from "@/config/sui";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
 import { CrossChainBridgeModal } from "@/components/CrossChainBridgeModal";
@@ -77,6 +79,8 @@ export default function PoolsPage() {
   const { joinPool, isPending: joining } = useJoinPool();
   const { createPool, isPending: creating } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
+  const { claimUSDC, isPending: claimPending } = useClaimUSDC();
+  const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -806,27 +810,15 @@ export default function PoolsPage() {
                   <p className="protocol-font text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "var(--brutal-muted)" }}>No USDC Balance</p>
                   <p className="mt-1 text-sm font-semibold" style={{ color: "var(--brutal-muted)" }}>Get free test USDC first to create a pool.</p>
                   <button
-                    onClick={async () => {
-                      try {
-                        const res = await fetch("/api/sponsor", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ action: "claim_usdc", userAddress: account?.address }),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          successToast("500 TEST_USDC minted!");
-                          setTimeout(() => refetchPools(), 1000);
-                        } else {
-                          errorToast(data.error || "Faucet failed");
-                        }
-                      } catch (e) {
-                        errorToast(e instanceof Error ? e.message : "Faucet error");
-                      }
+                    onClick={() => {
+                      if (!faucetId) return;
+                      claimUSDC(faucetId);
+                      setTimeout(() => refetchPools(), 1000);
                     }}
-                    className="protocol-font mt-3 w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                    disabled={!faucetId || claimPending}
+                    className="protocol-font mt-3 w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-accent)] py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Get 500 USDC from Faucet →
+                    {claimPending ? "Claiming..." : "Get 500 USDC from Faucet →"}
                   </button>
                 </div>
               )}
@@ -892,52 +884,40 @@ export default function PoolsPage() {
   );
 }
 
-function FaucetButton({ userAddress, refetchPools }: { userAddress: string; refetchPools: () => void }) {
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+function FaucetButton({ userAddress: _userAddress, refetchPools }: { userAddress: string; refetchPools: () => void }) {
+  const { claimUSDC, isPending } = useClaimUSDC();
+  const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+  const [success, setSuccess] = useState(false);
 
-  const handleFaucet = async () => {
-    setLoading(true);
-    setStatus("idle");
-    try {
-      const res = await fetch("/api/sponsor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "claim_usdc", userAddress }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStatus("success");
-        successToast("500 TEST_USDC minted to your wallet!");
-        setTimeout(() => refetchPools(), 2000);
-      } else {
-        setStatus("error");
-        errorToast(data.error || "Faucet failed");
-      }
-    } catch (e) {
-      setStatus("error");
-      errorToast(e instanceof Error ? e.message : "Faucet error");
-    } finally {
-      setLoading(false);
+  const handleFaucet = () => {
+    if (!faucetId) {
+      errorToast("Faucet not available");
+      return;
     }
+    claimUSDC(faucetId);
+    setSuccess(true);
+    setTimeout(() => {
+      refetchPools();
+      setSuccess(false);
+    }, 2000);
   };
 
   return (
     <button
       onClick={handleFaucet}
-      disabled={loading}
+      disabled={!faucetId || isPending || success}
       className={`protocol-font inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] px-4 py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 ${
-        status === "success" ? "bg-[var(--success-soft)]" : "bg-[var(--warn-soft)]"
+        success ? "bg-[var(--success-soft)]" : "bg-[var(--warn-soft)]"
       }`}
     >
-      {loading ? (
+      {isPending ? (
         <>
           <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
           Minting...
         </>
-      ) : status === "success" ? (
+      ) : success ? (
         "500 USDC Minted!"
       ) : (
         "Get Test USDC"
