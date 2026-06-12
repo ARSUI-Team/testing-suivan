@@ -529,32 +529,19 @@ module archa::arisan_pool {
     fun derive_seed_from_pool<CoinType>(
         pool: &ArisanPool<CoinType>,
         salt: u64,
-        ctx: &TxContext,
+        _ctx: &TxContext,
     ): (u64, u8) {
-        if (pool.seal_seed.is_some()) {
-            let seal_bytes = option::borrow(&pool.seal_seed);
-            let mut s = salt;
-            let mut j = 0;
-            let seal_len = vector::length(seal_bytes);
-            while (j < seal_len) {
-                let byte = (*vector::borrow(seal_bytes, j) as u64);
-                s = (s << 5) ^ s ^ byte;
-                j = j + 1;
-            };
-            (s, SEED_SOURCE_SEAL)
-        } else {
-            let digest = tx_context::digest(ctx);
-            let mut s: u64 = salt;
-            let mut j = 0;
-            let len = vector::length(digest);
-            while (j < len) {
-                let byte = *vector::borrow(digest, j);
-                let shift = ((j % 8) as u8) * 8;
-                s = s ^ ((byte as u64) << shift);
-                j = j + 1;
-            };
-            (s, 0u8)
-        }
+        assert!(pool.seal_seed.is_some(), E_NO_SEAL_SEED);
+        let seal_bytes = option::borrow(&pool.seal_seed);
+        let mut s = salt;
+        let mut j = 0;
+        let seal_len = vector::length(seal_bytes);
+        while (j < seal_len) {
+            let byte = (*vector::borrow(seal_bytes, j) as u64);
+            s = (s << 5) ^ s ^ byte;
+            j = j + 1;
+        };
+        (s, SEED_SOURCE_SEAL)
     }
 
     // ====== Entry Functions ======
@@ -860,9 +847,7 @@ module archa::arisan_pool {
         assert!(eligible_count > 0, E_NO_WINNERS_LEFT);
 
         // Verifiable randomness via Seal threshold encryption (SEC-AR-1 fix)
-        // If seal seed is set: use it (verifiable randomness)
-        // If seal seed is NOT set: fall back to tx_context::digest() for convenience
-        // This enables frontend testing without full Seal key server setup
+        // Requires seal seed to be set — no tx_context::digest() fallback
         let (seed, seed_source) = derive_seed_from_pool(pool, pool.current_cycle, ctx);
 
         // Rejection sampling to eliminate modulo bias
@@ -1035,6 +1020,7 @@ module archa::arisan_pool {
             let len = vector::length(&pool.participant_list);
             let mut distributed: u128 = 0;
             let mut last_active_idx: u64 = 0;
+            let mut has_any_distribution: bool = false;
             let mut i = 0;
             while (i < len) {
                 let addr = *vector::borrow(&pool.participant_list, i);
@@ -1044,12 +1030,13 @@ module archa::arisan_pool {
                     p.proportional_yield_earned = (share as u64);
                     distributed = distributed + share;
                     last_active_idx = i;
+                    has_any_distribution = true;
                 };
                 i = i + 1;
             };
-            // Award truncation dust to last active participant
+            // Award truncation dust to last active participant (only if any received yield)
             let remainder = (total_collateral_yield_val as u128) - distributed;
-            if (remainder > 0) {
+            if (remainder > 0 && has_any_distribution) {
                 let addr = *vector::borrow(&pool.participant_list, last_active_idx);
                 let p = table::borrow_mut(&mut pool.participants, addr);
                 p.proportional_yield_earned = p.proportional_yield_earned + (remainder as u64);
@@ -1271,10 +1258,13 @@ module archa::arisan_pool {
 
     /// Deposit yield earned from collateral deployment (e.g. lending protocol)
     /// Yield is distributed proportionally to all participants at pool end
+    /// Requires PoolAdminCap — prevents dust/griefing deposits from unauthorized callers
     public fun deposit_collateral_yield<CoinType>(
+        cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
         yield_coin: Coin<CoinType>,
     ) {
+        assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert_not_paused(pool);
         assert!(!pool.is_ended, E_POOL_ENDED);
         let amount = coin::value(&yield_coin);
