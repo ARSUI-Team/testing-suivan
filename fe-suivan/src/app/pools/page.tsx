@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import ConnectSuiWallet from "@/components/ConnectSuiWallet";
 import { useLanguage } from "@/context/LanguageContext";
 import { Layers } from "lucide-react";
@@ -28,19 +28,29 @@ import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 
 type PoolStatus = "all" | "open" | "active" | "completed";
 
-function findCreatedObject(response: TransactionResult, objectType: string) {
+function findObjectChange(response: TransactionResult, objectType: string) {
   return response.objectChanges?.find((change) =>
-    change.type === "created" && change.objectType?.includes(objectType)
+    "objectId" in change && !!change.objectId && change.objectType?.includes(objectType)
   );
+}
+
+async function waitForDigest(client: ReturnType<typeof useSuiClient>, digest: string) {
+  try {
+    await client.waitForTransaction({ digest, timeout: 20_000 });
+  } catch {
+    // The UI can still refresh optimistically if the indexer is slow.
+  }
 }
 
 export default function PoolsPage() {
   const account = useCurrentAccount();
+  const suiClient = useSuiClient();
   const isConnected = !!account;
   const [filter, setFilter] = useState<PoolStatus>("all");
   const [selectedPool, setSelectedPool] = useState<FormattedPool | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [joinCoinId, setJoinCoinId] = useState("");
+  const [publishingMetadata, setPublishingMetadata] = useState(false);
   const [createForm, setCreateForm] = useState({
     depositAmount: 25,
     maxParticipants: 8,
@@ -85,6 +95,17 @@ export default function PoolsPage() {
 
   const COLLATERAL_MULTIPLIER = 125;
 
+  const resetCreateForm = () => {
+    setCreateForm({
+      depositAmount: 25,
+      maxParticipants: 8,
+      cycleDuration: 30,
+      usdcCoinId: usdcCoins[0]?.coinObjectId || "",
+      poolName: "",
+      poolDescription: "",
+    });
+  };
+
   const handleJoinPool = () => {
     if (!selectedPool) return;
     const coinId = joinCoinId || usdcCoins[0]?.coinObjectId || "";
@@ -108,36 +129,74 @@ export default function PoolsPage() {
       return;
     }
 
-    // 1. Publish metadata to Walrus if name is provided
     let blobId: string | null = null;
-    if (createForm.poolName) {
+    if (createForm.poolName.trim()) {
+      setPublishingMetadata(true);
       blobId = await publishPoolMetadata(
-        createForm.poolName,
-        createForm.poolDescription,
+        createForm.poolName.trim(),
+        createForm.poolDescription.trim(),
         account?.address || "",
         "",
       );
+      setPublishingMetadata(false);
+
+      if (!blobId) {
+        errorToast("Metadata Publish Failed", "Pool was not created because the custom name could not be uploaded.");
+        return;
+      }
     }
-    // 2. Create pool on-chain
     createPool(
       createForm.depositAmount,
       createForm.maxParticipants,
       createForm.cycleDuration,
       createForm.usdcCoinId,
-      (response) => {
-        setShowCreateModal(false);
-        refetchPools();
+      async (response) => {
+        const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
 
-        if (blobId) {
-          const poolChange = findCreatedObject(response, "::ArisanPool");
-          const capChange = findCreatedObject(response, "::PoolAdminCap");
-          if (poolChange?.objectId && capChange?.objectId) {
-            linkMetadata(poolChange.objectId, blobId, capChange.objectId);
-          }
+        if (!blobId) {
+          await waitForDigest(suiClient, response.digest);
+          setShowCreateModal(false);
+          resetCreateForm();
+          refetchPools();
+          successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
+          return;
         }
 
-        const poolTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
-        successToast("Pool Created", `Your ROSCA pool is now live.${poolTxMsg}`);
+        const poolChange = findObjectChange(response, "::ArisanPool");
+        const capChange = findObjectChange(response, "::PoolAdminCap");
+        if (!poolChange?.objectId || !capChange?.objectId) {
+          await waitForDigest(suiClient, response.digest);
+          setShowCreateModal(false);
+          resetCreateForm();
+          refetchPools();
+          errorToast("Pool Created Without Name", `The pool was created, but its metadata could not be linked.${createTxMsg}`);
+          return;
+        }
+
+        linkMetadata(
+          poolChange.objectId,
+          blobId,
+          capChange.objectId,
+          async (linkResponse) => {
+            await waitForDigest(suiClient, linkResponse.digest);
+            setShowCreateModal(false);
+            resetCreateForm();
+            refetchPools();
+            successToast("Pool Created", `Your ROSCA pool is now live and the custom name has been applied.${createTxMsg}`);
+          },
+          (linkError) => {
+            setShowCreateModal(false);
+            resetCreateForm();
+            refetchPools();
+            errorToast(
+              "Pool Created Without Name",
+              linkError?.message || `The pool was created, but the custom name could not be linked.${createTxMsg}`,
+            );
+          }
+        );
+      },
+      (createError) => {
+        errorToast("Create Pool Failed", createError?.message || "Transaction failed");
       },
     );
   };
@@ -786,14 +845,19 @@ export default function PoolsPage() {
 
             <button
               onClick={handleCreatePool}
-              disabled={creating || linkingMeta}
+              disabled={creating || linkingMeta || publishingMetadata}
               className={`w-full border-[3px] border-[var(--brutal-ink)] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_var(--brutal-ink)] ${
-                creating || linkingMeta
+                creating || linkingMeta || publishingMetadata
                   ? "cursor-not-allowed bg-[var(--brutal-surface)] text-[var(--brutal-muted)] opacity-50"
                   : "bg-[var(--brutal-accent)] text-[var(--brutal-ink)] hover:-translate-x-0.5 hover:-translate-y-0.5"
               }`}
             >
-              {creating ? (
+              {publishingMetadata ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
+                  Publishing metadata...
+                </span>
+              ) : creating ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
                   Creating pool...

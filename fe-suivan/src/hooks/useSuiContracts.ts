@@ -536,23 +536,44 @@ export function useJoinPool() {
 }
 
 export function useCreatePool() {
-  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const client = useSuiClient();
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction<TransactionResult>({
+    execute: async ({ bytes, signature }) => {
+      const response = await client.executeTransactionBlock({
+        transactionBlock: bytes,
+        signature,
+        options: {
+          showObjectChanges: true,
+        },
+      });
+
+      return {
+        digest: response.digest,
+        objectChanges: response.objectChanges?.map((change) => ({
+          type: change.type,
+          objectType: "objectType" in change ? change.objectType : undefined,
+          objectId: "objectId" in change ? change.objectId : undefined,
+        })),
+      };
+    },
+  });
   const queryClient = useQueryClient();
   const [txResponse, setTxResponse] = useState<TransactionResult | null>(null);
 
-    const COLLATERAL_MULTIPLIER = 125;
+  const COLLATERAL_MULTIPLIER = 125;
 
-    const createPool = (
-      depositAmount: number,
-      maxParticipants: number,
-      cycleDurationDays: number,
-      usdcCoinId: string,
-      onSuccess?: (response: TransactionResult) => void,
-    ) => {
-      const tx = new Transaction();
+  const createPool = (
+    depositAmount: number,
+    maxParticipants: number,
+    cycleDurationDays: number,
+    usdcCoinId: string,
+    onSuccess?: (response: TransactionResult) => void,
+    onError?: (error: Error) => void,
+  ) => {
+    const tx = new Transaction();
 
-      const requiredCollateral = Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100);
-      const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
+    const requiredCollateral = Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100);
+    const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
 
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::arisan_factory::create_custom_pool`,
@@ -572,6 +593,9 @@ export function useCreatePool() {
         setTxResponse(response);
         queryClient.invalidateQueries({ queryKey: ["suivan"] });
         onSuccess?.(response);
+      },
+      onError: (mutationError) => {
+        onError?.(mutationError as Error);
       },
     });
   };
@@ -790,7 +814,13 @@ export function useLinkPoolMetadata() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
 
-  const linkMetadata = (poolId: string, blobId: string, poolAdminCapId: string) => {
+  const linkMetadata = (
+    poolId: string,
+    blobId: string,
+    poolAdminCapId: string,
+    onSuccess?: (response: TransactionResult) => void,
+    onError?: (error: Error) => void,
+  ) => {
     const tx = new Transaction();
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::walrus_store::link_pool_metadata`,
@@ -802,8 +832,12 @@ export function useLinkPoolMetadata() {
       typeArguments: [SUI_USDC_TYPE],
     });
     signAndExecute({ transaction: tx }, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         queryClient.invalidateQueries({ queryKey: ["suivan"] });
+        onSuccess?.({ digest: response.digest });
+      },
+      onError: (mutationError) => {
+        onError?.(mutationError as Error);
       },
     });
   };
