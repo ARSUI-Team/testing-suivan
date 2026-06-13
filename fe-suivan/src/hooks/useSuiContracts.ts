@@ -5,6 +5,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID } from "@/config/sui";
+import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 
 export type TransactionResult = {
   digest: string;
@@ -279,7 +280,12 @@ export function useRequiredCollateral(poolAddress: string | undefined) {
       if (!config) return 0;
       const depositAmount = Number(config.deposit_amount as string || "0");
       const collateralMultiplier = Number(config.collateral_multiplier as string || "0");
-      return (depositAmount * collateralMultiplier / 100) / 1_000_000;
+      const maxParticipants = Number(config.max_participants as string || "0");
+      return getRequiredCollateralAmount(
+        depositAmount / 1_000_000,
+        maxParticipants,
+        collateralMultiplier,
+      );
     },
     enabled: !!poolAddress,
   });
@@ -560,7 +566,7 @@ export function useCreatePool() {
   const queryClient = useQueryClient();
   const [txResponse, setTxResponse] = useState<TransactionResult | null>(null);
 
-  const COLLATERAL_MULTIPLIER = 125;
+  const COLLATERAL_MULTIPLIER = DEFAULT_COLLATERAL_MULTIPLIER;
 
   const createPool = (
     depositAmount: number,
@@ -572,7 +578,11 @@ export function useCreatePool() {
   ) => {
     const tx = new Transaction();
 
-    const requiredCollateral = Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100);
+    const requiredCollateral = getRequiredCollateralAmount(
+      depositAmount,
+      maxParticipants,
+      COLLATERAL_MULTIPLIER,
+    );
     const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
 
     tx.moveCall({

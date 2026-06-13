@@ -25,6 +25,7 @@ import { PoolName } from "@/components/PoolName";
 import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
+import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 
 type PoolStatus = "all" | "open" | "active" | "completed";
 
@@ -93,7 +94,7 @@ export default function PoolsPage() {
 
   const gsapRef = useGsapEntrance([pools]);
 
-  const COLLATERAL_MULTIPLIER = 125;
+  const COLLATERAL_MULTIPLIER = DEFAULT_COLLATERAL_MULTIPLIER;
 
   const resetCreateForm = () => {
     setCreateForm({
@@ -113,7 +114,11 @@ export default function PoolsPage() {
       errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
-    const collateralAmt = Math.ceil(selectedPool.depositAmount * COLLATERAL_MULTIPLIER / 100);
+    const collateralAmt = getRequiredCollateralAmount(
+      selectedPool.depositAmount,
+      selectedPool.maxParticipants,
+      COLLATERAL_MULTIPLIER,
+    );
     joinPool(selectedPool.address, collateralAmt, coinId, (response) => {
       setSelectedPool(null);
       setJoinCoinId("");
@@ -837,7 +842,11 @@ export default function PoolsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.requiredCollateral")}</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                    {Math.ceil(createForm.depositAmount * 125 / 100)} USDC
+                    {getRequiredCollateralAmount(
+                      createForm.depositAmount,
+                      createForm.maxParticipants,
+                      COLLATERAL_MULTIPLIER,
+                    )} USDC
                   </span>
                 </div>
               </div>

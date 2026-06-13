@@ -33,6 +33,7 @@ import {
 } from "@/hooks/useSuiContracts";
 import { SUI_AGENT_ADDRESS, SUI_PACKAGE_ID } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
+import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 
 export default function PoolDetailPage() {
   const params = useParams();
@@ -374,14 +375,18 @@ export default function PoolDetailPage() {
     if (claimError && !claimSuccess) errorToast("Claim Failed", claimError?.message || "Transaction failed");
   }, [claimError, claimSuccess, errorToast]);
 
-  const COLLATERAL_MULTIPLIER = 125;
+  const COLLATERAL_MULTIPLIER = DEFAULT_COLLATERAL_MULTIPLIER;
 
   const handleJoinPool = () => {
     if (!joinCoinId) {
       errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
-    joinPool(poolAddress, Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100), joinCoinId);
+    joinPool(
+      poolAddress,
+      getRequiredCollateralAmount(depositAmount, maxParticipants, COLLATERAL_MULTIPLIER),
+      joinCoinId,
+    );
   };
 
   const handleMakeDeposit = () => {
@@ -546,7 +551,9 @@ export default function PoolDetailPage() {
                   </div>
                   <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.collateral")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">
+                      {getRequiredCollateralAmount(depositAmount, maxParticipants, COLLATERAL_MULTIPLIER)} USDC
+                    </p>
                   </div>
                 </div>
               </div>
@@ -968,7 +975,9 @@ export default function PoolDetailPage() {
 
               <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("pools.collateral")}</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
+                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">
+                  {getRequiredCollateralAmount(depositAmount, maxParticipants, COLLATERAL_MULTIPLIER)} USDC
+                </p>
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Returned at the end of the cycle with yield bonus when available</p>
               </div>
 

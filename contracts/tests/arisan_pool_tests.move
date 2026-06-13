@@ -18,7 +18,7 @@ module archa::arisan_pool_tests {
     const MAX_PARTICIPANTS: u64 = 5;
     const CYCLE_DURATION_MS: u64 = 2_592_000_000;
     const COLLATERAL_MULTIPLIER: u64 = 125;
-    const REQUIRED_COLLATERAL: u64 = 12_500_000;
+    const REQUIRED_COLLATERAL: u64 = 50_000_000;
 
     fun mint_coin(amount: u64, ctx: &mut TxContext): Coin<TEST_USDC> {
         coin::from_balance(
@@ -82,7 +82,7 @@ module archa::arisan_pool_tests {
     fun test_required_collateral_100pct() {
         let mut scenario = test_scenario::begin(@0xA);
         let (pool, cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(5_000_000, 10, 1_000_000, 100, scenario.ctx());
-        assert!(arisan_pool::required_collateral(&pool) == 5_000_000);
+        assert!(arisan_pool::required_collateral(&pool) == 45_000_000);
         cleanup_empty(pool, cap, &mut scenario);
         scenario.end();
     }
@@ -91,7 +91,7 @@ module archa::arisan_pool_tests {
     fun test_required_collateral_150pct() {
         let mut scenario = test_scenario::begin(@0xA);
         let (pool, cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(1_000_000, 3, 500_000, 150, scenario.ctx());
-        assert!(arisan_pool::required_collateral(&pool) == 1_500_000);
+        assert!(arisan_pool::required_collateral(&pool) == 3_000_000);
         cleanup_empty(pool, cap, &mut scenario);
         scenario.end();
     }
@@ -105,7 +105,7 @@ module archa::arisan_pool_tests {
         cleanup_empty(pool, cap, &mut scenario);
 
         let (pool2, cap2) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(100_000_000, 50, 10_000_000_000, 100, scenario.ctx());
-        assert!(arisan_pool::required_collateral(&pool2) == 100_000_000);
+        assert!(arisan_pool::required_collateral(&pool2) == 4_900_000_000);
         cleanup_empty(pool2, cap2, &mut scenario);
         scenario.end();
     }
@@ -541,6 +541,8 @@ module archa::arisan_pool_tests {
         assert!(arisan_pool::participant_collateral(&p_b) == 10_000_000);
         assert!(arisan_pool::participant_missed(&p_b) == 1);
         assert!(arisan_pool::participant_is_active(&p_b) == true);
+        assert!(arisan_pool::has_deposited_this_cycle(&pool, @0xB));
+        assert!(arisan_pool::active_depositors(&pool) == 1);
         assert!(arisan_pool::total_pool_funds(&pool) == DEPOSIT_AMOUNT);
 
         transfer::public_transfer(cap, @0xA);
@@ -586,6 +588,9 @@ module archa::arisan_pool_tests {
         let p_b = arisan_pool::get_participant(&pool, @0xB);
         assert!(arisan_pool::participant_collateral(&p_b) == 0);
         assert!(arisan_pool::participant_is_active(&p_b) == false);
+        assert!(arisan_pool::has_deposited_this_cycle(&pool, @0xB));
+        assert!(arisan_pool::active_depositors(&pool) == 1);
+        assert!(arisan_pool::total_pool_funds(&pool) == DEPOSIT_AMOUNT);
 
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);

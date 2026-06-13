@@ -3,6 +3,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { fromHex, fromBase64 } from "@mysten/sui/utils";
+import { getRequiredCollateralAmount } from "@/lib/poolMath";
 
 let client: SuiJsonRpcClient | null = null;
 function getClient() {
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
         if (!body.usdcCoinId || !body.depositAmount || !body.maxParticipants || !body.cycleDurationDays) {
           return NextResponse.json({ error: "Missing create_pool params: usdcCoinId, depositAmount, maxParticipants, cycleDurationDays" }, { status: 400 });
         }
-        const requiredCollateral = Math.ceil(body.depositAmount * 1.25);
+        const requiredCollateral = getRequiredCollateralAmount(body.depositAmount, body.maxParticipants, 125);
         const [collateralCoin] = tx.splitCoins(tx.object(body.usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
         tx.moveCall({
           target: `${PACKAGE_ID}::arisan_factory::create_custom_pool`,
