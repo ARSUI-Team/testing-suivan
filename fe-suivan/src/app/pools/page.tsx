@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -265,7 +265,7 @@ export default function PoolsPage() {
           {/* Faucet */}
           {isConnected && (
             <div className="gsap-up mb-4">
-              <FaucetButton userAddress={account!.address} refetchPools={refetchPools} />
+              <FaucetButton refetchPools={refetchPools} />
             </div>
           )}
 
@@ -884,30 +884,69 @@ export default function PoolsPage() {
   );
 }
 
-function FaucetButton({ userAddress: _userAddress, refetchPools }: { userAddress: string; refetchPools: () => void }) {
+function FaucetButton({ refetchPools }: { userAddress?: string; refetchPools: () => void }) {
   const { claimUSDC, isPending } = useClaimUSDC();
   const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const [success, setSuccess] = useState(false);
+  const [cooldownSec, setCooldownSec] = useState(0);
+
+  const COOLDOWN_MS = 86_400_000;
+
+  const checkCooldown = (): boolean => {
+    if (typeof window === "undefined") return false;
+    const raw = localStorage.getItem("suivan_faucet_claim");
+    if (!raw) return false;
+    const last = Number(raw);
+    const elapsed = Date.now() - last;
+    if (elapsed < COOLDOWN_MS) {
+      setCooldownSec(Math.ceil((COOLDOWN_MS - elapsed) / 1000));
+      return true;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const id = setInterval(() => setCooldownSec((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldownSec]);
+
+  const cooldownActive = cooldownSec > 0;
 
   const handleFaucet = () => {
     if (!faucetId) {
       errorToast("Faucet not available");
       return;
     }
+    if (checkCooldown()) {
+      errorToast("Faucet cooldown active — try again later");
+      return;
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("suivan_faucet_claim", String(Date.now()));
+    }
     claimUSDC(faucetId);
     setSuccess(true);
+    checkCooldown();
     setTimeout(() => {
       refetchPools();
       setSuccess(false);
     }, 2000);
   };
 
+  const fmt = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m ${s % 60}s`;
+  };
+
   return (
     <button
       onClick={handleFaucet}
-      disabled={!faucetId || isPending || success}
+      disabled={!faucetId || isPending || success || cooldownActive}
       className={`protocol-font inline-flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] px-4 py-2 text-xs font-black shadow-[3px_3px_0_var(--brutal-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 ${
         success ? "bg-[var(--success-soft)]" : "bg-[var(--warn-soft)]"
       }`}
@@ -919,6 +958,8 @@ function FaucetButton({ userAddress: _userAddress, refetchPools }: { userAddress
         </>
       ) : success ? (
         "500 USDC Minted!"
+      ) : cooldownActive ? (
+        `Cooldown ${fmt(cooldownSec)}`
       ) : (
         "Get Test USDC"
       )}
