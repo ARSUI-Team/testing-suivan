@@ -270,7 +270,11 @@ module archa::arisan_pool {
 
     /// Get required collateral amount based on config
     public fun required_collateral<CoinType>(pool: &ArisanPool<CoinType>): u64 {
-        (((pool.config.deposit_amount as u128) * (pool.config.collateral_multiplier as u128) / 100) as u64)
+        required_collateral_for_config(
+            pool.config.deposit_amount,
+            pool.config.max_participants,
+            pool.config.collateral_multiplier,
+        )
     }
 
     /// Get total collateral held
@@ -494,6 +498,48 @@ module archa::arisan_pool {
         }
     }
 
+    fun required_collateral_for_config(
+        deposit_amount: u64,
+        max_participants: u64,
+        collateral_multiplier: u64,
+    ): u64 {
+        if (max_participants <= 1) {
+            return 0
+        };
+        (((deposit_amount as u128) * ((max_participants - 1) as u128) * (collateral_multiplier as u128) / 100) as u64)
+    }
+
+    fun derive_seed_from_pool<CoinType>(
+        pool: &ArisanPool<CoinType>,
+        salt: u64,
+        ctx: &TxContext,
+    ): (u64, u8) {
+        if (pool.seal_seed.is_some()) {
+            let seal_bytes = option::borrow(&pool.seal_seed);
+            let mut s = salt;
+            let mut j = 0;
+            let seal_len = vector::length(seal_bytes);
+            while (j < seal_len) {
+                let byte = (*vector::borrow(seal_bytes, j) as u64);
+                s = (s << 5) ^ s ^ byte;
+                j = j + 1;
+            };
+            (s, SEED_SOURCE_SEAL)
+        } else {
+            let digest = tx_context::digest(ctx);
+            let mut s: u64 = salt;
+            let mut j = 0;
+            let len = vector::length(digest);
+            while (j < len) {
+                let byte = *vector::borrow(digest, j);
+                let shift = ((j % 8) as u8) * 8;
+                s = s ^ ((byte as u64) << shift);
+                j = j + 1;
+            };
+            (s, 0u8)
+        }
+    }
+
     // ====== Entry Functions ======
 
     /// Create a new ArisanPool and join as the first participant
@@ -514,7 +560,11 @@ module archa::arisan_pool {
         assert!(collateral_multiplier >= 100, E_COLLATERAL_TOO_LOW);
         assert!(max_participants >= 2, E_NOT_ENOUGH_PARTICIPANTS);
         assert!(max_participants <= MAX_POOL_SIZE, E_POOL_TOO_LARGE);
-        let required = (((deposit_amount as u128) * (collateral_multiplier as u128) / 100) as u64);
+        let required = required_collateral_for_config(
+            deposit_amount,
+            max_participants,
+            collateral_multiplier,
+        );
         assert!(coin::value(&collateral) >= required, E_COLLATERAL_TOO_LOW);
 
         let sender = ctx.sender();
@@ -620,7 +670,11 @@ module archa::arisan_pool {
         assert!(!pool.is_full, E_POOL_FULL);
 
         // Validate collateral amount
-        let required = (((pool.config.deposit_amount as u128) * (pool.config.collateral_multiplier as u128) / 100) as u64);
+        let required = required_collateral_for_config(
+            pool.config.deposit_amount,
+            pool.config.max_participants,
+            pool.config.collateral_multiplier,
+        );
         assert!(coin::value(&collateral) >= required, E_COLLATERAL_TOO_LOW);
 
         // Add participant
@@ -788,31 +842,7 @@ module archa::arisan_pool {
         // If seal seed is set: use it (verifiable randomness)
         // If seal seed is NOT set: fall back to tx_context::digest() for convenience
         // This enables frontend testing without full Seal key server setup
-        let (seed, seed_source) = if (pool.seal_seed.is_some()) {
-            let seal_bytes = option::borrow(&pool.seal_seed);
-            let mut s = pool.current_cycle;
-            let mut j = 0;
-            let seal_len = vector::length(seal_bytes);
-            while (j < seal_len) {
-                let byte = (*vector::borrow(seal_bytes, j) as u64);
-                s = (s << 5) ^ s ^ byte;
-                j = j + 1;
-            };
-            (s, SEED_SOURCE_SEAL)
-        } else {
-            // Fallback: use tx_context digest as seed
-            let digest = tx_context::digest(ctx);
-            let mut s: u64 = 0;
-            let mut j = 0;
-            let len = vector::length(digest);
-            while (j < len) {
-                let byte = *vector::borrow(digest, j);
-                let shift = ((j % 8) as u8) * 8;
-                s = s ^ ((byte as u64) << shift);
-                j = j + 1;
-            };
-            (s, 0u8) // seed_source 0 = tx_context fallback
-        };
+        let (seed, seed_source) = derive_seed_from_pool(pool, pool.current_cycle, ctx);
 
         // Rejection sampling to eliminate modulo bias
         // Find smallest power of 2 >= eligible_count, then reject
@@ -821,9 +851,12 @@ module archa::arisan_pool {
         let winner_index = unbiased_random_index(seed, eligible_u64);
         let winner = *vector::borrow(&eligible, winner_index);
 
-        // Clear seal seed after successful winner selection (read-first-then-clear pattern)
-        // Only emit event if seal seed was actually set (not fallback path)
-        if (pool.seal_seed.is_some()) {
+        // Check if this is the final winner (all will have received payout after this)
+        let all_won = check_all_received_payout_before_mark(pool);
+
+        // Clear seal seed after non-final cycle winner selection.
+        // Final-cycle jackpot reuses the same Seal/fallback entropy with a different salt.
+        if (!all_won && pool.seal_seed.is_some()) {
             pool.seal_seed = option::none();
             event::emit(SealSeedCleared { pool_id: object::id(pool) });
         };
@@ -834,9 +867,6 @@ module archa::arisan_pool {
         assert!(active_deps > 0, E_NO_WINNERS_LEFT);
 
         let cycle_deposits = (((pool.config.deposit_amount as u128) * (active_deps as u128)) as u64);
-
-        // Check if this is the final winner (all will have received payout after this)
-        let all_won = check_all_received_payout_before_mark(pool);
 
         // Yield bonus disabled — all yield accumulates for gacha distribution at pool end
         let yield_bonus = 0;
@@ -868,7 +898,7 @@ module archa::arisan_pool {
         // Mark winner + check if all participants have won → end pool
         if (all_won) {
             participant.has_received_payout = true;
-            end_pool_internal(pool, random, ctx);
+            end_pool_internal(pool, ctx);
         } else {
             participant.has_received_payout = true;
             // Advance cycle
@@ -923,18 +953,18 @@ module archa::arisan_pool {
     public fun end_pool<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
-        random: &Random,
+        _random: &Random,
         ctx: &mut TxContext,
     ) {
         assert_not_paused(pool);
         assert!(cap.pool_id == object::id(pool), E_WRONG_POOL_CAP);
         assert!(count_remaining_winners(pool) == 0, E_NO_WINNERS_LEFT);
-        end_pool_internal(pool, random, ctx);
+        end_pool_internal(pool, ctx);
     }
 
     /// Internal: end pool without cap check — called by select_winner() when all won
     /// Distributes collateral yield (proportional) + cumulative yield (gacha)
-    fun end_pool_internal<CoinType>(pool: &mut ArisanPool<CoinType>, random: &Random, ctx: &mut TxContext) {
+    fun end_pool_internal<CoinType>(pool: &mut ArisanPool<CoinType>, ctx: &mut TxContext) {
         assert!(!pool.is_ended, E_POOL_ENDED);
 
         // Safety: cannot end pool while funds are deployed to yield strategy (H-04 fix)
@@ -990,9 +1020,10 @@ module archa::arisan_pool {
             };
 
             if (total_tickets > 0) {
-                // Pass 2: weighted random selection in O(n) — no physical ticket array
-                let mut gen = new_generator(random, ctx);
-                let pick = random::generate_u64_in_range(&mut gen, 0, total_tickets - 1);
+                // Pass 2: weighted random selection in O(n) — no physical ticket array.
+                // Uses Seal seed when available, otherwise tx digest fallback with a domain-separated salt.
+                let (jackpot_seed, _) = derive_seed_from_pool(pool, 0x4A41434B504F54, ctx);
+                let pick = unbiased_random_index(jackpot_seed, total_tickets);
                 let mut remaining = pick;
                 let mut winner: address = @0x0;
                 let mut found = false;
@@ -1029,6 +1060,11 @@ module archa::arisan_pool {
                     participant_count: participants_in_gacha,
                 });
             };
+        };
+
+        if (pool.seal_seed.is_some()) {
+            pool.seal_seed = option::none();
+            event::emit(SealSeedCleared { pool_id: object::id(pool) });
         };
 
         // ====== STEP 3: Finalize pool ======
@@ -1130,50 +1166,48 @@ module archa::arisan_pool {
         let new_leaderboard = if (current_leaderboard >= LEADERBOARD_SLASH_PENALTY) {
             current_leaderboard - LEADERBOARD_SLASH_PENALTY
         } else { 1 };
+        let executed_slash = if (current_collateral >= slash_amount) { slash_amount } else { current_collateral };
+        let covered_cycle = executed_slash == slash_amount;
+        let new_collateral = current_collateral - executed_slash;
+        let missed = current_missed + 1;
 
-        if (slash_amount >= current_collateral) {
-            // Full depletion — deactivate participant
-            let remaining = current_collateral;
-            let missed = current_missed + 1;
+        let participant = table::borrow_mut(&mut pool.participants, participant_addr);
+        participant.collateral_amount = new_collateral;
+        participant.missed_payments = missed;
+        participant.leaderboard_score = new_leaderboard;
 
-            let participant = table::borrow_mut(&mut pool.participants, participant_addr);
-            participant.collateral_amount = 0;
+        if (covered_cycle) {
+            participant.deposits_this_cycle = true;
+            participant.last_deposit_cycle = pool.current_cycle;
+            pool.active_depositors_count = pool.active_depositors_count + 1;
+        };
+
+        if (new_collateral == 0) {
             participant.is_active = false;
-            participant.missed_payments = missed;
-            participant.leaderboard_score = new_leaderboard;
+        };
 
-            // Move remaining collateral to pool funds
-            if (remaining > 0) {
-                let slashed = coin::take(&mut pool.collateral_balance, remaining, ctx);
-                balance::join(&mut pool.pool_funds_balance, coin::into_balance(slashed));
-            };
+        let slashed_coin = coin::take(&mut pool.collateral_balance, executed_slash, ctx);
+        if (covered_cycle) {
+            balance::join(&mut pool.pool_funds_balance, coin::into_balance(slashed_coin));
+        } else {
+            balance::join(&mut pool.yield_balance, coin::into_balance(slashed_coin));
+        };
 
+        if (new_collateral == 0) {
             event::emit(ParticipantRemoved {
                 pool_id,
                 participant: participant_addr,
-                reason: b"collateral_depleted",
-            });
-        } else {
-            // Partial slash
-            let new_collateral = current_collateral - slash_amount;
-            let missed = current_missed + 1;
-
-            let participant = table::borrow_mut(&mut pool.participants, participant_addr);
-            participant.collateral_amount = new_collateral;
-            participant.missed_payments = missed;
-            participant.leaderboard_score = new_leaderboard;
-
-            let slashed_coin = coin::take(&mut pool.collateral_balance, slash_amount, ctx);
-            balance::join(&mut pool.pool_funds_balance, coin::into_balance(slashed_coin));
-
-            event::emit(CollateralSlashed {
-                pool_id,
-                participant: participant_addr,
-                slash_amount,
-                remaining_collateral: new_collateral,
-                missed_payments: missed,
+                reason: if (covered_cycle) { b"collateral_exhausted" } else { b"collateral_insolvent" },
             });
         };
+
+        event::emit(CollateralSlashed {
+            pool_id,
+            participant: participant_addr,
+            slash_amount: executed_slash,
+            remaining_collateral: new_collateral,
+            missed_payments: missed,
+        });
     }
 
     // ====== Collateral Yield Entry ======
