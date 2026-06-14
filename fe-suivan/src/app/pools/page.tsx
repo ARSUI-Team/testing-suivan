@@ -26,8 +26,9 @@ import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
-type PoolStatus = "all" | "open" | "active" | "completed";
+type PoolStatus = "all" | PoolLifecycleStatus;
 
 function findObjectChange(response: TransactionResult, objectType: string) {
   return response.objectChanges?.find((change) =>
@@ -84,12 +85,7 @@ export default function PoolsPage() {
     : [];
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case "open": return "Open";
-      case "active": return "Active";
-      case "completed": return "Completed";
-      default: return status;
-    }
+    return status === "all" ? "All" : getPoolStatusLabel(status as PoolLifecycleStatus);
   };
 
   const gsapRef = useGsapEntrance([pools]);
@@ -250,7 +246,7 @@ export default function PoolsPage() {
               <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
                 <p className="protocol-font text-xs font-black tracking-[0.1em] text-[var(--brutal-muted)]">{t("pools.active")}</p>
                 <p className="mt-2 text-3xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                  {pools.filter((p) => p.status === "active").length}
+                  {pools.filter((p) => ["ready", "active", "action_required"].includes(p.status)).length}
                 </p>
               </div>
               <div className="border-[3px] border-[var(--brutal-ink)] bg-[var(--warn-soft)] p-4 shadow-[4px_4px_0_var(--brutal-ink)]">
@@ -272,7 +268,7 @@ export default function PoolsPage() {
           {/* Filters & Create */}
           <div className="gsap-up mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-1.5 shadow-[4px_4px_0_var(--brutal-ink)]">
-              {(["all", "open", "active", "completed"] as PoolStatus[]).map((status) => (
+              {(["all", "open", "ready", "active", "action_required", "completed"] as PoolStatus[]).map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
@@ -321,7 +317,16 @@ export default function PoolsPage() {
             <div className="gsap-up grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredPools.map((pool) => {
                 const init = (pool.name || "?")[0].toUpperCase();
-                const statusBg = pool.status === "active" ? "#00e060" : pool.status === "open" ? "#f6c85f" : "#a8a49a";
+                const statusBg =
+                  pool.status === "active"
+                    ? "#00e060"
+                    : pool.status === "open"
+                      ? "#f6c85f"
+                      : pool.status === "ready"
+                        ? "#5ec8ff"
+                        : pool.status === "action_required"
+                          ? "#ff7a7a"
+                          : "#a8a49a";
                 const memberRatio = pool.currentParticipants / pool.maxParticipants;
                 return (
                   <div

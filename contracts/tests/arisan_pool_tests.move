@@ -727,7 +727,7 @@ module archa::arisan_pool_tests {
         // Cycle 1 ends at: start_time + 1 * cycle_duration = 1000 + 1_000_000 = 1_001_000
         clock.set_for_testing(1_001_000);
 
-        // Select winner — payout goes directly to winner address (H-02 fix)
+        // Select winner - payout is reserved until the winner claims it
         arisan_pool::set_seal_seed(&mut pool, b"test_seed");
         let random_state = scenario.take_shared<Random>();
         arisan_pool::select_winner(&cap, &mut pool, &clock, &random_state, scenario.ctx());
@@ -740,13 +740,25 @@ module archa::arisan_pool_tests {
         // Verify cycle winner recorded
         let winner_opt = arisan_pool::get_cycle_winner(&pool, 1);
         assert!(option::is_some(&winner_opt));
+        let winner = *option::borrow(&winner_opt);
+        let winner_info = arisan_pool::get_participant(&pool, winner);
+        assert!(arisan_pool::participant_pending_winner_payout(&winner_info) == DEPOSIT_AMOUNT * 2);
+        assert!(arisan_pool::total_pending_winner_payouts(&pool) == DEPOSIT_AMOUNT * 2);
 
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
 
-        // Verify winner received payout (check from winner's address in next tx)
-        scenario.next_tx(@0xA);
+        scenario.next_tx(winner);
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
+        arisan_pool::claim_winner_payout(&mut pool, scenario.ctx());
+        let winner_info = arisan_pool::get_participant(&pool, winner);
+        assert!(arisan_pool::participant_pending_winner_payout(&winner_info) == 0);
+        assert!(arisan_pool::participant_winner_payout_claimed(&winner_info));
+        assert!(arisan_pool::total_pending_winner_payouts(&pool) == 0);
+        test_scenario::return_shared(pool);
+
+        scenario.next_tx(winner);
         let _payout_coin = scenario.take_from_sender<coin::Coin<archa::test_usdc::TEST_USDC>>();
         assert!(coin::value(&_payout_coin) == DEPOSIT_AMOUNT * 2);
         let bal = coin::into_balance(_payout_coin);
@@ -1513,11 +1525,8 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
 
-        // Winner takes payout
-        scenario.next_tx(@0xA);
-        let _payout = scenario.take_from_sender<coin::Coin<archa::test_usdc::TEST_USDC>>();
-        let bal = coin::into_balance(_payout);
-        balance::destroy_for_testing(bal);
+        // Verify no automatic payout object is required before cycle 2
+        // Payout remains in escrow until the selected winner claims it.
 
         // Now cycle 2: winner must also deposit — both deposit
         scenario.next_tx(@0xA);
@@ -1721,12 +1730,19 @@ module archa::arisan_pool_tests {
 
         let info = arisan_pool::pool_info(&pool);
         assert!(arisan_pool::info_total_pool_funds(&info) == DEPOSIT_AMOUNT * 2 - DEPOSIT_AMOUNT * 2);
+        let winner_opt = arisan_pool::get_cycle_winner(&pool, 1);
+        let winner = *option::borrow(&winner_opt);
 
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
 
-        scenario.next_tx(@0xA);
+        scenario.next_tx(winner);
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
+        arisan_pool::claim_winner_payout(&mut pool, scenario.ctx());
+        test_scenario::return_shared(pool);
+
+        scenario.next_tx(winner);
         let payout = scenario.take_from_sender<coin::Coin<archa::test_usdc::TEST_USDC>>();
         assert!(coin::value(&payout) == DEPOSIT_AMOUNT * 2);
         let bal = coin::into_balance(payout);
