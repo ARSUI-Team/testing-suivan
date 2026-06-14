@@ -30,10 +30,12 @@ import {
   useUserUSDCcoins,
   useLinkPoolMetadata,
   useClaimFinal,
+  useClaimWinnerPayout,
 } from "@/hooks/useSuiContracts";
 import { SUI_AGENT_ADDRESS, SUI_PACKAGE_ID } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import { derivePoolLifecycle, getPoolStatusLabel } from "@/lib/poolLifecycle";
 
 export default function PoolDetailPage() {
   const params = useParams();
@@ -93,6 +95,13 @@ export default function PoolDetailPage() {
   } = useTransferAdminCap();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const { claimFinal, isPending: claiming, isSuccess: claimSuccess, hash: claimHash, error: claimError } = useClaimFinal();
+  const {
+    claimWinnerPayout,
+    isPending: claimingWinnerPayout,
+    isSuccess: winnerPayoutSuccess,
+    hash: winnerPayoutHash,
+    error: winnerPayoutError,
+  } = useClaimWinnerPayout();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -193,12 +202,17 @@ export default function PoolDetailPage() {
   const isStarted = poolInfo?.started || false;
   const isActive = poolInfo?.active || false;
 
-  // Determine pool status
-  let status: "open" | "active" | "completed" = "open";
   const isFull = poolInfo?.isFull || false;
-  if (isStarted && isActive) status = "active";
-  else if (isStarted && !isActive) status = "completed";
-  else if (isFull && !isStarted) status = "active"; // "ready to start" shows as active
+  const lifecycle = derivePoolLifecycle({
+    started: isStarted,
+    active: isActive,
+    ended: poolInfo?.isEnded || false,
+    full: isFull,
+    currentCycle,
+    poolStartTimeMs: poolInfo?.poolStartTimeMs || 0,
+    cycleDurationMs: poolInfo?.cycleDurationMs || 0,
+  });
+  const status = lifecycle.status;
 
   // Pool name from Walrus metadata or fallback
   let poolName = walrusMeta?.name || "Custom Pool";
@@ -209,7 +223,7 @@ export default function PoolDetailPage() {
   }
 
   // User is participant
-  const isParticipant = participantInfo?.isActive || false;
+  const isParticipant = !!participantInfo;
   const hasAdminCap = !!adminCapId;
   const hasDepositedThisCycle = !!participantInfo?.depositsThisCycle;
   const capacityPct = maxParticipants > 0
@@ -243,13 +257,17 @@ export default function PoolDetailPage() {
     },
     {
       label: "Start / advance",
-      state: isStarted ? "done" : isFull && hasAdminCap ? "ready" : "waiting",
+      state: isStarted ? "done" : lifecycle.nextAction === "start_pool" && hasAdminCap ? "ready" : "waiting",
       detail: isStarted ? `Cycle ${currentCycle}` : isFull ? "Pool is full" : "Waiting for full capacity",
     },
     {
       label: "Select winner",
-      state: poolInfo?.gachaWinner ? "done" : isStarted && isActive && hasAdminCap ? "ready" : "waiting",
-      detail: poolInfo?.gachaWinner ? `${poolInfo.gachaWinner.slice(0, 6)}…${poolInfo.gachaWinner.slice(-4)}` : "No winner yet",
+      state: lifecycle.nextAction === "resolve_cycle" && hasAdminCap ? "ready" : "waiting",
+      detail: lifecycle.deadlineReached
+        ? "Deadline reached: slash missing deposits, then draw"
+        : lifecycle.cycleDeadlineMs
+          ? `Deadline ${new Date(lifecycle.cycleDeadlineMs).toLocaleString()}`
+          : "Waiting for pool start",
     },
     {
       label: "Claim final",
@@ -305,7 +323,7 @@ export default function PoolDetailPage() {
       refetchPool();
       refetchParticipant();
       const txMsg = selectHash ? `\nTx: ${selectHash.slice(0, 10)}…${selectHash.slice(-4)}` : "";
-      successToast("Winner Selected", `The winner has been selected and paid out.${txMsg}`);
+      successToast("Winner Selected", `The payout is ready for the winner to withdraw.${txMsg}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectSuccess, selectHash]);
@@ -375,6 +393,24 @@ export default function PoolDetailPage() {
     if (claimError && !claimSuccess) errorToast("Claim Failed", claimError?.message || "Transaction failed");
   }, [claimError, claimSuccess, errorToast]);
 
+  useEffect(() => {
+    if (winnerPayoutSuccess) {
+      const txMsg = winnerPayoutHash
+        ? `\nTx: ${winnerPayoutHash.slice(0, 10)}…${winnerPayoutHash.slice(-4)}`
+        : "";
+      refetchPool();
+      refetchParticipant();
+      successToast("Winner Payout Withdrawn", `The cycle payout was sent to your wallet.${txMsg}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [winnerPayoutSuccess, winnerPayoutHash]);
+
+  useEffect(() => {
+    if (winnerPayoutError && !winnerPayoutSuccess) {
+      errorToast("Winner Withdraw Failed", winnerPayoutError.message || "Transaction failed");
+    }
+  }, [winnerPayoutError, winnerPayoutSuccess, errorToast]);
+
   const COLLATERAL_MULTIPLIER = DEFAULT_COLLATERAL_MULTIPLIER;
 
   const handleJoinPool = () => {
@@ -396,7 +432,9 @@ export default function PoolDetailPage() {
   const getStatusColor = (s: string) => {
     switch (s) {
       case "open": return "bg-[var(--success-soft)] text-[var(--success-deep)]";
+      case "ready": return "bg-[var(--warn-soft)] text-[var(--foreground)]";
       case "active": return "bg-[var(--accent-soft)] text-[var(--accent-deep)]";
+      case "action_required": return "bg-[var(--danger-soft)] text-[var(--foreground)]";
       case "completed": return "bg-[var(--surface-hover)] text-[var(--muted)]";
       default: return "bg-[var(--surface-hover)] text-[var(--muted)]";
     }
@@ -436,7 +474,7 @@ export default function PoolDetailPage() {
                   {poolName}
                 </h1>
                 <span className={`protocol-font rounded-full border-2 border-[var(--border)] px-3 py-1 text-xs font-black ${getStatusColor(status)}`}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {getPoolStatusLabel(status)}
                 </span>
               </div>
               <div className="protocol-font inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-black text-[var(--muted)] shadow-[4px_4px_0_var(--border)]">
@@ -710,9 +748,9 @@ export default function PoolDetailPage() {
                     </button>
                     <button
                       onClick={() => selectWinner(poolAddress, adminCapId)}
-                      disabled={!adminCapId || !isStarted || !isActive || selecting}
+                      disabled={!adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting}
                       className={`protocol-font rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
-                        !adminCapId || !isStarted || !isActive || selecting
+                        !adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting
                           ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
                           : "bg-[var(--warn)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
                       }`}
@@ -770,10 +808,36 @@ export default function PoolDetailPage() {
                             {participantInfo?.hasReceivedPayout ? t("detail.yes") : t("detail.notYet")}
                           </span>
                         </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="protocol-font text-xs font-black text-[var(--muted)]">Winner payout available</span>
+                          <span className="protocol-font font-black text-[var(--success-deep)]">
+                            {(participantInfo?.pendingWinnerPayout ?? 0).toFixed(2)} USDC
+                          </span>
+                        </div>
                       </div>
 
+                      {(participantInfo?.pendingWinnerPayout ?? 0) > 0 && (
+                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                          <h3 className="mb-2 font-black text-[var(--foreground)]">Arisan payout ready</h3>
+                          <p className="mb-3 text-sm font-semibold text-[var(--muted)]">
+                            Only your connected winner address can withdraw this payout.
+                          </p>
+                          <button
+                            onClick={() => claimWinnerPayout(poolAddress)}
+                            disabled={claimingWinnerPayout}
+                            className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                              claimingWinnerPayout
+                                ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                                : "bg-[var(--success)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                            }`}
+                          >
+                            {claimingWinnerPayout ? "Withdrawing..." : "Withdraw Winner Payout"}
+                          </button>
+                        </div>
+                      )}
+
                       {/* Deposit Button for Active Pool */}
-                      {status === "active" && isStarted && (
+                      {(status === "active" || status === "action_required") && isStarted && participantInfo?.isActive && (
                         <button
                           onClick={() => setShowDepositModal(true)}
                           className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"

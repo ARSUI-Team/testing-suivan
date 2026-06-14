@@ -4,6 +4,7 @@ import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { SUI_FACTORY_ID } from "@/config/sui";
+import { derivePoolLifecycle, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
 export interface PublicPool {
   id: number;
@@ -15,7 +16,7 @@ export interface PublicPool {
   cycleDuration: number;
   totalFunds: number;
   collateralBalance: number;
-  status: "open" | "active" | "completed";
+  status: PoolLifecycleStatus;
   apy: number;
   currentCycle: number;
   walrusMetadataBlobId: string;
@@ -30,10 +31,13 @@ interface ParsedPool {
   started: boolean;
   active: boolean;
   isFull: boolean;
+  isEnded: boolean;
   totalFunds: number;
   collateralBalance: number;
+  pendingWinnerPayouts: number;
   yield: number;
   cycleDurationMs: number;
+  poolStartTimeMs: number;
   walrusMetadataBlobId: string;
 }
 
@@ -68,10 +72,13 @@ function parsePoolFields(fields: Record<string, unknown>): ParsedPool | null {
       started: Boolean(fields?.is_started),
       active: Boolean(fields?.is_active),
       isFull: Boolean(fields?.is_full),
+      isEnded: Boolean(fields?.is_ended),
       totalFunds: readBalance(fields?.pool_funds_balance) / 1_000_000,
       collateralBalance: readBalance(fields?.collateral_balance) / 1_000_000,
+      pendingWinnerPayouts: readBalance(fields?.winner_payout_balance) / 1_000_000,
       yield: readBalance(fields?.yield_balance) / 1_000_000,
       cycleDurationMs: Number((config?.cycle_duration_ms as string) || 0),
+      poolStartTimeMs: Number((fields?.pool_start_time_ms as string) || 0),
       walrusMetadataBlobId: String((fields?.walrus_metadata_blob_id as string) || ""),
     };
   } catch {
@@ -80,10 +87,15 @@ function parsePoolFields(fields: Record<string, unknown>): ParsedPool | null {
 }
 
 function formatPool(pool: ParsedPool, index: number): PublicPool {
-  let status: PublicPool["status"] = "open";
-  if (pool.started && pool.active) status = "active";
-  else if (pool.started && !pool.active) status = "completed";
-  else if (pool.isFull && !pool.started) status = "active";
+  const { status } = derivePoolLifecycle({
+    started: pool.started,
+    active: pool.active,
+    ended: pool.isEnded,
+    full: pool.isFull,
+    currentCycle: pool.cycle,
+    poolStartTimeMs: pool.poolStartTimeMs,
+    cycleDurationMs: pool.cycleDurationMs,
+  });
 
   let name = "Custom Pool";
   if (pool.depositAmount === 10) name = "Small Pool";
@@ -100,7 +112,7 @@ function formatPool(pool: ParsedPool, index: number): PublicPool {
     maxParticipants: pool.maxParticipants,
     currentParticipants: pool.currentParticipants,
     cycleDuration: pool.cycleDurationMs > 0 ? Math.round(pool.cycleDurationMs / 86_400_000) : 30,
-    totalFunds: pool.totalFunds + pool.collateralBalance,
+    totalFunds: pool.totalFunds + pool.collateralBalance + pool.pendingWinnerPayouts,
     collateralBalance: pool.collateralBalance,
     status,
     apy: Math.round(apy * 10) / 10,

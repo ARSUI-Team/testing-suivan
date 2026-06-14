@@ -45,6 +45,7 @@ module archa::arisan_pool {
     const E_NO_SEAL_SEED: u64 = 24;
     const E_POOL_PAUSED: u64 = 25;
     const E_GACHA_ALREADY_CLAIMED: u64 = 26;
+    const E_NO_WINNER_PAYOUT: u64 = 27;
 
     // Score scaling for leaderboard → gacha tickets
     const TICKET_SCALE: u64 = 10;
@@ -81,6 +82,8 @@ module archa::arisan_pool {
         proportional_yield_earned: u64,  // Collateral yield entitlement (snapshot at end_pool)
         leaderboard_score: u64,          // Score for gacha ticket calculation
         gacha_claimed: bool,             // Already received gacha prize
+        pending_winner_payout: u64,       // Cycle payout reserved for winner withdrawal
+        winner_payout_claimed: bool,      // Prevents duplicate winner payout claims
     }
 
     /// The shared pool object — one per arisan group
@@ -112,6 +115,7 @@ module archa::arisan_pool {
         // Funds — separated as per audit fix D3
         collateral_balance: Balance<CoinType>,           // Holds all collateral
         pool_funds_balance: Balance<CoinType>,            // Holds all deposits (for yield)
+        winner_payout_balance: Balance<CoinType>,         // Escrow for cycle winners
         yield_balance: Balance<CoinType>,                 // Holds cumulative yield (from cycle deposits → gacha)
         collateral_yield_balance: Balance<CoinType>,      // Holds yield from collateral (proportional)
 
@@ -196,6 +200,12 @@ module archa::arisan_pool {
         eligible_count: u64,
         seed_source: u8,
         total_pool_funds: u64,
+    }
+
+    public struct WinnerPayoutClaimed has copy, drop {
+        pool_id: ID,
+        winner: address,
+        amount: u64,
     }
 
     public struct CollateralSlashed has copy, drop {
@@ -287,6 +297,11 @@ module archa::arisan_pool {
         balance::value(&pool.pool_funds_balance)
     }
 
+    /// Get cycle payouts reserved for winners but not withdrawn yet
+    public fun total_pending_winner_payouts<CoinType>(pool: &ArisanPool<CoinType>): u64 {
+        balance::value(&pool.winner_payout_balance)
+    }
+
     /// Get total yield earned (cumulative from cycle deposits)
     public fun total_yield<CoinType>(pool: &ArisanPool<CoinType>): u64 {
         balance::value(&pool.yield_balance)
@@ -327,6 +342,8 @@ module archa::arisan_pool {
     public fun participant_proportional_yield(p: &Participant): u64 { p.proportional_yield_earned }
     public fun participant_leaderboard_score(p: &Participant): u64 { p.leaderboard_score }
     public fun participant_gacha_claimed(p: &Participant): bool { p.gacha_claimed }
+    public fun participant_pending_winner_payout(p: &Participant): u64 { p.pending_winner_payout }
+    public fun participant_winner_payout_claimed(p: &Participant): bool { p.winner_payout_claimed }
 
     /// Check if participant has deposited this cycle (fix H1)
     public fun has_deposited_this_cycle<CoinType>(pool: &ArisanPool<CoinType>, addr: address): bool {
@@ -590,6 +607,8 @@ module archa::arisan_pool {
                 proportional_yield_earned: 0,
                 leaderboard_score: 10,  // join bonus
                 gacha_claimed: false,
+                pending_winner_payout: 0,
+                winner_payout_claimed: false,
             },
         );
 
@@ -616,6 +635,7 @@ module archa::arisan_pool {
             active_depositors_count: 0,
             collateral_balance: coin::into_balance(collateral),
             pool_funds_balance: balance::zero(),
+            winner_payout_balance: balance::zero(),
             yield_balance: balance::zero(),
             collateral_yield_balance: balance::zero(),
             strategy_id: option::none(),
@@ -694,6 +714,8 @@ module archa::arisan_pool {
                 proportional_yield_earned: 0,
                 leaderboard_score: 10,
                 gacha_claimed: false,
+                pending_winner_payout: 0,
+                winner_payout_claimed: false,
             },
         );
 
@@ -811,8 +833,7 @@ module archa::arisan_pool {
 
     /// Select winner for the current cycle
     /// - Requires PoolAdminCap (SEC-AC-1 fix)
-    /// - Payout transferred directly to winner address on-chain (H-02 fix)
-    /// - No return value — winner receives funds immediately, admin cannot intercept
+    /// - Payout is reserved on-chain and can only be withdrawn by the winner
     public fun select_winner<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
@@ -886,21 +907,22 @@ module archa::arisan_pool {
 
         // Record winner — save cycle BEFORE incrementing
         let selected_cycle = pool.current_cycle;
-        let participant = table::borrow_mut(&mut pool.participants, winner);
         table::add(&mut pool.cycle_winners, selected_cycle, winner);
         pool.last_winner = option::some(winner);
 
-        // Create payout coin and transfer directly to winner (H-02 fix)
-        // Winner receives funds immediately — admin cannot intercept
-        let payout_coin = coin::from_balance(payout_balance, ctx);
-        transfer::public_transfer(payout_coin, winner);
+        // Reserve payout in escrow. Only the selected winner can withdraw it.
+        balance::join(&mut pool.winner_payout_balance, payout_balance);
+        {
+            let participant = table::borrow_mut(&mut pool.participants, winner);
+            participant.pending_winner_payout = total_payout;
+            participant.winner_payout_claimed = false;
+            participant.has_received_payout = true;
+        };
 
         // Mark winner + check if all participants have won → end pool
         if (all_won) {
-            participant.has_received_payout = true;
             end_pool_internal(pool, ctx);
         } else {
-            participant.has_received_payout = true;
             // Advance cycle
             let old_cycle = pool.current_cycle;
             pool.current_cycle = pool.current_cycle + 1;
@@ -923,6 +945,41 @@ module archa::arisan_pool {
             eligible_count,
             seed_source,
             total_pool_funds: balance::value(&pool.pool_funds_balance),
+        });
+    }
+
+    /// Withdraw a cycle payout reserved for the transaction sender.
+    /// This remains available even when the pool is ended or paused.
+    public fun claim_winner_payout<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
+        ctx: &mut TxContext,
+    ) {
+        let sender = ctx.sender();
+        assert!(table::contains(&pool.participants, sender), E_NOT_PARTICIPANT);
+
+        let amount = {
+            let participant = table::borrow(&pool.participants, sender);
+            assert!(
+                participant.pending_winner_payout > 0 && !participant.winner_payout_claimed,
+                E_NO_WINNER_PAYOUT
+            );
+            participant.pending_winner_payout
+        };
+        assert!(balance::value(&pool.winner_payout_balance) >= amount, E_INSUFFICIENT_FUNDS);
+
+        {
+            let participant = table::borrow_mut(&mut pool.participants, sender);
+            participant.pending_winner_payout = 0;
+            participant.winner_payout_claimed = true;
+        };
+
+        let payout_coin = coin::take(&mut pool.winner_payout_balance, amount, ctx);
+        transfer::public_transfer(payout_coin, sender);
+
+        event::emit(WinnerPayoutClaimed {
+            pool_id: object::id(pool),
+            winner: sender,
+            amount,
         });
     }
 
@@ -1493,6 +1550,7 @@ module archa::arisan_pool {
             active_depositors_count: 0,
             collateral_balance: balance::zero(),
             pool_funds_balance: balance::zero(),
+            winner_payout_balance: balance::zero(),
             yield_balance: balance::zero(),
             collateral_yield_balance: balance::zero(),
             strategy_id: option::none(),
@@ -1513,7 +1571,7 @@ module archa::arisan_pool {
     /// Only works for empty pools (no participants, no funds)
     #[test_only]
     public fun test_cleanup_pool<CoinType>(pool: ArisanPool<CoinType>, cap: PoolAdminCap, _ctx: &mut TxContext) {
-        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
+        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, winner_payout_balance, yield_balance, collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
         // Drop empty containers
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
@@ -1523,6 +1581,7 @@ module archa::arisan_pool {
         option::destroy_none(seal_seed);
         balance::destroy_zero(collateral_balance);
         balance::destroy_zero(pool_funds_balance);
+        balance::destroy_zero(winner_payout_balance);
         balance::destroy_zero(yield_balance);
         balance::destroy_zero(collateral_yield_balance);
         // Drop unused fields
@@ -1552,7 +1611,7 @@ module archa::arisan_pool {
     /// Use this for yield integration tests where pool has accumulated yield/funds
     #[test_only]
     public fun test_cleanup_pool_with_funds<CoinType>(pool: ArisanPool<CoinType>, cap: PoolAdminCap, _ctx: &mut TxContext) {
-        let ArisanPool<CoinType> { id, participants, cycle_winners, mut collateral_balance, mut pool_funds_balance, mut yield_balance, mut collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
+        let ArisanPool<CoinType> { id, participants, cycle_winners, mut collateral_balance, mut pool_funds_balance, mut winner_payout_balance, mut yield_balance, mut collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
 
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
@@ -1567,6 +1626,13 @@ module archa::arisan_pool {
             transfer::public_transfer(_coin, creator);
         } else {
             balance::destroy_zero(pool_funds_balance);
+        };
+
+        if (balance::value(&winner_payout_balance) > 0) {
+            let _coin = coin::from_balance(winner_payout_balance, _ctx);
+            transfer::public_transfer(_coin, creator);
+        } else {
+            balance::destroy_zero(winner_payout_balance);
         };
 
         // Drain yield_balance
@@ -1631,7 +1697,7 @@ module archa::arisan_pool {
     /// Only works for empty pools (no participants, no funds)
     #[test_only]
     public fun test_destroy_pool_only<CoinType>(pool: ArisanPool<CoinType>, _ctx: &mut TxContext) {
-        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, yield_balance, collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
+        let ArisanPool<CoinType> { id, participants, cycle_winners, collateral_balance, pool_funds_balance, winner_payout_balance, yield_balance, collateral_yield_balance, participant_list, config, creator, ai_optimizer, current_cycle, pool_start_time_ms, is_active, is_full, is_started, is_ended, last_winner, active_depositors_count, strategy_id, walrus_metadata_blob_id, walrus_cycle_history_blob_id, walrus_agreement_blob_id, seal_seed, paused } = pool;
         table::destroy_empty(participants);
         table::destroy_empty(cycle_winners);
         vector::destroy_empty(participant_list);
@@ -1640,6 +1706,7 @@ module archa::arisan_pool {
         option::destroy_none(seal_seed);
         balance::destroy_zero(collateral_balance);
         balance::destroy_zero(pool_funds_balance);
+        balance::destroy_zero(winner_payout_balance);
         balance::destroy_zero(yield_balance);
         balance::destroy_zero(collateral_yield_balance);
         let PoolConfig { deposit_amount: _, max_participants: _, cycle_duration_ms: _, collateral_multiplier: _ } = config;

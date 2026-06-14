@@ -1,11 +1,12 @@
 "use client";
 
-import { useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID } from "@/config/sui";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import { derivePoolLifecycle, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
 export type TransactionResult = {
   digest: string;
@@ -35,6 +36,9 @@ export interface SuiPoolInfo {
   yield: number;
   collateralYield: number;
   cycleDurationMs: number;
+  poolStartTimeMs: number;
+  activeDepositors: number;
+  pendingWinnerPayouts: number;
   gachaWinner: string | null;
   gachaPrize: number;
   walrusMetadataBlobId: string;
@@ -50,7 +54,7 @@ export interface FormattedPool {
   cycleDuration: number;
   totalFunds: number;
   collateralBalance: number;
-  status: "open" | "active" | "completed";
+  status: PoolLifecycleStatus;
   apy: number;
   currentCycle: number;
   walrusMetadataBlobId: string;
@@ -68,6 +72,8 @@ export interface ParticipantInfo {
   proportionalYieldEarned: number;
   leaderboardScore: number;
   gachaClaimed: boolean;
+  pendingWinnerPayout: number;
+  winnerPayoutClaimed: boolean;
 }
 
 // ─── Helper ────────────────────────────────────────────────────────
@@ -95,6 +101,7 @@ function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
     const collateralBalance = readBalance(fields?.collateral_balance) / 1_000_000;
     const yieldBalance = readBalance(fields?.yield_balance) / 1_000_000;
     const collateralYieldBalance = readBalance(fields?.collateral_yield_balance) / 1_000_000;
+    const pendingWinnerPayouts = readBalance(fields?.winner_payout_balance) / 1_000_000;
 
     const cycleDurationMs = Number((config?.cycle_duration_ms as string) || 0);
 
@@ -113,6 +120,9 @@ function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
       yield: yieldBalance,
       collateralYield: collateralYieldBalance,
       cycleDurationMs,
+      poolStartTimeMs: Number((fields?.pool_start_time_ms as string) || 0),
+      activeDepositors: Number((fields?.active_depositors_count as string) || 0),
+      pendingWinnerPayouts,
       gachaWinner: null as string | null,
       gachaPrize: yieldBalance,
       walrusMetadataBlobId: String((fields?.walrus_metadata_blob_id as string) || ""),
@@ -231,13 +241,17 @@ export function useAllPoolsWithInfo() {
 }
 
 function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
-  const totalLocked = pool.totalFunds + pool.collateralBalance;
+  const totalLocked = pool.totalFunds + pool.collateralBalance + pool.pendingWinnerPayouts;
   const apy = pool.totalFunds > 0 ? (pool.yield / pool.totalFunds) * 100 * 12 : 8.5;
-  let status: "open" | "active" | "completed" = "open";
-  if (pool.started && pool.active) status = "active";
-  else if (pool.started && !pool.active) status = "completed";
-  else if (pool.isFull && !pool.started) status = "active";
-  else if (pool.currentParticipants < pool.maxParticipants) status = "open";
+  const { status } = derivePoolLifecycle({
+    started: pool.started,
+    active: pool.active,
+    ended: pool.isEnded,
+    full: pool.isFull,
+    currentCycle: pool.cycle,
+    poolStartTimeMs: pool.poolStartTimeMs,
+    cycleDurationMs: pool.cycleDurationMs,
+  });
 
   let name = "Custom Pool";
   if (pool.depositAmount === 10) name = "Small Pool";
@@ -317,8 +331,11 @@ export function useParticipantInfo(poolAddress: string | undefined, participantA
         },
       });
 
-      const pVal = (obj.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
-      if (!pVal) return null;
+      const rawValue = (obj.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
+      if (!rawValue) return null;
+      const pVal =
+        (rawValue as { fields?: Record<string, unknown> }).fields ??
+        rawValue;
 
       return {
         addr: participantAddress,
@@ -332,6 +349,8 @@ export function useParticipantInfo(poolAddress: string | undefined, participantA
         proportionalYieldEarned: Number(pVal.proportional_yield_earned || 0) / 1_000_000,
         leaderboardScore: Number(pVal.leaderboard_score || 0),
         gachaClaimed: Boolean(pVal.gacha_claimed),
+        pendingWinnerPayout: Number(pVal.pending_winner_payout || 0) / 1_000_000,
+        winnerPayoutClaimed: Boolean(pVal.winner_payout_claimed),
       } as ParticipantInfo;
     },
     enabled: !!poolAddress && !!participantAddress,
@@ -897,14 +916,17 @@ export function useSetPoolSealSeed() {
 export function useClaimFinal() {
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
   const queryClient = useQueryClient();
+  const account = useCurrentAccount();
 
   const claimFinal = (poolId: string) => {
+    if (!account?.address) return;
     const tx = new Transaction();
-    tx.moveCall({
+    const [claimCoin] = tx.moveCall({
       target: `${SUI_PACKAGE_ID}::arisan_pool::claim_final`,
       arguments: [tx.object(poolId)],
       typeArguments: [SUI_USDC_TYPE],
     });
+    tx.transferObjects([claimCoin], tx.pure.address(account.address));
 
     signAndExecute({ transaction: tx }, {
       onSuccess: () => {
@@ -923,6 +945,34 @@ export function useClaimFinal() {
 }
 
 // ─── Faucet ────────────────────────────────────────────────────────
+
+export function useClaimWinnerPayout() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const claimWinnerPayout = (poolId: string) => {
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::claim_winner_payout`,
+      arguments: [tx.object(poolId)],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+      },
+    });
+  };
+
+  return {
+    claimWinnerPayout,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
 
 export function useClaimUSDC() {
   const { mutate: signAndExecute, isPending, data, error } = useSignAndExecuteTransaction();
