@@ -539,23 +539,21 @@ export default function PoolDetailPage() {
                 </div>
 
                 {lastWinner && (
-                  <div className="mt-4 overflow-hidden rounded-[1.25rem] border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] shadow-[6px_6px_0_var(--brutal-ink)]">
-                    <div className="flex items-stretch">
-                      {/* Left accent bar */}
-                      <div className="w-2 shrink-0 bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-600" />
-                      <div className="flex-1 p-5">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--brutal-muted)]">
-                              Cycle {typeof currentCycle === "number" ? currentCycle - 1 : "?"} Winner
-                            </p>
-                            <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[var(--brutal-ink)]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
-                              {typeof lastWinner === "string" ? `${lastWinner.slice(0, 8)}…${lastWinner.slice(-6)}` : String(lastWinner)}
-                            </p>
-                          </div>
-                          {/* Trophy SVG */}
-                          <svg className="h-10 w-10 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                  <div className="mt-4 overflow-hidden rounded-[1.25rem] border-[3px] border-[var(--brutal-ink)] bg-gradient-to-br from-[#0a1628] via-[#0f2340] to-[#0a1628] shadow-[0_8px_30px_rgba(56,189,248,0.25)]">
+                    <div className="relative p-5">
+                      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#38bdf8] opacity-[0.06] blur-2xl" />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#38bdf8]/70">
+                            Cycle {typeof currentCycle === "number" ? currentCycle - 1 : "?"} Winner
+                          </p>
+                          <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[#e2e8f0]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                            {typeof lastWinner === "string" ? `${lastWinner.slice(0, 8)}…${lastWinner.slice(-6)}` : String(lastWinner)}
+                          </p>
+                        </div>
+                        <div className="shrink-0 rounded-full bg-gradient-to-br from-[#38bdf8] to-[#0284c7] p-3 shadow-[0_0_20px_rgba(56,189,248,0.4)]">
+                          <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 22V8c0-1.1.9-2 2-2s2 .9 2 2v14"/><path d="M8 14c-2.6 0-3.5 2-3.5 2s.9-2 3.5-2"/><path d="M16 14c2.6 0 3.5 2 3.5 2s-.9-2-3.5-2"/>
                           </svg>
                         </div>
                       </div>
