@@ -4,11 +4,21 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { fromHex, fromBase64 } from "@mysten/sui/utils";
 import { getRequiredCollateralAmount } from "@/lib/poolMath";
+import {
+  SUI_FACTORY_ID,
+  SUI_FAUCET_ID,
+  SUI_NETWORK,
+  SUI_PACKAGE_ID,
+  SUI_USDC_TYPE,
+} from "@/config/suiConstants";
 
 let client: SuiJsonRpcClient | null = null;
 function getClient() {
   if (!client) {
-    client = new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl("testnet"), network: "testnet" });
+    client = new SuiJsonRpcClient({
+      url: getJsonRpcFullnodeUrl(SUI_NETWORK),
+      network: SUI_NETWORK,
+    });
   }
   return client;
 }
@@ -22,11 +32,6 @@ function parseSecretKey(raw: string): Uint8Array {
 }
 
 const SPONSOR_SECRET_KEY = process.env.SPONSOR_SECRET_KEY || "";
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825";
-
-const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825::test_usdc::TEST_USDC";
-const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xe2587c933fdd1f4fa4bab04655a773a23d896bab18738e0efafdc6c6f36f5558";
-const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0xc7ab25a1c78d708441bf311929782fc95d32a9521027d4c3f868debdcfac46b4";
 
 interface SponsorRequest {
   action: "claim_usdc" | "join_pool" | "create_pool" | "make_deposit" | "start_pool" | "select_winner" | "end_pool" | "slash_collateral";
@@ -62,9 +67,15 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "claim_usdc": {
+        if (SUI_NETWORK === "mainnet" || !SUI_FAUCET_ID) {
+          return NextResponse.json(
+            { error: "The test token faucet is disabled on mainnet." },
+            { status: 400 },
+          );
+        }
         tx.moveCall({
-          target: `${PACKAGE_ID}::faucet::claim_test_usdc`,
-          arguments: [tx.object(FAUCET_ID), tx.object("0x6")],
+          target: `${SUI_PACKAGE_ID}::faucet::claim_test_usdc`,
+          arguments: [tx.object(SUI_FAUCET_ID), tx.object("0x6")],
         });
         break;
       }
@@ -76,16 +87,16 @@ export async function POST(req: NextRequest) {
         const requiredCollateral = getRequiredCollateralAmount(body.depositAmount, body.maxParticipants, 125);
         const [collateralCoin] = tx.splitCoins(tx.object(body.usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_factory::create_custom_pool`,
+          target: `${SUI_PACKAGE_ID}::arisan_factory::create_custom_pool`,
           arguments: [
-            tx.object(FACTORY_ID),
+            tx.object(SUI_FACTORY_ID),
             collateralCoin,
             tx.pure.u64(body.depositAmount * 1_000_000),
             tx.pure.u64(body.maxParticipants),
             tx.pure.u64(body.cycleDurationDays * 24 * 60 * 60 * 1000),
             tx.pure.u64(125),
           ],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }
@@ -96,9 +107,9 @@ export async function POST(req: NextRequest) {
         }
         const [collateralCoin] = tx.splitCoins(tx.object(body.usdcCoinId), [tx.pure.u64(body.collateralAmount * 1_000_000)]);
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::join_pool`,
+          target: `${SUI_PACKAGE_ID}::arisan_pool::join_pool`,
           arguments: [tx.object(body.poolId), collateralCoin],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }
@@ -109,9 +120,9 @@ export async function POST(req: NextRequest) {
         }
         const [depositCoin] = tx.splitCoins(tx.object(body.usdcCoinId), [tx.pure.u64(body.amount * 1_000_000)]);
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::make_deposit`,
+          target: `${SUI_PACKAGE_ID}::arisan_pool::make_deposit`,
           arguments: [tx.object(body.poolId), depositCoin],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }
@@ -121,13 +132,13 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Missing start_pool params: poolId, poolAdminCapId" }, { status: 400 });
         }
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::start_pool`,
+          target: `${SUI_PACKAGE_ID}::arisan_pool::start_pool`,
           arguments: [
             tx.object(body.poolAdminCapId),
             tx.object(body.poolId),
             tx.object("0x6"),
           ],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }
@@ -137,14 +148,14 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Missing select_winner params: poolId, poolAdminCapId" }, { status: 400 });
         }
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::select_winner`,
+          target: `${SUI_PACKAGE_ID}::arisan_pool::select_winner`,
           arguments: [
             tx.object(body.poolAdminCapId),
             tx.object(body.poolId),
             tx.object("0x6"),
             tx.object("0x8"),
           ],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }
@@ -154,13 +165,13 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Missing end_pool params: poolId, poolAdminCapId" }, { status: 400 });
         }
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::end_pool`,
+          target: `${SUI_PACKAGE_ID}::arisan_pool::end_pool`,
           arguments: [
             tx.object(body.poolAdminCapId),
             tx.object(body.poolId),
             tx.object("0x8"),
           ],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }
@@ -170,14 +181,14 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Missing slash_collateral params: poolId, poolAdminCapId, participantAddress" }, { status: 400 });
         }
         tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::slash_collateral`,
+          target: `${SUI_PACKAGE_ID}::arisan_pool::slash_collateral`,
           arguments: [
             tx.object(body.poolAdminCapId),
             tx.object(body.poolId),
             tx.pure.address(body.participantAddress),
             tx.object("0x6"),
           ],
-          typeArguments: [USDC_TYPE],
+          typeArguments: [SUI_USDC_TYPE],
         });
         break;
       }

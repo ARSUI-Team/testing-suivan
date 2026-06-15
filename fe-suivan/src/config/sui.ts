@@ -2,7 +2,9 @@ import { useNetworkVariable } from "./networkConfig";
 export {
   SUI_AGENT_ADDRESS,
   SUI_CLOCK_ID,
+  SUI_FAUCET_ID,
   SUI_FACTORY_ID,
+  SUI_NETWORK,
   SUI_PACKAGE_ID,
   SUI_SUI_TYPE,
   SUI_USDC_TYPE,

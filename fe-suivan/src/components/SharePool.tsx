@@ -43,7 +43,10 @@ export default function SharePool({
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://suivan.app";
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || "https://suivan.vercel.app";
   const poolUrl = `${baseUrl}/pools/${poolAddress}`;
 
   const shareText = `Join my ROSCA pool on Suivan. ${monthlyDeposit} USDC monthly deposit, ${participants}/${maxParticipants} participants${apy ? `, ${apy.toFixed(1)}% APY` : ""}. Built for Sui-native community savings.`;
