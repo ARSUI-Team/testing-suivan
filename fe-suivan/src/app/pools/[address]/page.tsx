@@ -539,16 +539,26 @@ export default function PoolDetailPage() {
                 </div>
 
                 {lastWinner && (
-                  <div className="mt-4 rounded-[1.25rem] border-[3px] border-[#e8180a] bg-gradient-to-br from-[#fff5f5] to-[#ffe0e0] p-5 shadow-[6px_6px_0_#e8180a]">
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl">👑</span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#e8180a]">Cycle #{typeof currentCycle === "number" ? currentCycle - 1 : "0"} Winner</p>
-                        <p className="mt-1 truncate text-lg font-black tracking-[-0.02em] text-[var(--brutal-ink)]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                          {typeof lastWinner === "string" ? lastWinner : String(lastWinner)}
-                        </p>
+                  <div className="mt-4 overflow-hidden rounded-[1.25rem] border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] shadow-[6px_6px_0_var(--brutal-ink)]">
+                    <div className="flex items-stretch">
+                      {/* Left accent bar */}
+                      <div className="w-2 shrink-0 bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-600" />
+                      <div className="flex-1 p-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--brutal-muted)]">
+                              Cycle {typeof currentCycle === "number" ? currentCycle - 1 : "?"} Winner
+                            </p>
+                            <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[var(--brutal-ink)]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                              {typeof lastWinner === "string" ? `${lastWinner.slice(0, 8)}…${lastWinner.slice(-6)}` : String(lastWinner)}
+                            </p>
+                          </div>
+                          {/* Trophy SVG */}
+                          <svg className="h-10 w-10 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                          </svg>
+                        </div>
                       </div>
-                      <span className="shrink-0 rounded-full bg-[#e8180a] px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-white">WINNER</span>
                     </div>
                   </div>
                 )}
