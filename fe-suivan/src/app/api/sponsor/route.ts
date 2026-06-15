@@ -24,7 +24,7 @@ function parseSecretKey(raw: string): Uint8Array {
 }
 
 const SPONSOR_SECRET_KEY = process.env.SPONSOR_SECRET_KEY || "";
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825";
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0xb79c6171ac1ce89d864f1ce59329b8393d7f540e6e31b30cad0b71c54729bfb6";
 
 const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825::test_usdc::TEST_USDC";
 const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xe2587c933fdd1f4fa4bab04655a773a23d896bab18738e0efafdc6c6f36f5558";
