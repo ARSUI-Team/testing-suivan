@@ -85,6 +85,15 @@ export default function PoolsPage() {
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
+  useEffect(() => {
+    if (showCreateModal || selectedPool) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showCreateModal, selectedPool]);
+
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)
     : [];
