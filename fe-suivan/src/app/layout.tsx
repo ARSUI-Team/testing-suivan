@@ -26,8 +26,10 @@ const jetBrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://suivan.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://suivan.vercel.app"),
+  metadataBase: new URL(siteUrl),
   title: "Suivan - Community Wealth Protocol on Sui",
   description: "A Sui-native frontend for global ROSCA communities, rotating savings cycles, pool state, APY signals, and transparent member progress.",
   keywords: ["Suivan", "ROSCA", "Arisan", "Sui", "community finance", "rotating savings"],
@@ -39,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Suivan - Community Wealth Protocol on Sui",
     description: "Global ROSCA pools with Sui-native settlement, zkLogin onboarding, and AI-optimized yield signals.",
-    url: "https://suivan.vercel.app",
+    url: siteUrl,
     siteName: "Suivan",
     type: "website",
     images: [{ url: "/suivan-logo.jpeg", width: 772, height: 717, alt: "Suivan" }],

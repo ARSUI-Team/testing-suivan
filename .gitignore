@@ -1,6 +1,7 @@
 *.md
 !README.md
 !YIELD_COLLATERAL_HANDOFF.md
+!MAINNET_DOMAIN_HANDOFF.md
 *.txt
 
 migration-docs/
