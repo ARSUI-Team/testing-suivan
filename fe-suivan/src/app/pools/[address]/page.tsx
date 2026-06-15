@@ -757,14 +757,14 @@ export default function PoolDetailPage() {
                     </button>
                     <button
                       onClick={() => selectWinner(poolAddress, adminCapId)}
-                      disabled={!adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting}
+                      disabled={!adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting || selectSuccess}
                       className={`protocol-font rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
-                        !adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting
+                        !adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting || selectSuccess
                           ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
                           : "bg-[var(--warn)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
                       }`}
                     >
-                      {selecting ? "Selecting..." : "Winner"}
+                      {selecting ? "Selecting..." : selectSuccess ? "✓ Winner Selected" : "Winner"}
                     </button>
                   </div>
                   <button
