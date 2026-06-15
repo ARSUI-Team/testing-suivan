@@ -31,6 +31,7 @@ import {
   useLinkPoolMetadata,
   useClaimFinal,
   useClaimWinnerPayout,
+  useLastWinner,
 } from "@/hooks/useSuiContracts";
 import { SUI_AGENT_ADDRESS, SUI_PACKAGE_ID } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
@@ -86,6 +87,7 @@ export default function PoolDetailPage() {
   const { startPool, isPending: starting, isSuccess: startSuccess, error: startError, hash: startHash } = useStartPool();
   const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError, hash: selectHash } = useSelectWinner();
   const { endPool, isPending: ending, isSuccess: endSuccess, error: endError, hash: endHash } = useEndPool();
+  const { lastWinner } = useLastWinner(poolAddress);
   const {
     transferAdminCap,
     isPending: delegating,
@@ -535,6 +537,13 @@ export default function PoolDetailPage() {
                     <p className="protocol-font text-xl font-black text-[var(--foreground)]">${totalFunds.toFixed(2)}</p>
                   </div>
                 </div>
+
+                {lastWinner && (
+                  <div className="mt-3 rounded-2xl border-2 border-[var(--warning)] bg-[var(--warn-soft)] p-3">
+                    <p className="protocol-font text-xs font-black text-[var(--muted)]">🏆 Last Winner</p>
+                    <p className="protocol-font text-sm font-black text-[var(--foreground)] truncate">{typeof lastWinner === "string" ? `${lastWinner.slice(0, 6)}...${lastWinner.slice(-4)}` : String(lastWinner)}</p>
+                  </div>
+                )}
 
                 {/* Progress Bar */}
                 <div className="mt-6">
