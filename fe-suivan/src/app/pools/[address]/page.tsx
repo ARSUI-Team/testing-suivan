@@ -930,8 +930,8 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* Pool Metadata Editor */}
-              {isConnected && (
+               {/* Pool Metadata Editor — Admin only */}
+               {isConnected && hasAdminCap && (
                 <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Pool Metadata</h2>
