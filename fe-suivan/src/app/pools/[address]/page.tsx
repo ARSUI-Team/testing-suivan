@@ -853,12 +853,18 @@ export default function PoolDetailPage() {
 
                       {/* Deposit Button for Active Pool */}
                       {(status === "active" || status === "action_required") && isStarted && participantInfo?.isActive && (
-                        <button
-                          onClick={() => setShowDepositModal(true)}
-                          className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
-                        >
-                          {t("detail.makeDeposit")}
-                        </button>
+                        hasDepositedThisCycle ? (
+                          <div className="protocol-font rounded-xl border-2 border-[var(--border)] bg-[var(--success-soft)] py-3 text-center font-black text-[var(--foreground)]">
+                            ✓ Deposited This Cycle
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowDepositModal(true)}
+                            className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                          >
+                            {t("detail.makeDeposit")}
+                          </button>
+                        )
                       )}
 
                       {/* Claim section for completed pool */}
