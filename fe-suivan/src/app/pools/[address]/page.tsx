@@ -810,12 +810,12 @@ export default function PoolDetailPage() {
                   </div>
                   <button
                     onClick={() => endPool(poolAddress, adminCapId)}
-                    disabled={!adminCapId || !isStarted || !isActive || ending}
-                    className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
-                      !adminCapId || !isStarted || !isActive || ending
-                        ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                        : "bg-[var(--danger-soft)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
-                    }`}
+                      disabled={!adminCapId || status === "completed" || !isStarted || ending}
+                      className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
+                        !adminCapId || status === "completed" || !isStarted || ending
+                          ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                          : "bg-[var(--danger-soft)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                      }`}
                   >
                     {ending ? "Ending..." : "End Pool"}
                   </button>
