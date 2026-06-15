@@ -89,7 +89,6 @@ export default function PoolDetailPage() {
   const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError, hash: selectHash } = useSelectWinner();
   const { endPool, isPending: ending, isSuccess: endSuccess, error: endError, hash: endHash } = useEndPool();
   const { lastWinner } = useLastWinner(poolAddress);
-  const { cycleWinners } = useCycleWinners(poolAddress, currentCycle);
   const {
     transferAdminCap,
     isPending: delegating,
@@ -214,6 +213,7 @@ export default function PoolDetailPage() {
   const currentCycle = poolInfo?.cycle || 0;
   const isStarted = poolInfo?.started || false;
   const isActive = poolInfo?.active || false;
+  const { cycleWinners } = useCycleWinners(poolAddress, currentCycle);
 
   const isFull = poolInfo?.isFull || false;
   const lifecycle = derivePoolLifecycle({
