@@ -520,6 +520,41 @@ export function useLastWinner(poolAddress: string | undefined) {
   return { lastWinner: data, isLoading };
 }
 
+export function useCycleWinners(poolAddress: string | undefined, currentCycle: number) {
+  const client = useSuiClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["suivan", "cycleWinners", poolAddress],
+    queryFn: async () => {
+      if (!poolAddress || currentCycle <= 0) return [] as { cycle: number; address: string }[];
+      const obj = await client.getObject({
+        id: poolAddress,
+        options: { showContent: true },
+      });
+      const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
+      const tableId = (fields?.cycle_winners as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+      if (!tableId) return [];
+
+      const winners: { cycle: number; address: string }[] = [];
+      for (let cycle = 1; cycle <= currentCycle; cycle++) {
+        try {
+          const entry = await client.getDynamicFieldObject({
+            parentId: tableId,
+            name: { type: "u64", value: String(cycle) },
+          });
+          const value = (entry.data?.content as { fields?: { value?: string } })?.fields?.value;
+          if (value) winners.push({ cycle, address: value });
+        } catch {
+          // field may not exist yet
+        }
+      }
+      return winners;
+    },
+    enabled: !!poolAddress && currentCycle > 0,
+    refetchInterval: CHAIN_POLL_INTERVAL_MS,
+  });
+  return { cycleWinners: data, isLoading };
+}
+
 // ─── Write Hooks (useSignAndExecuteTransaction) ────────────────────
 
 export function useJoinPool() {

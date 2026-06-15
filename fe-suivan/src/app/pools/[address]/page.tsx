@@ -32,6 +32,7 @@ import {
   useClaimFinal,
   useClaimWinnerPayout,
   useLastWinner,
+  useCycleWinners,
 } from "@/hooks/useSuiContracts";
 import { SUI_AGENT_ADDRESS, SUI_PACKAGE_ID } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
@@ -88,6 +89,7 @@ export default function PoolDetailPage() {
   const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError, hash: selectHash } = useSelectWinner();
   const { endPool, isPending: ending, isSuccess: endSuccess, error: endError, hash: endHash } = useEndPool();
   const { lastWinner } = useLastWinner(poolAddress);
+  const { cycleWinners } = useCycleWinners(poolAddress, currentCycle);
   const {
     transferAdminCap,
     isPending: delegating,
@@ -548,7 +550,7 @@ export default function PoolDetailPage() {
                             Cycle {typeof currentCycle === "number" ? currentCycle : "?"} Winner
                           </p>
                           <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[#e2e8f0]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
-                            {typeof lastWinner === "string" && lastWinner.startsWith("0x") ? lastWinner : String(lastWinner || "")}
+                            {typeof lastWinner === "string" && lastWinner.startsWith("0x") ? `${lastWinner.slice(0, 6)}...${lastWinner.slice(-4)}` : String(lastWinner || "")}
                           </p>
                         </div>
                         <div className="shrink-0 rounded-full bg-gradient-to-br from-[#38bdf8] to-[#0284c7] p-3 shadow-[0_0_20px_rgba(56,189,248,0.4)]">
@@ -558,6 +560,15 @@ export default function PoolDetailPage() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+                {(cycleWinners?.length ?? 0) > 1 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {cycleWinners!.filter(w => !lastWinner || w.address !== (typeof lastWinner === "string" ? lastWinner : "")).map((w) => (
+                      <span key={w.cycle} className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[var(--muted)]">
+                        C{w.cycle}: {w.address.startsWith("0x") ? `${w.address.slice(0, 4)}..${w.address.slice(-4)}` : w.address}
+                      </span>
+                    ))}
                   </div>
                 )}
 
