@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     const body: SponsorRequest = await req.json();
 
-    const validationError = validateSponsorRequest(body);
+    const validationError = validateSponsorRequest(body as unknown as Record<string, unknown>);
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
