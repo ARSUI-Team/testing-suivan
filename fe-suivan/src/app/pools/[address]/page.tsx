@@ -562,12 +562,17 @@ export default function PoolDetailPage() {
                     </div>
                   </div>
                 )}
-                {(cycleWinners?.length ?? 0) > 1 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {cycleWinners!.filter(w => !lastWinner || w.address !== (typeof lastWinner === "string" ? lastWinner : "")).map((w) => (
-                      <span key={w.cycle} className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[var(--muted)]">
-                        C{w.cycle}: {w.address.startsWith("0x") ? `${w.address.slice(0, 4)}..${w.address.slice(-4)}` : w.address}
-                      </span>
+                {(cycleWinners?.length ?? 0) > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {cycleWinners!.map((w) => (
+                      <div key={w.cycle} className="flex items-center gap-3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2.5">
+                        <span className="shrink-0 rounded-lg bg-[var(--accent)] px-2.5 py-1 text-xs font-black text-[var(--foreground)]">
+                          C{w.cycle}
+                        </span>
+                        <span className="truncate text-sm font-semibold text-[var(--foreground)]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          {w.address}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 )}
