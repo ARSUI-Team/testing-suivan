@@ -503,7 +503,7 @@ export default function PoolsPage() {
                       {[
                         { value: `${pool.depositAmount}`, label: "Deposit", sub: "USDC" },
                         { value: `${pool.currentParticipants}/${pool.maxParticipants}`, label: "Members", sub: `${Math.round(memberRatio * 100)}%` },
-                        { value: `${pool.cycleDuration}d`, label: "Cycle", sub: `$${pool.totalFunds.toFixed(0)}` },
+                        { value: pool.cycleDurationMs && pool.cycleDurationMs < 86_400_000 ? `${Math.round(pool.cycleDurationMs / 60_000)}m` : `${pool.cycleDuration}d`, label: "Cycle", sub: `$${pool.totalFunds.toFixed(0)}` },
                       ].map((stat, si) => (
                         <div
                           key={stat.label}
@@ -846,15 +846,19 @@ export default function PoolsPage() {
 
               <div className="space-y-2 border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-4 shadow-[3px_3px_0_var(--brutal-ink)]">
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.totalValue")}</span>
+                  <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>Total Pool per Cycle</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
                     {createForm.depositAmount * createForm.maxParticipants} USDC
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>{t("pools.poolDuration")}</span>
+                  <span className="font-semibold" style={{ color: "var(--brutal-muted)" }}>Total Duration</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "var(--brutal-ink)" }}>
-                    {createForm.cycleDuration * createForm.maxParticipants} days
+                    {createForm.cycleUnit === "minutes"
+                      ? (createForm.cycleDuration * createForm.maxParticipants < 60
+                          ? `${createForm.cycleDuration * createForm.maxParticipants}m`
+                          : `${Math.round(createForm.cycleDuration * createForm.maxParticipants / 60)}h`)
+                      : `${createForm.cycleDuration * createForm.maxParticipants} days`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
