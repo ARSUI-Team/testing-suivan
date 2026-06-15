@@ -715,8 +715,7 @@ export function useSelectWinner() {
   const selectWinner = (poolId: string, poolAdminCapId: string) => {
     const tx = new Transaction();
 
-    const seed = new Uint8Array(16);
-    crypto.getRandomValues(seed);
+    const seed = Array.from(crypto.getRandomValues(new Uint8Array(16)));
 
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,

@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "select_winner": {
-        const seed = new Uint8Array(randomBytes(16));
+        const seed = Array.from(randomBytes(16));
         tx.moveCall({
           target: `${PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,
           arguments: [
