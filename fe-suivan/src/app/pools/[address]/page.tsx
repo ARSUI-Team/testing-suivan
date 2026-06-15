@@ -539,9 +539,17 @@ export default function PoolDetailPage() {
                 </div>
 
                 {lastWinner && (
-                  <div className="mt-3 rounded-2xl border-2 border-[var(--warning)] bg-[var(--warn-soft)] p-3">
-                    <p className="protocol-font text-xs font-black text-[var(--muted)]">🏆 Last Winner</p>
-                    <p className="protocol-font text-sm font-black text-[var(--foreground)] truncate">{typeof lastWinner === "string" ? `${lastWinner.slice(0, 6)}...${lastWinner.slice(-4)}` : String(lastWinner)}</p>
+                  <div className="mt-4 rounded-[1.25rem] border-[3px] border-[#e8180a] bg-gradient-to-br from-[#fff5f5] to-[#ffe0e0] p-5 shadow-[6px_6px_0_#e8180a]">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl">👑</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#e8180a]">Cycle #{typeof currentCycle === "number" ? currentCycle - 1 : "0"} Winner</p>
+                        <p className="mt-1 truncate text-lg font-black tracking-[-0.02em] text-[var(--brutal-ink)]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          {typeof lastWinner === "string" ? lastWinner : String(lastWinner)}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[#e8180a] px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-white">WINNER</span>
+                    </div>
                   </div>
                 )}
 
