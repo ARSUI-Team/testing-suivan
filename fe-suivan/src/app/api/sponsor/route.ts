@@ -40,6 +40,7 @@ interface SponsorRequest {
   depositAmount?: number;
   maxParticipants?: number;
   cycleDurationDays?: number;
+  cycleDurationMs?: number;
   collateralAmount?: number;
   amount?: number;
   poolAdminCapId?: string;
@@ -101,8 +102,12 @@ export async function POST(req: NextRequest) {
       }
 
       case "create_pool": {
-        if (!body.usdcCoinId || !body.depositAmount || !body.maxParticipants || !body.cycleDurationDays) {
-          return NextResponse.json({ error: "Missing create_pool params: usdcCoinId, depositAmount, maxParticipants, cycleDurationDays" }, { status: 400 });
+        if (!body.usdcCoinId || !body.depositAmount || !body.maxParticipants) {
+          return NextResponse.json({ error: "Missing create_pool params: usdcCoinId, depositAmount, maxParticipants" }, { status: 400 });
+        }
+        const cycleMs = body.cycleDurationMs || (body.cycleDurationDays || 0) * 24 * 60 * 60 * 1000;
+        if (!cycleMs) {
+          return NextResponse.json({ error: "Missing cycleDurationMs or cycleDurationDays" }, { status: 400 });
         }
         const requiredCollateral = getRequiredCollateralAmount(body.depositAmount, body.maxParticipants, 125);
         const [collateralCoin] = tx.splitCoins(tx.object(body.usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
@@ -113,7 +118,7 @@ export async function POST(req: NextRequest) {
             collateralCoin,
             tx.pure.u64(body.depositAmount! * 1_000_000),
             tx.pure.u64(body.maxParticipants!),
-            tx.pure.u64(body.cycleDurationDays! * 24 * 60 * 60 * 1000),
+            tx.pure.u64(cycleMs),
             tx.pure.u64(125),
           ],
           typeArguments: [USDC_TYPE],

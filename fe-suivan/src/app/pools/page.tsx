@@ -59,6 +59,7 @@ export default function PoolsPage() {
     depositAmount: 25,
     maxParticipants: 8,
     cycleDuration: 30,
+    cycleUnit: "days" as "days" | "minutes",
     usdcCoinId: "",
     poolName: "",
     poolDescription: "",
@@ -101,6 +102,7 @@ export default function PoolsPage() {
       depositAmount: 25,
       maxParticipants: 8,
       cycleDuration: 30,
+      cycleUnit: "days",
       usdcCoinId: usdcCoins[0]?.coinObjectId || "",
       poolName: "",
       poolDescription: "",
@@ -153,7 +155,7 @@ export default function PoolsPage() {
     createPool(
       createForm.depositAmount,
       createForm.maxParticipants,
-      createForm.cycleDuration,
+      createForm.cycleUnit === "minutes" ? createForm.cycleDuration * 60 * 1000 : createForm.cycleDuration * 24 * 60 * 60 * 1000,
       createForm.usdcCoinId,
       async (response) => {
         const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
@@ -472,7 +474,7 @@ export default function PoolsPage() {
                           marginBottom: 10,
                         }}
                       >
-                        {pool.depositAmount} USDC deposit &middot; {pool.cycleDuration}-day cycles &middot; {pool.apy}% APY
+                        {pool.depositAmount} USDC deposit &middot; {pool.cycleDurationMs && pool.cycleDurationMs < 86_400_000 ? Math.round(pool.cycleDurationMs / 60_000) + "m" : pool.cycleDuration + "d"} cycles &middot; {pool.apy}% APY
                         {pool.walrusMetadataBlobId && (
                           <span style={{ color: "#14b8a6", marginLeft: 6 }}>+Walrus</span>
                         )}
@@ -788,14 +790,24 @@ export default function PoolsPage() {
               </div>
 
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>Cycle Duration (Days)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={createForm.cycleDuration}
-                  onChange={(e) => setCreateForm({ ...createForm, cycleDuration: Number(e.target.value) })}
-                  className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
-                />
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "var(--brutal-muted)" }}>Cycle Duration</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={createForm.cycleDuration}
+                    onChange={(e) => setCreateForm({ ...createForm, cycleDuration: Number(e.target.value) })}
+                    className="min-h-[44px] w-full border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
+                  />
+                  <select
+                    value={createForm.cycleUnit}
+                    onChange={(e) => setCreateForm({ ...createForm, cycleUnit: e.target.value as "days" | "minutes" })}
+                    className="min-h-[44px] border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-card)] px-3 py-3 text-sm font-semibold shadow-[3px_3px_0_var(--brutal-ink)] outline-none"
+                  >
+                    <option value="minutes">Minutes</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
               </div>
 
               {usdcBalance > 0 ? (

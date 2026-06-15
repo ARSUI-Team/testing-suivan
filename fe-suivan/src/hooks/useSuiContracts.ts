@@ -52,6 +52,7 @@ export interface FormattedPool {
   maxParticipants: number;
   currentParticipants: number;
   cycleDuration: number;
+  cycleDurationMs: number;
   totalFunds: number;
   collateralBalance: number;
   status: PoolLifecycleStatus;
@@ -270,6 +271,7 @@ function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
     maxParticipants: pool.maxParticipants,
     currentParticipants: pool.currentParticipants,
     cycleDuration: cycleDurationDays,
+    cycleDurationMs: pool.cycleDurationMs,
     totalFunds: totalLocked,
     collateralBalance: pool.collateralBalance,
     status,
@@ -590,7 +592,7 @@ export function useCreatePool() {
   const createPool = (
     depositAmount: number,
     maxParticipants: number,
-    cycleDurationDays: number,
+    cycleDurationMs: number,
     usdcCoinId: string,
     onSuccess?: (response: TransactionResult) => void,
     onError?: (error: Error) => void,
@@ -611,7 +613,7 @@ export function useCreatePool() {
         collateralCoin,
         tx.pure.u64(depositAmount * 1_000_000),
         tx.pure.u64(maxParticipants),
-        tx.pure.u64(cycleDurationDays * 24 * 60 * 60 * 1000),
+        tx.pure.u64(cycleDurationMs),
         tx.pure.u64(COLLATERAL_MULTIPLIER),
       ],
       typeArguments: [SUI_USDC_TYPE],
