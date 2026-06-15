@@ -545,10 +545,10 @@ export default function PoolDetailPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#38bdf8]/70">
-                            Cycle {typeof currentCycle === "number" ? currentCycle - 1 : "?"} Winner
+                            Cycle {typeof currentCycle === "number" ? currentCycle : "?"} Winner
                           </p>
                           <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[#e2e8f0]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
-                            {typeof lastWinner === "string" ? `${lastWinner.slice(0, 8)}…${lastWinner.slice(-6)}` : String(lastWinner)}
+                            {typeof lastWinner === "string" && lastWinner.startsWith("0x") ? lastWinner : String(lastWinner || "")}
                           </p>
                         </div>
                         <div className="shrink-0 rounded-full bg-gradient-to-br from-[#38bdf8] to-[#0284c7] p-3 shadow-[0_0_20px_rgba(56,189,248,0.4)]">
