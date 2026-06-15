@@ -173,6 +173,15 @@ export default function PoolDetailPage() {
     }
   }, [defaultCoinId, depositCoinId, showDepositModal]);
 
+  useEffect(() => {
+    if (showJoinModal || showDepositModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showJoinModal, showDepositModal]);
+
   const handleSaveMetadata = async () => {
     if (!metaName.trim()) {
       errorToast("Validation", "Pool name is required");
@@ -1025,9 +1034,9 @@ export default function PoolDetailPage() {
 
       {/* Join Pool Modal */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 sm:pt-24 sm:items-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowJoinModal(false)} />
-          <div className="relative w-full max-w-md rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-6 shadow-[8px_8px_0_var(--border)]">
+          <div className="relative w-full max-w-md max-h-[80vh] overflow-y-auto rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-6 shadow-[8px_8px_0_var(--border)]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Join {poolName}</h3>
               <button onClick={() => setShowJoinModal(false)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--accent)] p-2 text-[var(--foreground)] transition hover:-translate-y-0.5">
