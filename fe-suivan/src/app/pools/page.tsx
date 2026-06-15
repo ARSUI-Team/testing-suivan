@@ -557,33 +557,6 @@ export default function PoolsPage() {
 
                     {/* Buttons */}
                     <div style={{ flexShrink: 0 }}>
-                      {pool.status === "open" && pool.currentParticipants < pool.maxParticipants && (
-                        <button
-                          onClick={() => setSelectedPool(pool)}
-                          disabled={!isConnected}
-                          className="prof-btn"
-                          style={{
-                            display: "block",
-                            width: "100%",
-                            padding: "11px",
-                            background: isConnected ? "#38bdf8" : "var(--brutal-surface)",
-                            color: isConnected ? "var(--brutal-ink)" : "var(--brutal-muted)",
-                            border: "none",
-                            borderTop: "3px solid var(--brutal-ink)",
-                            fontFamily: "'Bebas Neue', system-ui, sans-serif",
-                            fontSize: "1rem",
-                            letterSpacing: "0.2em",
-                            cursor: isConnected ? "pointer" : "not-allowed",
-                            textAlign: "center",
-                            opacity: isConnected ? 1 : 0.5,
-                            transition: "background 0.15s, color 0.15s",
-                          }}
-                          onMouseEnter={(e) => { if (isConnected) { e.currentTarget.style.background = "var(--brutal-ink)"; e.currentTarget.style.color = "#38bdf8"; }}}
-                          onMouseLeave={(e) => { if (isConnected) { e.currentTarget.style.background = "#38bdf8"; e.currentTarget.style.color = "var(--brutal-ink)"; }}}
-                        >
-                          {isConnected ? t("pools.join") : "Connect Wallet"}
-                        </button>
-                      )}
                       <a
                         href={`/pools/${pool.address}`}
                         className="prof-btn"
