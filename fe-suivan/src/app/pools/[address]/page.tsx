@@ -63,7 +63,7 @@ export default function PoolDetailPage() {
   const { participantAddresses, participantCount, isLoading: participantsLoading } = useParticipantList(poolAddress);
 
   // User-specific data
-  const { participantInfo, refetch: refetchParticipant } = useParticipantInfo(poolAddress, address);
+  const { participantInfo, isLoading: participantLoading, refetch: refetchParticipant } = useParticipantInfo(poolAddress, address);
 
   // Live data
   const { currentYield } = useCurrentYield(poolAddress);
@@ -781,7 +781,13 @@ export default function PoolDetailPage() {
                 <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
                   <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.yourStatus")}</h2>
 
-                  {isParticipant ? (
+                  {participantLoading ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                        <p className="font-semibold text-[var(--muted)]">Loading...</p>
+                      </div>
+                    </div>
+                  ) : isParticipant ? (
                     <div className="space-y-4">
                       <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
                         <div className="flex items-center gap-2 mb-2">
