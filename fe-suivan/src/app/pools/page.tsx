@@ -924,12 +924,8 @@ function FaucetButton({ refetchPools }: { userAddress?: string; refetchPools: ()
       errorToast("Faucet cooldown active — try again later");
       return;
     }
-    if (typeof window !== "undefined") {
-      localStorage.setItem("suivan_faucet_claim", String(Date.now()));
-    }
     claimUSDC(faucetId);
     setSuccess(true);
-    checkCooldown();
     setTimeout(() => {
       refetchPools();
       setSuccess(false);
