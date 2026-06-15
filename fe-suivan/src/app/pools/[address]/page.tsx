@@ -547,7 +547,7 @@ export default function PoolDetailPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#38bdf8]/70">
-                            Cycle {typeof currentCycle === "number" ? currentCycle : "?"} Winner
+                            Cycle {typeof currentCycle === "number" && currentCycle > 1 ? currentCycle - 1 : currentCycle || "?"} Winner
                           </p>
                           <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[#e2e8f0]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
                             {typeof lastWinner === "string" && lastWinner.startsWith("0x") ? `${lastWinner.slice(0, 6)}...${lastWinner.slice(-4)}` : String(lastWinner || "")}
