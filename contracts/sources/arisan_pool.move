@@ -547,7 +547,7 @@ module archa::arisan_pool {
     // ====== Entry Functions ======
 
     /// Create a new ArisanPool and join as the first participant
-    /// - Accepts collateral Coin (must be >= deposit_amount * collateral_multiplier / 100)
+    /// - Accepts collateral Coin (must be >= deposit_amount * (max_participants - 1) * collateral_multiplier / 100)
     /// - Pool is created as shared object so anyone can join
     /// - Creator becomes first participant automatically
     public fun create_pool<CoinType>(
