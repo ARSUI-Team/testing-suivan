@@ -12,6 +12,9 @@ module archa::arisan_factory {
     const E_INVALID_TEMPLATE: u64 = 101;
     const E_TEMPLATE_INACTIVE: u64 = 102;
     const E_FACTORY_PAUSED: u64 = 103;
+    const E_TOO_MANY_POOLS: u64 = 104;
+
+    const MAX_POOLS_PER_USER: u64 = 100;
 
     // ====== Structs ======
 
@@ -203,6 +206,7 @@ module archa::arisan_factory {
 
         if (table::contains(&factory.user_pools, creator)) {
             let user_pools = table::borrow_mut(&mut factory.user_pools, creator);
+            assert!(vector::length(user_pools) < MAX_POOLS_PER_USER, E_TOO_MANY_POOLS);
             vector::push_back(user_pools, pool_id);
         } else {
             let mut new_list = vector[];
@@ -250,6 +254,7 @@ module archa::arisan_factory {
 
         if (table::contains(&factory.user_pools, creator)) {
             let user_pools = table::borrow_mut(&mut factory.user_pools, creator);
+            assert!(vector::length(user_pools) < MAX_POOLS_PER_USER, E_TOO_MANY_POOLS);
             vector::push_back(user_pools, pool_id);
         } else {
             let mut new_list = vector[];
