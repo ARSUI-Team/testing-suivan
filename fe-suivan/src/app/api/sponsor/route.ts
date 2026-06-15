@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
           arguments: [
             tx.object(body.poolAdminCapId!),
             tx.object(body.poolId!),
-            tx.pure(seed),
+            tx.pure.vector("u8", seed),
           ],
           typeArguments: [USDC_TYPE],
         });

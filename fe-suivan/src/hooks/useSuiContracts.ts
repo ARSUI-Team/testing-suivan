@@ -722,7 +722,7 @@ export function useSelectWinner() {
       arguments: [
         tx.object(poolAdminCapId),
         tx.object(poolId),
-        tx.pure(seed),
+        tx.pure.vector("u8", seed),
       ],
       typeArguments: [SUI_USDC_TYPE],
     });
