@@ -1168,7 +1168,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 4)] // E_NOT_PARTICIPANT (slash inactive participant)
+    #[expected_failure(abort_code = 12)] // E_ALREADY_DEPOSITED — slash marks deposits_this_cycle=true
     fun test_slash_collateral_inactive_participant() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
