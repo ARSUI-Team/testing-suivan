@@ -35,7 +35,7 @@ export function SuiProvider({ children }: { children: ReactNode }) {
 export function SuiWalletProvider({ children }: { children: ReactNode }) {
   return (
     <WalletProvider
-      autoConnect={false}
+      autoConnect={true}
       preferredWallets={["Slush", "Sui Wallet", "Surf Wallet", "Nightly"]}
     >
       {children}
