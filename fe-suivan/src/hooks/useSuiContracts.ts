@@ -829,14 +829,7 @@ export function useTransferAdminCap() {
   const transferAdminCap = (poolAdminCapId: string, newOwnerAddress: string) => {
     const tx = new Transaction();
 
-    tx.moveCall({
-      target: `${SUI_PACKAGE_ID}::arisan_pool::transfer_admin_cap`,
-      arguments: [
-        tx.object(poolAdminCapId),
-        tx.pure.address(newOwnerAddress),
-      ],
-      typeArguments: [SUI_USDC_TYPE],
-    });
+    tx.transferObjects([tx.object(poolAdminCapId)], tx.pure.address(newOwnerAddress));
 
     signAndExecute({ transaction: tx }, {
       onSuccess: () => {
