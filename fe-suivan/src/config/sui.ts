@@ -1,12 +1,4 @@
 import { useNetworkVariable } from "./networkConfig";
-export {
-  SUI_AGENT_ADDRESS,
-  SUI_CLOCK_ID,
-  SUI_FACTORY_ID,
-  SUI_PACKAGE_ID,
-  SUI_SUI_TYPE,
-  SUI_USDC_TYPE,
-} from "./suiConstants";
 
 export function usePackageId() {
   return useNetworkVariable("packageId");
@@ -27,3 +19,9 @@ export function useSuiType() {
 export function useFaucetId() {
   return useNetworkVariable("faucetId");
 }
+
+export const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
+export const SUI_FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID!;
+export const SUI_USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE!;
+export const SUI_SUI_TYPE = SUI_PACKAGE_ID + "::test_sui::TEST_SUI";
+export const SUI_CLOCK_ID = "0x6";

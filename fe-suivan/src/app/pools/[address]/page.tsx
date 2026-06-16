@@ -9,7 +9,8 @@ import SharePool from "@/components/SharePool";
 import SuiFeeProfile from "@/components/SuiFeeProfile";
 import PoolAnalyticsChart from "@/components/PoolAnalyticsChart";
 import { SuccessCelebration } from "@/components/Confetti";
-import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 import ConnectSuiWallet from "@/components/ConnectSuiWallet";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
@@ -23,21 +24,14 @@ import {
   useMakeDeposit,
   useStartPool,
   useSelectWinner,
-  useEndPool,
-  useTransferAdminCap,
   useCurrentYield,
   useUSDCBalance,
   useUserUSDCcoins,
   useLinkPoolMetadata,
   useClaimFinal,
-  useClaimWinnerPayout,
-  useLastWinner,
-  useCycleWinners,
 } from "@/hooks/useSuiContracts";
-import { SUI_AGENT_ADDRESS, SUI_PACKAGE_ID } from "@/config/sui";
+import { SUI_PACKAGE_ID } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
-import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
-import { derivePoolLifecycle, getPoolStatusLabel } from "@/lib/poolLifecycle";
 
 export default function PoolDetailPage() {
   const params = useParams();
@@ -65,7 +59,7 @@ export default function PoolDetailPage() {
   const { participantAddresses, participantCount, isLoading: participantsLoading } = useParticipantList(poolAddress);
 
   // User-specific data
-  const { participantInfo, isLoading: participantLoading, refetch: refetchParticipant } = useParticipantInfo(poolAddress, address);
+  const { participantInfo, refetch: refetchParticipant } = useParticipantInfo(poolAddress, address);
 
   // Live data
   const { currentYield } = useCurrentYield(poolAddress);
@@ -85,26 +79,10 @@ export default function PoolDetailPage() {
   // Actions
   const { joinPool, isPending: joining, isSuccess: joinSuccess, error: joinError, hash: joinHash } = useJoinPool();
   const { makeDeposit, isPending: depositing, isSuccess: depositSuccess, error: depositError, hash: depositHash } = useMakeDeposit();
-  const { startPool, isPending: starting, isSuccess: startSuccess, error: startError, hash: startHash } = useStartPool();
-  const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError, hash: selectHash } = useSelectWinner();
-  const { endPool, isPending: ending, isSuccess: endSuccess, error: endError, hash: endHash } = useEndPool();
-  const { lastWinner } = useLastWinner(poolAddress);
-  const {
-    transferAdminCap,
-    isPending: delegating,
-    isSuccess: delegateSuccess,
-    error: delegateError,
-    hash: delegateHash,
-  } = useTransferAdminCap();
+  const { startPool, isPending: starting, isSuccess: startSuccess, error: startError } = useStartPool();
+  const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError } = useSelectWinner();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const { claimFinal, isPending: claiming, isSuccess: claimSuccess, hash: claimHash, error: claimError } = useClaimFinal();
-  const {
-    claimWinnerPayout,
-    isPending: claimingWinnerPayout,
-    isSuccess: winnerPayoutSuccess,
-    hash: winnerPayoutHash,
-    error: winnerPayoutError,
-  } = useClaimWinnerPayout();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -114,7 +92,46 @@ export default function PoolDetailPage() {
   const [metaDesc, setMetaDesc] = useState(walrusMeta?.description || "");
   const [adminCapId, setAdminCapId] = useState("");
   const [publishingMeta, setPublishingMeta] = useState(false);
-  const [syncCountdown, setSyncCountdown] = useState(15);
+
+  // AI Agent integration
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+  const [agentInfo, setAgentInfo] = useState<{ agentAddress: string; managedPools: string[] } | null>(null);
+  const [delegating, setDelegating] = useState(false);
+  const isManagedByAgent = agentInfo?.managedPools.includes(poolAddress) ?? false;
+
+  useEffect(() => {
+    fetch("/api/agent/status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.configured) {
+          setAgentInfo({
+            agentAddress: data.agentAddress,
+            managedPools: (data.managedPools || []).map((p: { poolId: string }) => p.poolId),
+          });
+        }
+      })
+      .catch(() => {});
+  }, [poolAddress]);
+
+  const handleDelegateToAgent = () => {
+    if (!adminCapId || !agentInfo?.agentAddress) return;
+    setDelegating(true);
+    const tx = new Transaction();
+    tx.transferObjects([tx.object(adminCapId)], tx.pure.address(agentInfo.agentAddress));
+    signAndExecute({ transaction: tx }, {
+      onSuccess: () => {
+        successToast("Delegated to AI Agent", "PoolAdminCap transferred. Agent will now manage this pool.");
+        setAdminCapId("");
+        setDelegating(false);
+        // Trigger agent tick
+        fetch("/api/agent/tick", { method: "POST" }).catch(() => {});
+      },
+      onError: (err) => {
+        errorToast("Delegation failed", err?.message || "Transaction failed");
+        setDelegating(false);
+      },
+    });
+  };
 
   // Auto-fill admin cap from owned objects — match by pool_id
   const client = useSuiClient();
@@ -157,34 +174,6 @@ export default function PoolDetailPage() {
     }
   }, [linkSuccess, refetchPool, refetchWalrusMeta, successToast]);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setSyncCountdown((value) => value <= 1 ? 15 : value - 1);
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (showJoinModal && defaultCoinId && !joinCoinId) {
-      setJoinCoinId(defaultCoinId);
-    }
-  }, [defaultCoinId, joinCoinId, showJoinModal]);
-
-  useEffect(() => {
-    if (showDepositModal && defaultCoinId && !depositCoinId) {
-      setDepositCoinId(defaultCoinId);
-    }
-  }, [defaultCoinId, depositCoinId, showDepositModal]);
-
-  useEffect(() => {
-    if (showJoinModal || showDepositModal) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [showJoinModal, showDepositModal]);
-
   const handleSaveMetadata = async () => {
     if (!metaName.trim()) {
       errorToast("Validation", "Pool name is required");
@@ -213,19 +202,13 @@ export default function PoolDetailPage() {
   const currentCycle = poolInfo?.cycle || 0;
   const isStarted = poolInfo?.started || false;
   const isActive = poolInfo?.active || false;
-  const { cycleWinners } = useCycleWinners(poolAddress, currentCycle);
 
+  // Determine pool status
+  let status: "open" | "active" | "completed" = "open";
   const isFull = poolInfo?.isFull || false;
-  const lifecycle = derivePoolLifecycle({
-    started: isStarted,
-    active: isActive,
-    ended: poolInfo?.isEnded || false,
-    full: isFull,
-    currentCycle,
-    poolStartTimeMs: poolInfo?.poolStartTimeMs || 0,
-    cycleDurationMs: poolInfo?.cycleDurationMs || 0,
-  });
-  const status = lifecycle.status;
+  if (isStarted && isActive) status = "active";
+  else if (isStarted && !isActive) status = "completed";
+  else if (isFull && !isStarted) status = "active"; // "ready to start" shows as active
 
   // Pool name from Walrus metadata or fallback
   let poolName = walrusMeta?.name || "Custom Pool";
@@ -236,58 +219,7 @@ export default function PoolDetailPage() {
   }
 
   // User is participant
-  const isParticipant = !!participantInfo;
-  const hasAdminCap = !!adminCapId;
-  const hasDepositedThisCycle = !!participantInfo?.depositsThisCycle;
-  const capacityPct = maxParticipants > 0
-    ? Math.min(100, Math.round((currentParticipants / maxParticipants) * 100))
-    : 0;
-  const cycleDurationDays = poolInfo?.cycleDurationMs
-    ? Math.max(1, Math.round(poolInfo.cycleDurationMs / 86_400_000))
-    : 0;
-  const agentState = !isConnected
-    ? "connect_wallet"
-    : hasAdminCap
-      ? "ready"
-      : isStarted
-        ? "running_or_delegated"
-        : "not_delegated";
-  const actionLog = [
-    {
-      label: "Create pool",
-      state: poolInfo ? "done" : "waiting",
-      detail: poolAddress ? `${poolAddress.slice(0, 8)}…${poolAddress.slice(-4)}` : "Waiting for pool object",
-    },
-    {
-      label: "Join pool",
-      state: currentParticipants > 0 ? "done" : "waiting",
-      detail: `${currentParticipants}/${maxParticipants || 0} participants`,
-    },
-    {
-      label: "Make deposit",
-      state: hasDepositedThisCycle ? "done" : isStarted && isParticipant ? "ready" : "waiting",
-      detail: hasDepositedThisCycle ? "Current cycle paid" : `${depositAmount} USDC per cycle`,
-    },
-    {
-      label: "Start / advance",
-      state: isStarted ? "done" : lifecycle.nextAction === "start_pool" && hasAdminCap ? "ready" : "waiting",
-      detail: isStarted ? `Cycle ${currentCycle}` : isFull ? "Pool is full" : "Waiting for full capacity",
-    },
-    {
-      label: "Select winner",
-      state: lifecycle.nextAction === "resolve_cycle" && hasAdminCap ? "ready" : "waiting",
-      detail: lifecycle.deadlineReached
-        ? "Deadline reached: slash missing deposits, then draw"
-        : lifecycle.cycleDeadlineMs
-          ? `Deadline ${new Date(lifecycle.cycleDeadlineMs).toLocaleString()}`
-          : "Waiting for pool start",
-    },
-    {
-      label: "Claim final",
-      state: status === "completed" ? "ready" : "waiting",
-      detail: status === "completed" ? "Collateral + yield available" : "Pool still running",
-    },
-  ];
+  const isParticipant = participantInfo?.isActive || false;
 
   // Handle join success
   useEffect(() => {
@@ -320,7 +252,7 @@ export default function PoolDetailPage() {
   // Handle start pool success
   useEffect(() => {
     if (startSuccess) {
-      const txMsg = startHash ? `\nTx: ${startHash.slice(0, 10)}…${startHash.slice(-4)}` : "Pool started";
+      const txMsg = poolAddress ? `Pool started` : "";
       setSuccessMessage({ title: "Pool Started", message: `The ROSCA pool is now active. Participants can make deposits.` });
       setShowSuccessCelebration(true);
       refetchPool();
@@ -328,38 +260,17 @@ export default function PoolDetailPage() {
       successToast("Pool Started", txMsg);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startSuccess, startHash]);
+  }, [startSuccess]);
 
   // Handle select winner success
   useEffect(() => {
     if (selectSuccess) {
       refetchPool();
       refetchParticipant();
-      const txMsg = selectHash ? `\nTx: ${selectHash.slice(0, 10)}…${selectHash.slice(-4)}` : "";
-      successToast("Winner Selected", `The payout is ready for the winner to withdraw.${txMsg}`);
+      successToast("Winner Selected", "The winner has been selected and paid out.");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectSuccess, selectHash]);
-
-  useEffect(() => {
-    if (endSuccess) {
-      refetchPool();
-      refetchParticipant();
-      const txMsg = endHash ? `\nTx: ${endHash.slice(0, 10)}…${endHash.slice(-4)}` : "";
-      successToast("Pool Ended", `Final claims are now available.${txMsg}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endSuccess, endHash]);
-
-  useEffect(() => {
-    if (delegateSuccess) {
-      refetchPool();
-      const txMsg = delegateHash ? `\nTx: ${delegateHash.slice(0, 10)}…${delegateHash.slice(-4)}` : "";
-      successToast("Agent Delegated", `PoolAdminCap transferred to the AI agent.${txMsg}`);
-      setAdminCapId("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [delegateSuccess, delegateHash]);
+  }, [selectSuccess]);
 
   // Handle join error
   useEffect(() => {
@@ -380,14 +291,6 @@ export default function PoolDetailPage() {
     if (selectError) errorToast("Select Winner Failed", selectError?.message || "Transaction failed");
   }, [selectError, errorToast]);
 
-  useEffect(() => {
-    if (endError) errorToast("End Pool Failed", endError?.message || "Transaction failed");
-  }, [endError, errorToast]);
-
-  useEffect(() => {
-    if (delegateError) errorToast("Delegate Agent Failed", delegateError?.message || "Transaction failed");
-  }, [delegateError, errorToast]);
-
   // Handle claim success
   useEffect(() => {
     if (claimSuccess) {
@@ -406,36 +309,22 @@ export default function PoolDetailPage() {
     if (claimError && !claimSuccess) errorToast("Claim Failed", claimError?.message || "Transaction failed");
   }, [claimError, claimSuccess, errorToast]);
 
-  useEffect(() => {
-    if (winnerPayoutSuccess) {
-      const txMsg = winnerPayoutHash
-        ? `\nTx: ${winnerPayoutHash.slice(0, 10)}…${winnerPayoutHash.slice(-4)}`
-        : "";
-      refetchPool();
-      refetchParticipant();
-      successToast("Winner Payout Withdrawn", `The cycle payout was sent to your wallet.${txMsg}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [winnerPayoutSuccess, winnerPayoutHash]);
+  // Auto-populate coin ID when modals open
+  if (showJoinModal && defaultCoinId && !joinCoinId) {
+    setJoinCoinId(defaultCoinId);
+  }
+  if (showDepositModal && defaultCoinId && !depositCoinId) {
+    setDepositCoinId(defaultCoinId);
+  }
 
-  useEffect(() => {
-    if (winnerPayoutError && !winnerPayoutSuccess) {
-      errorToast("Winner Withdraw Failed", winnerPayoutError.message || "Transaction failed");
-    }
-  }, [winnerPayoutError, winnerPayoutSuccess, errorToast]);
-
-  const COLLATERAL_MULTIPLIER = DEFAULT_COLLATERAL_MULTIPLIER;
+  const COLLATERAL_MULTIPLIER = 125;
 
   const handleJoinPool = () => {
     if (!joinCoinId) {
       errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
-    joinPool(
-      poolAddress,
-      getRequiredCollateralAmount(depositAmount, maxParticipants, COLLATERAL_MULTIPLIER),
-      joinCoinId,
-    );
+    joinPool(poolAddress, Math.ceil(depositAmount * COLLATERAL_MULTIPLIER / 100), joinCoinId);
   };
 
   const handleMakeDeposit = () => {
@@ -445,9 +334,7 @@ export default function PoolDetailPage() {
   const getStatusColor = (s: string) => {
     switch (s) {
       case "open": return "bg-[var(--success-soft)] text-[var(--success-deep)]";
-      case "ready": return "bg-[var(--warn-soft)] text-[var(--foreground)]";
       case "active": return "bg-[var(--accent-soft)] text-[var(--accent-deep)]";
-      case "action_required": return "bg-[var(--danger-soft)] text-[var(--foreground)]";
       case "completed": return "bg-[var(--surface-hover)] text-[var(--muted)]";
       default: return "bg-[var(--surface-hover)] text-[var(--muted)]";
     }
@@ -487,7 +374,7 @@ export default function PoolDetailPage() {
                   {poolName}
                 </h1>
                 <span className={`protocol-font rounded-full border-2 border-[var(--border)] px-3 py-1 text-xs font-black ${getStatusColor(status)}`}>
-                  {getPoolStatusLabel(status)}
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
               </div>
               <div className="protocol-font inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-black text-[var(--muted)] shadow-[4px_4px_0_var(--border)]">
@@ -540,55 +427,18 @@ export default function PoolDetailPage() {
                   </div>
                 </div>
 
-                {lastWinner && (
-                  <div className="mt-4 overflow-hidden rounded-[1.25rem] border-[3px] border-[var(--brutal-ink)] bg-gradient-to-br from-[#0a1628] via-[#0f2340] to-[#0a1628] shadow-[0_8px_30px_rgba(56,189,248,0.25)]">
-                    <div className="relative p-5">
-                      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#38bdf8] opacity-[0.06] blur-2xl" />
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#38bdf8]/70">
-                            {status === "completed" ? "Final Winner" : "Last Winner"}
-                          </p>
-                          <p className="mt-2 text-2xl font-black tracking-[-0.02em] text-[#e2e8f0]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
-                            {typeof lastWinner === "string" && lastWinner.startsWith("0x") ? `${lastWinner.slice(0, 6)}...${lastWinner.slice(-4)}` : String(lastWinner || "")}
-                          </p>
-                        </div>
-                        <div className="shrink-0 rounded-full bg-gradient-to-br from-[#38bdf8] to-[#0284c7] p-3 shadow-[0_0_20px_rgba(56,189,248,0.4)]">
-                          <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 22V8c0-1.1.9-2 2-2s2 .9 2 2v14"/><path d="M8 14c-2.6 0-3.5 2-3.5 2s.9-2 3.5-2"/><path d="M16 14c2.6 0 3.5 2 3.5 2s-.9-2-3.5-2"/>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {(cycleWinners?.length ?? 0) > 0 && (
-                  <div className="mt-3 space-y-1.5">
-                    {cycleWinners!.map((w) => (
-                      <div key={w.cycle} className="flex items-center gap-3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2.5">
-                        <span className="shrink-0 rounded-lg bg-[var(--accent)] px-2.5 py-1 text-xs font-black text-[var(--foreground)]">
-                          C{w.cycle}
-                        </span>
-                        <span className="truncate text-sm font-semibold text-[var(--foreground)]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                          {w.address}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {/* Progress Bar */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="protocol-font text-xs font-black text-[var(--muted)]">{t("detail.capacity")}</span>
                     <span className="protocol-font text-sm font-black text-[var(--foreground)]">
-                      {capacityPct}%
+                      {Math.round((currentParticipants / maxParticipants) * 100)}%
                     </span>
                   </div>
                   <div className="h-3 w-full overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--surface-hover)]">
                     <div
                       className="h-full bg-[var(--accent)] transition-all duration-500"
-                      style={{ width: `${capacityPct}%` }}
+                      style={{ width: `${(currentParticipants / maxParticipants) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -639,9 +489,7 @@ export default function PoolDetailPage() {
                   </div>
                   <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.collateral")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">
-                      {getRequiredCollateralAmount(depositAmount, maxParticipants, COLLATERAL_MULTIPLIER)} USDC
-                    </p>
+                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                   </div>
                 </div>
               </div>
@@ -687,7 +535,7 @@ export default function PoolDetailPage() {
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {poolInfo?.gachaWinner?.toLowerCase() === addr.toLowerCase() && (
-                                <span className="protocol-font text-xs font-black text-[var(--yellow)]">Gacha Winner</span>
+                                <span className="protocol-font text-xs font-black text-[var(--yellow)]">🏆 Gacha Winner</span>
                               )}
                               {addr.toLowerCase() === address?.toLowerCase() && (
                                 <span className="protocol-font text-xs font-black text-[var(--success-deep)]">You</span>
@@ -714,130 +562,12 @@ export default function PoolDetailPage() {
 
             {/* Right Column - Actions */}
             <div className="space-y-6">
-              <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="protocol-font text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">AI Pool Agent</p>
-                    <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Lifecycle Control</h2>
-                  </div>
-                  <span className="protocol-font inline-flex items-center gap-2 rounded-full border-2 border-[var(--border)] bg-[var(--background)] px-3 py-1 text-[10px] font-black text-[var(--foreground)]">
-                    <span className={`h-2.5 w-2.5 rounded-full ${
-                      agentState === "ready" || agentState === "running_or_delegated"
-                        ? "bg-[var(--success)]"
-                        : "bg-[var(--warn)]"
-                    }`} />
-                    {agentState === "connect_wallet"
-                      ? "Connect"
-                      : agentState === "ready"
-                        ? "Ready"
-                        : agentState === "running_or_delegated"
-                          ? "Delegated"
-                          : "Local cap"}
-                  </span>
-                </div>
-
-                <div className="mb-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-3">
-                    <p className="protocol-font text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">Sync</p>
-                    <p className="protocol-font mt-1 text-xl font-black text-[var(--foreground)]">{syncCountdown}s</p>
-                  </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-3">
-                    <p className="protocol-font text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">Cycle</p>
-                    <p className="protocol-font mt-1 text-xl font-black text-[var(--foreground)]">
-                      {cycleDurationDays ? `${cycleDurationDays}d` : "Pending"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mb-4 space-y-2">
-                  {actionLog.map((item) => (
-                    <div key={item.label} className="flex items-start gap-3 rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-3">
-                      <span className={`mt-1 h-3 w-3 shrink-0 rounded-full ${
-                        item.state === "done"
-                          ? "bg-[var(--success)]"
-                          : item.state === "ready"
-                            ? "bg-[var(--accent)]"
-                            : "bg-[var(--muted)]"
-                      }`} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="protocol-font text-xs font-black uppercase tracking-[0.08em] text-[var(--foreground)]">{item.label}</p>
-                          <span className="protocol-font rounded-full bg-[var(--surface-hover)] px-2 py-0.5 text-[9px] font-black uppercase text-[var(--muted)]">
-                            {item.state}
-                          </span>
-                        </div>
-                        <p className="mt-1 break-words text-xs font-semibold text-[var(--muted)]">{item.detail}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-3">
-                  <button
-                    onClick={() => transferAdminCap(adminCapId, SUI_AGENT_ADDRESS)}
-                    disabled={!adminCapId || delegating}
-                    className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
-                      !adminCapId || delegating
-                        ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                        : "bg-[var(--success)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
-                    }`}
-                  >
-                    {delegating ? "Delegating..." : "Delegate to Agent"}
-                  </button>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => startPool(poolAddress, adminCapId)}
-                      disabled={!adminCapId || !isFull || isStarted || starting}
-                      className={`protocol-font rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
-                        !adminCapId || !isFull || isStarted || starting
-                          ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                          : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
-                      }`}
-                    >
-                      {starting ? "Starting..." : "Start"}
-                    </button>
-                    <button
-                      onClick={() => selectWinner(poolAddress, adminCapId)}
-                      disabled={!adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting || selectSuccess || (isStarted && !hasDepositedThisCycle)}
-                      className={`protocol-font rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
-                        !adminCapId || lifecycle.nextAction !== "resolve_cycle" || selecting || selectSuccess || (isStarted && !hasDepositedThisCycle)
-                          ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                          : "bg-[var(--warn)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
-                      }`}
-                    >
-                      {selecting ? "Selecting..." : selectSuccess ? "✓ Winner Selected" : lifecycle.nextAction === "resolve_cycle" && !hasDepositedThisCycle ? "Deposit First" : "Winner"}
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => endPool(poolAddress, adminCapId)}
-                      disabled={!adminCapId || status === "completed" || !isStarted || ending}
-                      className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 text-xs font-black transition-all ${
-                        !adminCapId || status === "completed" || !isStarted || ending
-                          ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                          : "bg-[var(--danger-soft)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
-                      }`}
-                  >
-                    {ending ? "Ending..." : "End Pool"}
-                  </button>
-                </div>
-
-                <p className="mt-3 break-all text-[10px] font-semibold leading-5 text-[var(--muted)]">
-                  Agent: {SUI_AGENT_ADDRESS}
-                </p>
-              </div>
-
               {/* User Status Card */}
               {isConnected && (
                 <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
                   <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.yourStatus")}</h2>
 
-                  {participantLoading ? (
-                    <div className="space-y-4">
-                      <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
-                        <p className="font-semibold text-[var(--muted)]">Loading...</p>
-                      </div>
-                    </div>
-                  ) : isParticipant ? (
+                  {isParticipant ? (
                     <div className="space-y-4">
                       <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
                         <div className="flex items-center gap-2 mb-2">
@@ -864,48 +594,85 @@ export default function PoolDetailPage() {
                             {participantInfo?.hasReceivedPayout ? t("detail.yes") : t("detail.notYet")}
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="protocol-font text-xs font-black text-[var(--muted)]">Winner payout available</span>
-                          <span className="protocol-font font-black text-[var(--success-deep)]">
-                            {(participantInfo?.pendingWinnerPayout ?? 0).toFixed(2)} USDC
-                          </span>
-                        </div>
                       </div>
 
-                      {(participantInfo?.pendingWinnerPayout ?? 0) > 0 && (
-                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
-                          <h3 className="mb-2 font-black text-[var(--foreground)]">Arisan payout ready</h3>
-                          <p className="mb-3 text-sm font-semibold text-[var(--muted)]">
-                            Only your connected winner address can withdraw this payout.
-                          </p>
-                          <button
-                            onClick={() => claimWinnerPayout(poolAddress)}
-                            disabled={claimingWinnerPayout}
-                            className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
-                              claimingWinnerPayout
-                                ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                                : "bg-[var(--success)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
-                            }`}
-                          >
-                            {claimingWinnerPayout ? "Withdrawing..." : "Withdraw Winner Payout"}
-                          </button>
-                        </div>
+                      {/* Start Pool Button — show when pool is full but not started */}
+                      {isFull && !isStarted && adminCapId && (
+                        <button
+                          onClick={() => startPool(poolAddress, adminCapId)}
+                          disabled={starting}
+                          className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                            starting
+                              ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                              : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {starting ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                              Starting Pool...
+                            </span>
+                          ) : "Start Pool"}
+                        </button>
                       )}
 
                       {/* Deposit Button for Active Pool */}
-                      {(status === "active" || status === "action_required") && isStarted && participantInfo?.isActive && (
-                        hasDepositedThisCycle ? (
-                          <div className="protocol-font rounded-xl border-2 border-[var(--border)] bg-[var(--success-soft)] py-3 text-center font-black text-[var(--foreground)]">
-                            ✓ Deposited This Cycle
+                      {status === "active" && isStarted && (
+                        <button
+                          onClick={() => setShowDepositModal(true)}
+                          className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                        >
+                          {t("detail.makeDeposit")}
+                        </button>
+                      )}
+
+                      {/* AI Agent Status */}
+                      {agentInfo && (
+                        <div className={`rounded-xl border-2 p-4 ${isManagedByAgent ? "border-[var(--success-deep)] bg-[var(--success-soft)]" : "border-[var(--border)] bg-[var(--surface)]"}`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="protocol-font text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
+                                {isManagedByAgent ? "🤖 AI Agent" : "AI Agent"}
+                              </p>
+                              <p className={`mt-1 text-sm font-black ${isManagedByAgent ? "text-[var(--success-deep)]" : "text-[var(--foreground)]"}`}>
+                                {isManagedByAgent
+                                  ? "Managing this pool automatically"
+                                  : adminCapId
+                                    ? "Delegate to automate pool lifecycle"
+                                    : "Available for automation"}
+                              </p>
+                            </div>
+                            {!isManagedByAgent && adminCapId && (
+                              <button
+                                onClick={handleDelegateToAgent}
+                                disabled={delegating}
+                                className="protocol-font rounded-xl border-2 border-[var(--accent-deep)] bg-[var(--accent)] px-4 py-2 text-xs font-black shadow-[2px_2px_0_var(--border)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                              >
+                                {delegating ? "Delegating..." : "Delegate"}
+                              </button>
+                            )}
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => setShowDepositModal(true)}
-                            className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
-                          >
-                            {t("detail.makeDeposit")}
-                          </button>
-                        )
+                        </div>
+                      )}
+
+                      {/* Select Winner Button — show when pool is started, cycle active, and adminCap available */}
+                      {isStarted && isActive && adminCapId && currentCycle > 0 && (
+                        <button
+                          onClick={() => selectWinner(poolAddress, adminCapId)}
+                          disabled={selecting}
+                          className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                            selecting
+                              ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
+                              : "bg-[var(--yellow)] text-black shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {selecting ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                              Selecting Winner...
+                            </span>
+                          ) : "Select Winner"}
+                        </button>
                       )}
 
                       {/* Claim section for completed pool */}
@@ -922,7 +689,7 @@ export default function PoolDetailPage() {
                           )}
                           {participantInfo?.gachaClaimed && (
                             <p className="mb-3 text-sm font-bold text-[var(--yellow)]">
-                              Gacha prize winner
+                              🏆 You won the Gacha prize!
                             </p>
                           )}
                           <button
@@ -977,8 +744,8 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-               {/* Pool Metadata Editor — Admin only */}
-               {isConnected && hasAdminCap && (
+              {/* Pool Metadata Editor */}
+              {isConnected && (
                 <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Pool Metadata</h2>
@@ -1081,9 +848,9 @@ export default function PoolDetailPage() {
 
       {/* Join Pool Modal */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 sm:pt-24 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowJoinModal(false)} />
-          <div className="relative w-full max-w-md max-h-[80vh] overflow-y-auto rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-6 shadow-[8px_8px_0_var(--border)]">
+          <div className="relative w-full max-w-md rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-6 shadow-[8px_8px_0_var(--border)]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Join {poolName}</h3>
               <button onClick={() => setShowJoinModal(false)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--accent)] p-2 text-[var(--foreground)] transition hover:-translate-y-0.5">
@@ -1101,9 +868,7 @@ export default function PoolDetailPage() {
 
               <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("pools.collateral")}</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">
-                  {getRequiredCollateralAmount(depositAmount, maxParticipants, COLLATERAL_MULTIPLIER)} USDC
-                </p>
+                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Returned at the end of the cycle with yield bonus when available</p>
               </div>
 
