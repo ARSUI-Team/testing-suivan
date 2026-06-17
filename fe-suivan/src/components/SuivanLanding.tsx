@@ -401,7 +401,7 @@ export default function SuivanLanding() {
               </div>
             ) : (
               displayPools.map((pool) => (
-                <article className="suivan-reveal p-5 md:p-6" key={pool.name} style={{ background: "var(--brutal-bg)", border: "4px solid var(--brutal-ink)", boxShadow: "8px 8px 0 var(--brutal-ink)", color: "var(--brutal-ink)" }}>
+                <article className="suivan-reveal p-5 md:p-6" key={pool.address} style={{ background: "var(--brutal-bg)", border: "4px solid var(--brutal-ink)", boxShadow: "8px 8px 0 var(--brutal-ink)", color: "var(--brutal-ink)" }}>
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="min-w-0">
                       <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#e8180a", fontFamily: "var(--font-bebas)" }}>
