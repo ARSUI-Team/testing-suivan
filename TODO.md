@@ -24,7 +24,7 @@
 
 ---
 
-## 🟠 FASE 2: YIELD + JACKPOT (30 min)
+## 🟠 FASE 2: YIELD + JACKPOT (30 min)a
 
 | Done | Task |
 |---|---|
