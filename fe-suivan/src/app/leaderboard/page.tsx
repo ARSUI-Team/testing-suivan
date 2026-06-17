@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect, createElement } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useLeaderboardData } from "@/hooks/useLeaderboardData";
@@ -130,7 +129,6 @@ export default function LeaderboardPage() {
             </div>
           </div>
         </section>
-        <Footer />
       </main>
     );
   }
@@ -145,7 +143,7 @@ export default function LeaderboardPage() {
           className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.28),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(168,164,154,0.18),transparent_26%)]"
         />
         <div className="mx-auto max-w-6xl">
-          <p className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[4px_4px_0_#0a0a0a]">
+          <p className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[10px_10px_0_#0a0a0a]">
             <Trophy className="size-4" />
             {t("leaderboard.badge")}
           </p>
@@ -164,7 +162,7 @@ export default function LeaderboardPage() {
       <section className="px-5 pb-20 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
-            <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[4px_4px_0_#0a0a0a]">
+            <div className="border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[10px_10px_0_#0a0a0a]">
               <div className="mb-4 flex items-center gap-2">
                 <Calendar className="size-5 text-[#0a0a0a]" />
                 <h2 className="protocol-font text-sm font-black uppercase tracking-[0.18em]">{t("leaderboard.cycleTitle")}</h2>
@@ -172,14 +170,14 @@ export default function LeaderboardPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b-[2px] border-[#0a0a0a] pb-2">
                   <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.cycleDeadline")}</span>
-                  <span className="inline-flex items-center gap-1.5 border-[2px] border-[#0a0a0a] bg-[#fef9c3] px-2.5 py-1 text-xs font-black">
+                  <span className="inline-flex items-center gap-1.5 border-[3px] border-[#0a0a0a] bg-[#fef9c3] px-2.5 py-1 text-xs font-black">
                     <Calendar className="size-3" />
                     20th
                   </span>
                 </div>
                 <div className="flex items-center justify-between border-b-[2px] border-[#0a0a0a] pb-2">
                   <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.cycleDrawing")}</span>
-                  <span className="inline-flex items-center gap-1.5 border-[2px] border-[#0a0a0a] bg-[#e0f4ff] px-2.5 py-1 text-xs font-black">
+                  <span className="inline-flex items-center gap-1.5 border-[3px] border-[#0a0a0a] bg-[#e0f4ff] px-2.5 py-1 text-xs font-black">
                     <Sparkles className="size-3" />
                     25th
                   </span>
@@ -201,7 +199,7 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[4px_4px_0_#0a0a0a]">
+            <div className="border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[10px_10px_0_#0a0a0a]">
               <div className="mb-4 flex items-center gap-2">
                 <Trophy className="size-5 text-[#0a0a0a]" />
                 <h2 className="protocol-font text-sm font-black uppercase tracking-[0.18em]">Tiers &amp; Multipliers</h2>
@@ -212,7 +210,7 @@ export default function LeaderboardPage() {
                   return (
                     <div
                       key={tier.key}
-                      className="border-[2px] border-[#0a0a0a] p-3 text-center"
+                      className="border-[3px] border-[#0a0a0a] p-3 text-center"
                       style={{ background: tier.color }}
                     >
                       <Icon className="mx-auto mb-1 size-5 text-[#0a0a0a]" />
@@ -242,7 +240,7 @@ export default function LeaderboardPage() {
               { label: t("leaderboard.statEarned"), value: `$${stats.totalYieldDistributed.toLocaleString()}`, bg: "#e0f4ff" },
               { label: t("leaderboard.statAvgApy"), value: `${stats.avgApy}%`, bg: "#fef9c3" },
             ].map(({ label, value, bg }) => (
-              <div className="border-[3px] border-[#0a0a0a] p-4 shadow-[4px_4px_0_#0a0a0a]" style={{ backgroundColor: bg }} key={label}>
+              <div className="border-[3px] border-[#0a0a0a] p-4 shadow-[10px_10px_0_#0a0a0a]" style={{ backgroundColor: bg }} key={label}>
                 <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{label}</p>
                 <p
                   className="mt-2 text-3xl font-black tracking-tight"
@@ -262,13 +260,13 @@ export default function LeaderboardPage() {
           )}
 
           {isConnected && userRank && (
-            <div className="mt-8 border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[4px_4px_0_#0a0a0a]">
+            <div className="mt-8 border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[10px_10px_0_#0a0a0a]">
               <div className="mb-4 flex items-center gap-2">
                 <Wallet className="size-5 text-[#0a0a0a]" />
                 <h2 className="protocol-font text-sm font-black uppercase tracking-[0.18em]">{t("leaderboard.yourRank")}</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-5">
-                <div className="flex items-center gap-3 border-[2px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
+                <div className="flex items-center gap-3 border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
                   <span className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.rank")}</span>
                   <span
                     className="text-2xl font-black"
@@ -277,10 +275,10 @@ export default function LeaderboardPage() {
                     #{userRank.rank}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 border-[2px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
+                <div className="flex items-center gap-3 border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
                   <span className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.yourTier")}</span>
                   <div className="flex items-center gap-1.5">
-                    <div className="grid size-7 place-items-center border-[2px] border-[#0a0a0a]" style={{ background: TIER_CONFIG[userRank.tier].color }}>
+                    <div className="grid size-7 place-items-center border-[3px] border-[#0a0a0a]" style={{ background: TIER_CONFIG[userRank.tier].color }}>
                       {createElement(TIER_CONFIG[userRank.tier].icon, { className: "size-4 text-[#0a0a0a]" })}
                     </div>
                     <span
@@ -291,7 +289,7 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 border-[2px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
+                <div className="flex items-center gap-3 border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
                   <span className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.yourPoints")}</span>
                   <span
                     className="text-2xl font-black"
@@ -300,7 +298,7 @@ export default function LeaderboardPage() {
                     {userRank.points}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 border-[2px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
+                <div className="flex items-center gap-3 border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
                   <span className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.onTime")}</span>
                   <span
                     className="text-2xl font-black"
@@ -309,7 +307,7 @@ export default function LeaderboardPage() {
                     {userRank.onTimeRate}%
                   </span>
                 </div>
-                <div className="flex items-center gap-3 border-[2px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
+                <div className="flex items-center gap-3 border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-3">
                   <span className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.yourYield")}</span>
                   <span
                     className="text-2xl font-black"
@@ -329,7 +327,7 @@ export default function LeaderboardPage() {
             </div>
             {participants.length > 0 ? (
               <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] shadow-[6px_6px_0_#0a0a0a]">
-                <div className="hidden border-b-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-4 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px]">
+                <div className="hidden border-b-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-4 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px]">
                   <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.rank")}</span>
                   <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.member")}</span>
                   <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#555555]">{t("leaderboard.tier")}</span>
@@ -346,12 +344,12 @@ export default function LeaderboardPage() {
                       className="border-b-[3px] border-[#0a0a0a] p-4 last:border-b-0 md:grid md:grid-cols-[40px_1fr_100px_100px_100px_100px_100px] md:items-center md:gap-3"
                     >
                       <div className="mb-2 flex items-center justify-between md:mb-0">
-                        <span className="protocol-font flex size-7 items-center justify-center border-[3px] border-[#0a0a0a] bg-[#e8e1d9] text-xs font-black md:static">
+                        <span className="protocol-font flex size-7 items-center justify-center border-[3px] border-[#0a0a0a] bg-[#fdfdfa] text-xs font-black md:static">
                           {p.rank}
                         </span>
                         <div className="flex items-center gap-2 md:hidden">
                           <div
-                            className="grid size-5 shrink-0 place-items-center border-[2px] border-[#0a0a0a]"
+                            className="grid size-5 shrink-0 place-items-center border-[3px] border-[#0a0a0a]"
                             style={{ background: TIER_CONFIG[p.tier].color }}
                           >
                             <TierIcon className="size-3 text-[#0a0a0a]" />
@@ -365,7 +363,7 @@ export default function LeaderboardPage() {
                             {p.address}
                           </span>
                           {isConnected && p.rank <= 5 && (
-                            <span className="border-[2px] border-[#0a0a0a] bg-[#38bdf8] px-1.5 py-0.5 text-xs font-black uppercase">Top</span>
+                            <span className="border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-1.5 py-0.5 text-xs font-black uppercase">Top</span>
                           )}
                         </div>
                         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#555555] md:hidden">
@@ -376,7 +374,7 @@ export default function LeaderboardPage() {
                       </div>
                       <div className="hidden items-center gap-1.5 md:flex">
                         <div
-                          className="grid size-6 shrink-0 place-items-center border-[2px] border-[#0a0a0a]"
+                          className="grid size-6 shrink-0 place-items-center border-[3px] border-[#0a0a0a]"
                           style={{ background: TIER_CONFIG[p.tier].color }}
                         >
                           <TierIcon className="size-3 text-[#0a0a0a]" />
@@ -390,7 +388,7 @@ export default function LeaderboardPage() {
                       </div>
                       <span className="hidden text-sm font-black text-[#0a0a0a] md:block">{p.points}</span>
                       <span
-                        className={`hidden items-center gap-1 border-[2px] border-[#0a0a0a] px-2 py-0.5 text-xs font-black md:inline-flex ${
+                        className={`hidden items-center gap-1 border-[3px] border-[#0a0a0a] px-2 py-0.5 text-xs font-black md:inline-flex ${
                           p.onTimeRate >= 100
                             ? "bg-[#ccfbf1]"
                             : p.onTimeRate >= 70
@@ -411,7 +409,7 @@ export default function LeaderboardPage() {
                 })}
               </div>
             ) : (
-              <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-10 text-center shadow-[6px_6px_0_#0a0a0a]">
+              <div className="border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-10 text-center shadow-[6px_6px_0_#0a0a0a]">
                 <Trophy className="mx-auto mb-4 size-10 text-[#555555]" />
                 <h3 className="text-2xl font-black text-[#0a0a0a]">No Participants Yet</h3>
                 <p className="mt-2 font-semibold text-[#555555] max-w-md mx-auto">
@@ -424,7 +422,7 @@ export default function LeaderboardPage() {
           <div className="mt-8">
             <button
               onClick={() => setShowRules(!showRules)}
-              className="protocol-font inline-flex w-full items-center justify-between border-[3px] border-[#0a0a0a] bg-[#e8e1d9] px-6 py-4 text-xs font-black uppercase tracking-[0.18em] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8]"
+              className="protocol-font inline-flex w-full items-center justify-between border-[3px] border-[#0a0a0a] bg-[#fdfdfa] px-6 py-4 text-xs font-black uppercase tracking-[0.18em] shadow-[10px_10px_0_#0a0a0a] transition hover:bg-[#38bdf8]"
             >
               <span className="flex items-center gap-2">
                 <Info className="size-4" />
@@ -434,35 +432,35 @@ export default function LeaderboardPage() {
             </button>
             {showRules && (
               <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[10px_10px_0_#0a0a0a]">
                   <div className="mb-3 flex items-center gap-2">
                     <Calendar className="size-4 text-[#0a0a0a]" />
                     <h3 className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("leaderboard.rulesPayment")}</h3>
                   </div>
                   <p className="text-sm font-semibold leading-6 text-[#555555]">{t("leaderboard.rulesPaymentDesc")}</p>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[10px_10px_0_#0a0a0a]">
                   <div className="mb-3 flex items-center gap-2">
                     <Star className="size-4 text-[#0a0a0a]" />
                     <h3 className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("leaderboard.rulesPoints")}</h3>
                   </div>
                   <div className="space-y-2">
                     {POINTS_BREAKDOWN.map((pb) => (
-                      <div key={pb.range} className="flex items-center justify-between border-[2px] border-[#0a0a0a] px-3 py-1.5" style={{ background: pb.color }}>
+                      <div key={pb.range} className="flex items-center justify-between border-[3px] border-[#0a0a0a] px-3 py-1.5" style={{ background: pb.color }}>
                         <span className="text-[11px] font-bold">{pb.range}</span>
                         <span className="protocol-font text-xs font-black">+{pb.points} pts</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[10px_10px_0_#0a0a0a]">
                   <div className="mb-3 flex items-center gap-2">
                     <Sparkles className="size-4 text-[#0a0a0a]" />
                     <h3 className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("leaderboard.rulesDrawing")}</h3>
                   </div>
                   <p className="text-sm font-semibold leading-6 text-[#555555]">{t("leaderboard.rulesDrawingDesc")}</p>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-5 shadow-[10px_10px_0_#0a0a0a]">
                   <div className="mb-3 flex items-center gap-2">
                     <TrendingUp className="size-4 text-[#0a0a0a]" />
                     <h3 className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("leaderboard.rulesYield")}</h3>
@@ -470,7 +468,7 @@ export default function LeaderboardPage() {
                   <p className="text-sm font-semibold leading-6 text-[#555555]">{t("leaderboard.rulesYieldDesc")}</p>
                   <div className="mt-3 space-y-1.5">
                     {tierInfo.map((tier) => (
-                      <div key={tier.key} className="flex items-center justify-between border-[2px] border-[#0a0a0a] px-2.5 py-1" style={{ background: tier.color }}>
+                      <div key={tier.key} className="flex items-center justify-between border-[3px] border-[#0a0a0a] px-2.5 py-1" style={{ background: tier.color }}>
                         <span className="text-xs font-bold">{tier.label}</span>
                         <span className="protocol-font text-xs font-black">{tier.multiplier}x yield multiplier</span>
                       </div>
@@ -484,7 +482,7 @@ export default function LeaderboardPage() {
           <div className="mt-10 text-center">
             <Link
               href="/pools"
-              className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
             >
               {t("leaderboard.cta")}
               <ArrowRight className="size-5" />
@@ -493,7 +491,6 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }
