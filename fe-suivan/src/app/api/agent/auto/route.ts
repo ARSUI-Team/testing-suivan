@@ -10,6 +10,17 @@ const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0x70a934372b9508ca92e8
 const USDC_TYPE = `${PACKAGE_ID}::test_usdc::TEST_USDC`;
 const AGENT_SECRET_KEY = process.env.AGENT_SECRET_KEY || "";
 
+let lastRunAt = 0;
+const MIN_INTERVAL_MS = 10_000;
+
+const agentLog: Array<{ ts: number; msg: string }> = [];
+function log(msg: string) {
+  const entry = { ts: Date.now(), msg };
+  agentLog.push(entry);
+  if (agentLog.length > 100) agentLog.shift();
+  console.log(`[AUTO-AGENT] ${msg}`);
+}
+
 function getClient() {
   const net = process.env.NEXT_PUBLIC_SUI_NETWORK === "mainnet" ? "mainnet" : "testnet";
   return new SuiJsonRpcClient({ url: getJsonRpcFullnodeUrl(net), network: net });
@@ -149,10 +160,18 @@ export async function GET() {
     return NextResponse.json({ error: "Agent not configured" }, { status: 501 });
   }
 
-  const keypair = Ed25519Keypair.fromSecretKey(parseSecretKey(AGENT_SECRET_KEY));
-  const agentAddr = keypair.toSuiAddress();
+  const now = Date.now();
+  if (now - lastRunAt < MIN_INTERVAL_MS) {
+    return NextResponse.json({ error: "Rate limited", retryAfterMs: MIN_INTERVAL_MS - (now - lastRunAt) }, { status: 429 });
+  }
+  lastRunAt = now;
 
-  // Get all pool IDs from factory
+  try {
+    const keypair = Ed25519Keypair.fromSecretKey(parseSecretKey(AGENT_SECRET_KEY));
+    const agentAddr = keypair.toSuiAddress();
+    log(`Starting scan — agent: ${agentAddr.slice(0, 6)}`);
+
+    // Get all pool IDs from factory
   const factoryObj = await getClient().getObject({ id: FACTORY_ID, options: { showContent: true } });
   const ff = (factoryObj.data?.content as { fields?: Record<string, unknown> })?.fields;
   const poolCount = Number((ff?.pool_count as string) || "0");
@@ -172,16 +191,27 @@ export async function GET() {
   for (const pid of poolIds) {
     try {
       const actions = await handlePool(pid, keypair, agentAddr);
-      if (actions.length > 0) results[pid] = actions;
-    } catch { /* skip errored pools */ }
+      if (actions.length > 0) {
+        results[pid] = actions;
+        log(`Pool ${pid.slice(0, 6)} ← ${actions.join(", ")}`);
+      }
+    } catch (e) {
+      log(`Pool ${pid.slice(0, 6)} error: ${e instanceof Error ? e.message : "Unknown"}`);
+    }
   }
 
+  log(`Scan complete — checked ${poolIds.length}, acted ${Object.keys(results).length}`);
   return NextResponse.json({
     checked: poolIds.length,
     acted: Object.keys(results).length,
     results,
+    agentLog: agentLog.slice(-20),
     timestamp: Date.now(),
   });
+  } catch (e) {
+    log(`FATAL: ${e instanceof Error ? e.message : "Unknown"}`);
+    return NextResponse.json({ error: "Agent scan failed", detail: e instanceof Error ? e.message : "Unknown" }, { status: 500 });
+  }
 }
 
 // ─── POST: single pool manual trigger ───
