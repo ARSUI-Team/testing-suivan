@@ -846,18 +846,20 @@ export default function PoolsPage() {
 }
 
 function FaucetButton({ refetchPools }: { userAddress?: string; refetchPools: () => void }) {
+  const account = useCurrentAccount();
   const { claimUSDC, isPending } = useClaimUSDC();
   const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const [success, setSuccess] = useState(false);
   const [cooldownSec, setCooldownSec] = useState(0);
+  const addr = account?.address;
 
   const COOLDOWN_MS = 86_400_000;
 
   const checkCooldown = (): boolean => {
-    if (typeof window === "undefined") return false;
-    const raw = localStorage.getItem("suivan_faucet_claim");
+    if (typeof window === "undefined" || !addr) return false;
+    const raw = localStorage.getItem("suivan_faucet_claim_" + addr);
     if (!raw) return false;
     const last = Number(raw);
     const elapsed = Date.now() - last;

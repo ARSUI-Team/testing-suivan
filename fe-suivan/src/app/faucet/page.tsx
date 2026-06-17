@@ -26,15 +26,15 @@ const LS_KEY = "suivan_faucet_claim";
 const LS_HISTORY_KEY = "suivan_faucet_history";
 const SUISCAN_URL = "https://suiscan.xyz/testnet";
 
-function getLastClaimTime(): number {
-  if (typeof window === "undefined") return 0;
-  const raw = localStorage.getItem(LS_KEY);
+function getLastClaimTime(address?: string): number {
+  if (typeof window === "undefined" || !address) return 0;
+  const raw = localStorage.getItem(`${LS_KEY}_${address}`);
   return raw ? Number(raw) : 0;
 }
 
-function setLastClaimTime() {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(LS_KEY, String(Date.now()));
+function setLastClaimTime(address?: string) {
+  if (typeof window !== "undefined" && address) {
+    localStorage.setItem(`${LS_KEY}_${address}`, String(Date.now()));
   }
 }
 
@@ -105,7 +105,7 @@ export default function FaucetPage() {
 
   // Restore cooldown from localStorage on mount
   useEffect(() => {
-    const last = getLastClaimTime();
+    const last = getLastClaimTime(address);
     if (last) {
       const elapsed = Date.now() - last;
       const remaining = Math.max(0, FAUCET_COOLDOWN_S - Math.floor(elapsed / 1000));
@@ -117,7 +117,7 @@ export default function FaucetPage() {
 
   const onClaimSuccess = useCallback((digest?: string) => {
     setClaimStatus("success");
-    setLastClaimTime();
+    setLastClaimTime(address);
     setCooldown(FAUCET_COOLDOWN_S);
     addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest || txHash });
     refetchBalance();
@@ -175,7 +175,7 @@ export default function FaucetPage() {
   const handleClaimDirect = useCallback(() => {
     if (!address || cooldownActive || isWalletClaiming || !faucetId) return;
 
-    const last = getLastClaimTime();
+    const last = getLastClaimTime(address);
     if (last && Date.now() - last < FAUCET_COOLDOWN_S * 1000) {
       setCooldown(Math.ceil((FAUCET_COOLDOWN_S * 1000 - (Date.now() - last)) / 1000));
       errorToast("Please wait for cooldown to expire");
