@@ -236,7 +236,7 @@ export default function SimulatorPage() {
                     <div className="flex gap-3">
                       <ShieldCheck className="size-4 text-[#f8672d] shrink-0 mt-0.5" />
                       <p className="text-[11px] font-semibold leading-relaxed text-[#555555]">
-                        Jaminan melindungi semua anggota. Jika kamu melewatkan pembayaran, setoran dipotong dari jaminan. Jaminan yang tidak digunakan + yield proporsional dikembalikan saat pool berakhir.
+                        {t("simulator.collateralDetail")}
                       </p>
                     </div>
                   </div>

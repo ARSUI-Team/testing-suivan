@@ -343,6 +343,7 @@ const en: Record<string, string> = {
   "simulator.savings": "Efficiency",
   "simulator.cta": "Explore Real Pools",
   "simulator.collateralNote": "125% of remaining contribution commitment, returned at cycle end",
+  "simulator.collateralDetail": "Collateral protects all members. If you miss a payment, the deposit is deducted from your collateral. Unused collateral + proportional yield is returned when the pool ends.",
 
   "faucet.badge": "TEST FAUCET",
   "faucet.title": "Get Test Tokens",
@@ -714,6 +715,7 @@ const id: Record<string, string> = {
   "simulator.savings": "Efisiensi",
   "simulator.cta": "Jelajahi Pool Nyata",
   "simulator.collateralNote": "125% dari sisa komitmen kontribusi, dikembalikan di akhir siklus",
+  "simulator.collateralDetail": "Jaminan melindungi semua anggota. Jika kamu melewatkan pembayaran, setoran dipotong dari jaminan. Jaminan yang tidak digunakan + yield proporsional dikembalikan saat pool berakhir.",
 
   "faucet.badge": "FAUCET TEST",
   "faucet.title": "Dapatkan Token Tes",
