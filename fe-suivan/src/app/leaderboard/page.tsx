@@ -432,7 +432,12 @@ export default function LeaderboardPage() {
             ) : (
               <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-10 text-center shadow-[12px_12px_0_#0a0a0a] overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.04 }} />
+                <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-10%", width: "40%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
                 <div className="relative z-10">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="w-12 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
+                  <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>empty</span>
+                </div>
                 <Trophy className="mx-auto mb-4 size-10 text-[#333333]" />
                 <h3 className="text-2xl font-black text-[#0a0a0a]">No Participants Yet</h3>
                 <p className="mt-2 font-semibold text-[#333333] max-w-md mx-auto">
