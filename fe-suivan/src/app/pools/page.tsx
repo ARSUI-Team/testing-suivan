@@ -330,7 +330,7 @@ export default function PoolsPage() {
                   }
                   setShowCreateModal(true);
                 }}
-                className="brutal-btn"
+                className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
               >
                 + {t("pools.create")}
               </button>
@@ -679,7 +679,7 @@ export default function PoolsPage() {
                   <p className="mt-1 text-sm font-semibold" style={{ color: "#555555" }}>Get free test USDC from the Faucet page before joining.</p>
                   <Link
                     href="/faucet"
-                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] py-2 text-xs font-black shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
                     Go to Faucet →
                   </Link>
