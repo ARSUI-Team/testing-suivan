@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, createElement } from "react";
+import { useMemo, useState, useEffect, createElement } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -87,7 +87,10 @@ export default function LeaderboardPage() {
   const { t } = useLanguage();
   const account = useCurrentAccount();
   const isConnected = !!account;
+  const [mounted, setMounted] = useState(false);
   const [showRules, setShowRules] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
   const { participants, isLoading } = useLeaderboardData();
   const { pools, isLoading: poolsLoading } = useAllPoolsWithInfo();
 

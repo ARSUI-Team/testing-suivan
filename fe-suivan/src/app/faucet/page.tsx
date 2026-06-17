@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
 import { useUSDCBalance, useClaimUSDC } from "@/hooks/useSuiContracts";
@@ -67,6 +66,8 @@ export default function FaucetPage() {
   const { balance: usdcBalance, refetch: refetchBalance } = useUSDCBalance(address);
   const { claimUSDC, isPending: isWalletClaiming, hash: txHash, error: claimError } = useClaimUSDC();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
   const [cooldown, setCooldown] = useState(0);
   const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>(loadClaimHistory);
@@ -205,13 +206,13 @@ export default function FaucetPage() {
       <section className="relative isolate overflow-hidden px-5 pb-6 pt-32 md:px-10 lg:px-12">
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(94,200,255,0.34),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(20,184,166,0.24),transparent_26%)]"
+          className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.28),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(168,164,154,0.18),transparent_26%)]"
         />
         <div className="mx-auto max-w-6xl">
-          <div className="inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 shadow-[4px_4px_0_#0a0a0a]">
+          <p className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[10px_10px_0_#0a0a0a]">
             <Droplets className="size-4 text-[#0a0a0a]" />
-            <span className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("faucet.badge")}</span>
-          </div>
+            {t("faucet.badge")}
+          </p>
           <h1
             className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl"
             style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
@@ -226,18 +227,30 @@ export default function FaucetPage() {
 
       <section className="px-5 pb-20 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">
-          {!isConnected ? (
-            <div className="mx-auto max-w-md border-[4px] border-[#0a0a0a] bg-[#e8e1d9] p-10 text-center shadow-[8px_8px_0_#0a0a0a]">
-              <div className="mx-auto mb-6 grid size-16 place-items-center border-[3px] border-[#0a0a0a] bg-[#38bdf8]">
-                <Wallet className="size-7 text-[#0a0a0a]" />
+          {!mounted ? null : !isConnected ? (
+            <div className="relative mx-auto max-w-md border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[14px_14px_0_#0a0a0a] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-10%", width: "50%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 2px, transparent 2px 10px)", opacity: 0.06, mixBlendMode: "multiply" }} />
+                <div className="relative z-20 p-8 text-center">
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="w-12 h-4" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 7px, transparent 7px, transparent 12px, #0a0a0a 12px, #0a0a0a 13px, transparent 13px, transparent 18px)" }} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>auth</span>
+                  </div>
+                  <div className="mx-auto mb-6 grid size-16 place-items-center border-[3px] border-[#0a0a0a] bg-grid-brutal">
+                    <Wallet className="size-7 text-[#0a0a0a]" />
+                  </div>
+                  <h2
+                    className="text-2xl font-black leading-none"
+                    style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
+                  >
+                    {t("faucet.walletRequired")}
+                  </h2>
+                  <div className="mt-6 pt-3 border-t-[2px] border-[#0a0a0a] flex justify-between items-end">
+                    <div className="w-8 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 5px, transparent 5px, transparent 8px)" }} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>required</span>
+                  </div>
+                </div>
               </div>
-              <h2
-                className="text-3xl font-black"
-                style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
-              >
-                {t("faucet.walletRequired")}
-              </h2>
-            </div>
           ) : (
             <>
               <div className="mb-8">
@@ -245,7 +258,7 @@ export default function FaucetPage() {
                   {t("faucet.balanceTitle")}
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center gap-4 border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[4px_4px_0_#0a0a0a]">
+                  <div className="flex items-center gap-4 border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[10px_10px_0_#0a0a0a]">
                     <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[#0a0a0a] bg-[#fbf7ed]">
                       <Shield className="size-5 text-[#0a0a0a]" />
                     </div>
@@ -269,7 +282,7 @@ export default function FaucetPage() {
                     href="https://faucet.testnet.sui.io"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-4 border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#38bdf8]"
+                    className="group flex items-center gap-4 border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#38bdf8]"
                   >
                     <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[#0a0a0a] bg-[#fbf7ed] transition group-hover:bg-[#38bdf8]">
                       <ExternalLink className="size-5 text-[#0a0a0a]" />
@@ -297,7 +310,7 @@ export default function FaucetPage() {
                 {t("faucet.badge")}
               </p>
 
-              <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[4px_4px_0_#0a0a0a]">
+              <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[10px_10px_0_#0a0a0a]">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="grid size-12 place-items-center border-[3px] border-[#0a0a0a] bg-[#ccfbf1]">
                     <Shield className="size-5 text-[#0a0a0a]" />
@@ -317,7 +330,7 @@ export default function FaucetPage() {
                   <button
                     onClick={handleClaimDirect}
                     disabled={cooldownActive || claimStatus === "loading" || isWalletClaiming || !faucetId}
-                    className={`protocol-font relative w-full border-[3px] border-[#0a0a0a] px-5 py-3 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    className={`protocol-font relative w-full border-[3px] border-[#0a0a0a] px-5 py-3 text-xs font-black shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
                       claimStatus === "success"
                         ? "bg-[#ccfbf1] text-[#0a0a0a]"
                         : cooldownActive
@@ -363,7 +376,7 @@ export default function FaucetPage() {
               <p className="protocol-font mb-3 mt-10 text-xs font-black uppercase tracking-[0.18em] text-[#555555]">
                 {t("faucet.recentTitle")}
               </p>
-              <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] shadow-[4px_4px_0_#0a0a0a]">
+              <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] shadow-[10px_10px_0_#0a0a0a]">
                 {claimHistory.length === 0 ? (
                   <div className="p-8 text-center">
                     <RefreshCw className="mx-auto mb-3 size-6 text-[#555555]" />
@@ -415,7 +428,7 @@ export default function FaucetPage() {
               <div className="mt-8 text-center">
                 <Link
                   href="/pools"
-                  className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                  className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                 >
                   {t("faucet.goToPools")}
                   <ArrowRight className="size-5" />
@@ -426,7 +439,6 @@ export default function FaucetPage() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

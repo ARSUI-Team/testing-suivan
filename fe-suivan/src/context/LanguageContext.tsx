@@ -56,23 +56,50 @@ const en: Record<string, string> = {
 
   "faq.badge": "FAQ",
   "faq.title": "Frequently Asked Questions",
-  "faq.subtitle": "Answers about Suivan, ROSCA pools, Sui-native settlement, and the current frontend migration.",
+  "faq.subtitle": "Everything you need to know about Suivan, ROSCA pools, and how to start saving on Sui.",
+
   "faq.q1": "What is Suivan?",
-  "faq.a1": "Suivan is a protocol for on-chain ROSCA savings, built on Sui.",
+  "faq.a1": "Suivan is an on-chain ROSCA protocol built on Sui Move. It brings traditional rotating savings into DeFi — community members contribute monthly, winners are randomly selected via Seal RNG, and idle funds earn yield through AI-optimized DeFi strategies. No treasurer, no middleman, fully transparent smart contracts.",
+
   "faq.q2": "What is ROSCA?",
-  "faq.a2": "ROSCA stands for Rotating Savings and Credit Association. Members contribute on a recurring cycle, and one member receives the pooled payout each round until everyone has received a turn.",
-  "faq.q3": "How does Arisan relate to ROSCA?",
-  "faq.a3": "Arisan is a local Indonesian expression of the broader ROSCA model. Suivan explains that cultural familiarity while keeping the product language accessible for a global audience.",
-  "faq.q4": "Why build this on Sui?",
-  "faq.a4": "Sui gives Suivan a strong direction for fast settlement, low fees, transparent object-oriented state, and scalable community finance experiences.",
-  "faq.q5": "How do the smart contracts work?",
-  "faq.a5": "The smart contracts are actively deployed on Sui testnet, with upgrade pathways designed for mainnet readiness. Pool creation, joining, deposits, winner selection, and collateral management are all functional on-chain.",
-  "faq.q6": "What pool data will the frontend show?",
-  "faq.a6": "The frontend is prepared for pool lists, pool detail, join flow, contribution flow, participant status, cycle progress, APY signals, and yield summaries.",
-  "faq.q7": "Is Suivan custodial?",
-  "faq.a7": "The product direction is non-custodial. Final security, custody, and transaction details should follow the new Sui contract architecture once available.",
-  "faq.q8": "How can I follow the project?",
-  "faq.a8": "You can follow the Suivan community through Telegram and Discord while the protocol and frontend continue to evolve.",
+  "faq.a2": "ROSCA (Rotating Savings and Credit Association) is a global savings model practiced by billions — known as Arisan in Indonesia, Chit Fund in India, Tanda in Mexico, and many more. Members contribute a fixed amount each cycle. Each cycle, one member receives the entire pooled payout. This repeats until everyone has had a turn.",
+
+  "faq.q3": "How do I start using Suivan?",
+  "faq.a3": "Just connect your wallet — Suivan supports zkLogin, so you can sign in with Google or any OAuth provider, no seed phrase required. Head to /faucet to claim free test SUI and 500 USDC. Then explore /pools, pick one that fits your budget, and join. Your first transaction's gas is ultra-low on Sui (~0.0001 SUI).",
+
+  "faq.q4": "Why Sui? What makes it different?",
+  "faq.a4": "Sui's object-centric model makes every pool a live on-chain object you can inspect at any time. Sub-second finality means instant settlement. Gas fees are fractions of a cent (~$0.0003). zkLogin removes wallet complexity. Seal RNG provides verifiable fair random winner selection. Walrus stores pool metadata permanently. This stack is impossible on any other chain.",
+
+  "faq.q5": "How does the collateral system work?",
+  "faq.a5": "Every participant deposits 125% collateral upfront — calculated as 1.25 × (remaining contributions). This guarantees commitment. If you miss a payment, your collateral is slashed proportionally. If you complete all cycles faithfully, your full collateral is returned PLUS proportional yield earned during the pool's lifetime. This eliminates the traditional ROSCA risk of members running away after their turn.",
+
+  "faq.q6": "How are winners selected?",
+  "faq.a6": "Winners are selected randomly each cycle using Seal RNG — Sui's native on-chain random number generator. This guarantees fair, verifiable, and tamper-proof selection. No admin, no manual drawing, no bias. The randomness proof is recorded on-chain for anyone to verify.",
+
+  "faq.q7": "How does yield work?",
+  "faq.a7": "While funds sit idle between cycles, our AI Yield Optimizer deploys them across Sui DeFi protocols (DeepBook, Bluefin, Cetus, Scallop, Aftermath, Navi, Turbos) to earn the highest available APY. Yield accrues to the pool and is distributed as a bonus to each cycle's winner. On the /ai page, you can see live APY data and AI-generated strategy recommendations.",
+
+  "faq.q8": "Is Suivan non-custodial?",
+  "faq.a8": "Yes. Suivan is fully non-custodial. You remain in control of your assets at all times through your wallet. Smart contracts handle pool logic and collateral on-chain. There is no admin key that can withdraw user funds. The protocol is designed with principle of least privilege — even the pool creator cannot access other participants' deposits.",
+
+  "faq.q9": "What happens if someone defaults?",
+  "faq.a9": "If a participant misses a payment, their collateral is slashed — the missed contribution amount is deducted and distributed to the pool. The remaining collateral stays locked until the end of the cycle. The pool continues normally; other members are protected. This is enforced entirely by smart contract, no human intervention needed.",
+
+  "faq.q10": "Are the smart contracts audited?",
+  "faq.a10": "The Suivan Move smart contracts are deployed on Sui testnet. The codebase is open-source and follows Sui Move security best practices: hot potato patterns for atomic operations, capability-based access control, and principle of least privilege. A full third-party audit is planned before mainnet launch.",
+
+  "faq.q11": "How much does it cost to use Suivan?",
+  "faq.a11": "Sui gas fees are extremely low — approximately 0.0001 SUI per transaction (less than $0.001). A full ROSCA cycle of 10 participants costs roughly 0.0011 SUI in total gas — effectively free. Compare this to Ethereum where the same operations would cost $15+. Use the /simulator to calculate your exact costs.",
+
+  "faq.q12": "Can I create my own pool?",
+  "faq.a12": "Absolutely. Connect your wallet, go to /pools, and click + Create Pool. You set the deposit amount, number of participants (2-50), and cycle duration (days or minutes for testing). You can optionally upload a custom name and description via Walrus for permanent decentralized storage. No approval needed — your pool is live immediately.",
+
+  "faq.q13": "What is Walrus and how does Suivan use it?",
+  "faq.a13": "Walrus is Sui's decentralized blob storage protocol. Suivan uses it to store pool metadata (names, descriptions) permanently on-chain rather than relying on centralized databases. This means your pool's identity is decentralized, immutable, and verifiable — just like the pool's financial state.",
+
+  "faq.q14": "Where can I follow the project?",
+  "faq.a14": "Join our community on Telegram (t.me/sui_van) and Discord (discord.gg/XxxM958bm). Follow @suivan_id on X/Twitter for updates. The codebase is open-source on GitHub. Suivan is a Sui Overflow 2026 hackathon project — we welcome feedback, contributors, and early testers.",
+
   "faq.contactTitle": "Still have questions?",
   "faq.contactDesc": "Join the Suivan community channels for updates, feedback, and collaboration.",
 
@@ -400,23 +427,50 @@ const id: Record<string, string> = {
 
   "faq.badge": "FAQ",
   "faq.title": "Pertanyaan Umum",
-  "faq.subtitle": "Jawaban tentang Suivan, pool ROSCA, penyelesaian Sui-native, dan migrasi frontend.",
+  "faq.subtitle": "Semua yang perlu kamu ketahui tentang Suivan, pool ROSCA, dan cara mulai menabung di Sui.",
+
   "faq.q1": "Apa itu Suivan?",
-  "faq.a1": "Suivan adalah protokol untuk tabungan ROSCA on-chain, dibangun di Sui.",
+  "faq.a1": "Suivan adalah protokol ROSCA on-chain yang dibangun di Sui Move. Menghadirkan tabungan bergilir tradisional ke dalam DeFi — anggota komunitas berkontribusi bulanan, pemenang dipilih secara acak via Seal RNG, dan dana menganggur menghasilkan yield melalui strategi DeFi yang dioptimalkan AI. Tanpa bendahara, tanpa perantara, smart contract transparan penuh.",
+
   "faq.q2": "Apa itu ROSCA?",
-  "faq.a2": "ROSCA adalah singkatan dari Rotating Savings and Credit Association. Anggota berkontribusi dalam siklus berulang, dan satu anggota menerima pembayaran kumpulan setiap putaran hingga semua mendapat giliran.",
-  "faq.q3": "Bagaimana hubungan Arisan dengan ROSCA?",
-  "faq.a3": "Arisan adalah ekspresi lokal Indonesia dari model ROSCA yang lebih luas. Suivan menjelaskan keakraban budaya itu sambil menjaga bahasa produk dapat diakses secara global.",
-  "faq.q4": "Mengapa dibangun di Sui?",
-  "faq.a4": "Sui memberi Suivan arah yang kuat untuk penyelesaian cepat, biaya rendah, state berorientasi objek yang transparan, dan pengalaman keuangan komunitas yang skalabel.",
-  "faq.q5": "Bagaimana cara kerja kontrak pintar?",
-  "faq.a5": "Kontrak pintar telah aktif digunakan di testnet Sui, dengan jalur upgrade yang dirancang untuk kesiapan mainnet. Pembuatan pool, bergabung, setoran, pemilihan pemenang, dan manajemen jaminan semuanya berfungsi on-chain.",
-  "faq.q6": "Data pool apa yang akan ditampilkan frontend?",
-  "faq.a6": "Frontend siap untuk daftar pool, detail pool, alur join, alur kontribusi, status partisipan, progres siklus, sinyal APY, dan ringkasan yield.",
-  "faq.q7": "Apakah Suivan kustodial?",
-  "faq.a7": "Arah produk adalah non-kustodial. Detail keamanan, kustodi, dan transaksi akhir akan mengikuti arsitektur kontrak Sui yang baru.",
-  "faq.q8": "Bagaimana cara mengikuti proyek ini?",
-  "faq.a8": "Anda dapat mengikuti komunitas Suivan melalui Telegram dan Discord sementara protokol dan frontend terus berkembang.",
+  "faq.a2": "ROSCA (Rotating Savings and Credit Association) adalah model tabungan global yang dipraktikkan oleh miliaran orang — dikenal sebagai Arisan di Indonesia, Chit Fund di India, Tanda di Meksiko, dan banyak lagi. Anggota menyetor jumlah tetap setiap siklus. Setiap siklus, satu anggota menerima seluruh pembayaran yang terkumpul. Ini berulang sampai semua mendapat giliran.",
+
+  "faq.q3": "Bagaimana cara mulai menggunakan Suivan?",
+  "faq.a3": "Cukup hubungkan dompetmu — Suivan mendukung zkLogin, jadi kamu bisa masuk dengan Google atau penyedia OAuth apa pun, tanpa seed phrase. Buka /faucet untuk klaim SUI test gratis dan 500 USDC. Lalu jelajahi /pools, pilih yang sesuai anggaranmu, dan gabung. Gas transaksi pertamamu sangat rendah di Sui (~0,0001 SUI).",
+
+  "faq.q4": "Kenapa Sui? Apa yang membuatnya berbeda?",
+  "faq.a4": "Model object-centric Sui membuat setiap pool menjadi objek on-chain hidup yang bisa kamu periksa kapan saja. Finalitas sub-detik berarti penyelesaian instan. Biaya gas hanya pecahan sen (~Rp5). zkLogin menghilangkan kerumitan wallet. Seal RNG menyediakan pemilihan pemenang acak yang dapat diverifikasi. Walrus menyimpan metadata pool secara permanen. Stack ini mustahil di chain lain.",
+
+  "faq.q5": "Bagaimana sistem jaminan bekerja?",
+  "faq.a5": "Setiap peserta menyetor jaminan 125% di muka — dihitung sebagai 1,25 × (sisa kontribusi). Ini menjamin komitmen. Jika kamu melewatkan pembayaran, jaminanmu dipotong secara proporsional. Jika kamu menyelesaikan semua siklus dengan setia, jaminan penuh dikembalikan PLUS yield proporsional yang diperoleh selama masa pool. Ini menghilangkan risiko tradisional ROSCA di mana anggota kabur setelah mendapat giliran.",
+
+  "faq.q6": "Bagaimana pemenang dipilih?",
+  "faq.a6": "Pemenang dipilih secara acak setiap siklus menggunakan Seal RNG — generator angka acak on-chain asli Sui. Ini menjamin pemilihan yang adil, dapat diverifikasi, dan anti-manipulasi. Tanpa admin, tanpa undian manual, tanpa bias. Bukti keacakan tercatat on-chain untuk diverifikasi siapa pun.",
+
+  "faq.q7": "Bagaimana yield bekerja?",
+  "faq.a7": "Saat dana menganggur di antara siklus, AI Yield Optimizer kami menyebarkannya ke protokol DeFi Sui (DeepBook, Bluefin, Cetus, Scallop, Aftermath, Navi, Turbos) untuk mendapatkan APY tertinggi yang tersedia. Yield terkumpul ke pool dan didistribusikan sebagai bonus ke pemenang setiap siklus. Di halaman /ai, kamu bisa melihat data APY langsung dan rekomendasi strategi yang dihasilkan AI.",
+
+  "faq.q8": "Apakah Suivan non-kustodial?",
+  "faq.a8": "Ya. Suivan sepenuhnya non-kustodial. Kamu tetap memegang kendali penuh atas asetmu setiap saat melalui wallet-mu. Smart contract menangani logika pool dan jaminan on-chain. Tidak ada kunci admin yang bisa menarik dana pengguna. Protokol dirancang dengan prinsip hak istimewa terendah — bahkan pembuat pool tidak bisa mengakses deposit peserta lain.",
+
+  "faq.q9": "Apa yang terjadi jika seseorang gagal bayar?",
+  "faq.a9": "Jika seorang peserta melewatkan pembayaran, jaminannya dipotong — jumlah kontribusi yang terlewat dipotong dan didistribusikan ke pool. Sisa jaminan tetap terkunci hingga akhir siklus. Pool berlanjut normal; anggota lain terlindungi. Ini ditegakkan sepenuhnya oleh smart contract, tanpa perlu campur tangan manusia.",
+
+  "faq.q10": "Apakah smart contract sudah diaudit?",
+  "faq.a10": "Smart contract Suivan Move di-deploy di testnet Sui. Kode sumber bersifat open-source dan mengikuti praktik keamanan terbaik Sui Move: pola hot potato untuk operasi atomik, kontrol akses berbasis kapabilitas, dan prinsip hak istimewa terendah. Audit penuh pihak ketiga direncanakan sebelum peluncuran mainnet.",
+
+  "faq.q11": "Berapa biaya menggunakan Suivan?",
+  "faq.a11": "Biaya gas Sui sangat rendah — sekitar 0,0001 SUI per transaksi (kurang dari Rp5). Satu siklus ROSCA penuh dengan 10 peserta hanya menghabiskan sekitar 0,0011 SUI total gas — bisa dibilang gratis. Bandingkan dengan Ethereum di mana operasi yang sama akan menghabiskan $15+. Gunakan /simulator untuk menghitung biaya pastimu.",
+
+  "faq.q12": "Bisakah saya membuat pool sendiri?",
+  "faq.a12": "Tentu saja. Hubungkan wallet-mu, buka /pools, dan klik + Create Pool. Kamu mengatur jumlah setoran, jumlah peserta (2-50), dan durasi siklus (hari atau menit untuk testing). Kamu bisa mengunggah nama dan deskripsi kustom via Walrus untuk penyimpanan terdesentralisasi permanen. Tanpa perlu persetujuan — pool-mu langsung aktif.",
+
+  "faq.q13": "Apa itu Walrus dan bagaimana Suivan menggunakannya?",
+  "faq.a13": "Walrus adalah protokol penyimpanan blob terdesentralisasi dari Sui. Suivan menggunakannya untuk menyimpan metadata pool (nama, deskripsi) secara permanen on-chain daripada bergantung pada database terpusat. Ini berarti identitas pool-mu terdesentralisasi, tidak dapat diubah, dan dapat diverifikasi — sama seperti status keuangan pool.",
+
+  "faq.q14": "Di mana saya bisa mengikuti proyek ini?",
+  "faq.a14": "Gabung komunitas kami di Telegram (t.me/sui_van) dan Discord (discord.gg/XxxM958bm). Ikuti @suivan_id di X/Twitter untuk update. Kode sumber open-source di GitHub. Suivan adalah proyek hackathon Sui Overflow 2026 — kami menyambut masukan, kontributor, dan penguji awal.",
+
   "faq.contactTitle": "Masih ada pertanyaan?",
   "faq.contactDesc": "Bergabunglah dengan saluran komunitas Suivan untuk pembaruan, umpan balik, dan kolaborasi.",
 

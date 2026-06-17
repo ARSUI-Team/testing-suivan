@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useProfileData } from "@/hooks/useProfileData";
 import {
@@ -31,7 +30,10 @@ export default function ProfilePage() {
   const { t } = useLanguage();
   const account = useCurrentAccount();
   const isConnected = !!account;
+  const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
   const { stats: profileStats, badges, activity, isLoading } = useProfileData(account?.address);
 
   const displayAddr = useMemo(() => {
@@ -75,7 +77,7 @@ export default function ProfilePage() {
 
   if (isConnected && isLoading) {
     return (
-      <main className="min-h-screen bg-[#fbf7ed] text-[#0a0a0a]">
+<main className="min-h-screen bg-grid-brutal text-[#0a0a0a]">
         <Header />
         <section className="px-5 pt-36 pb-20 md:px-10 lg:px-12">
           <div className="mx-auto max-w-6xl">
@@ -85,7 +87,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
-        <Footer />
       </main>
     );
   }
@@ -100,10 +101,10 @@ export default function ProfilePage() {
           className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.28),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(168,164,154,0.18),transparent_26%)]"
         />
         <div className="mx-auto max-w-6xl">
-          <div className="inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 shadow-[4px_4px_0_#0a0a0a]">
+          <p className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[10px_10px_0_#0a0a0a]">
             <User className="size-4 text-[#0a0a0a]" />
-            <span className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("profile.badge")}</span>
-          </div>
+            {t("profile.badge")}
+          </p>
           <h1
             className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl"
             style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
@@ -118,8 +119,8 @@ export default function ProfilePage() {
 
       <section className="px-5 pb-20 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">
-          {!isConnected ? (
-            <div className="mx-auto max-w-md border-[4px] border-[#0a0a0a] bg-[#e8e1d9] p-10 text-center shadow-[8px_8px_0_#0a0a0a]">
+          {!mounted ? null : !isConnected ? (
+            <div className="mx-auto max-w-md border-[4px] border-[#0a0a0a] bg-grid-brutal p-10 text-center shadow-[14px_14px_0_#0a0a0a]">
               <div className="mx-auto mb-6 grid size-16 place-items-center border-[3px] border-[#0a0a0a] bg-[#38bdf8]">
                 <Wallet className="size-7 text-[#0a0a0a]" />
               </div>
@@ -138,7 +139,7 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={stat.label}
-                      className="border-[3px] border-[#0a0a0a] p-5 shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                      className="border-[3px] border-[#0a0a0a] p-5 shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                       style={{ background: stat.color }}
                     >
                       <Icon className="mb-2 size-5 text-[#0a0a0a]" />
@@ -163,7 +164,7 @@ export default function ProfilePage() {
               )}
 
               <div className="mb-8 mt-8 grid gap-8 lg:grid-cols-2">
-                <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[10px_10px_0_#0a0a0a]">
                   <div className="mb-5 flex items-center gap-2">
                     <Wallet className="size-5 text-[#0a0a0a]" />
                     <h2 className="protocol-font text-sm font-black uppercase tracking-[0.18em]">
@@ -211,7 +212,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="border-[3px] border-[#0a0a0a] bg-[#e8e1d9] p-6 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[10px_10px_0_#0a0a0a]">
                   <div className="mb-5 flex items-center gap-2">
                     <Activity className="size-5 text-[#0a0a0a]" />
                     <h2 className="protocol-font text-sm font-black uppercase tracking-[0.18em]">
@@ -271,7 +272,7 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={badge.name}
-                      className={`border-[3px] border-[#0a0a0a] p-4 text-center shadow-[4px_4px_0_#0a0a0a] transition ${
+                      className={`border-[3px] border-[#0a0a0a] p-4 text-center shadow-[10px_10px_0_#0a0a0a] transition ${
                         badge.achieved
                           ? "hover:-translate-x-0.5 hover:-translate-y-0.5"
                           : "opacity-40 grayscale"
@@ -303,7 +304,7 @@ export default function ProfilePage() {
               <div className="mt-10 text-center">
                 <Link
                   href="/pools"
-                  className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+                  className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                 >
                   Explore Pools
                   <ArrowRight className="size-5" />
@@ -314,7 +315,6 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

@@ -251,12 +251,17 @@ export default function SimulatorPage() {
 
               {/* Pool Summary + Position */}
               <div className="grid gap-6 md:grid-cols-2">
-                <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[5px_5px_0_#0a0a0a] overflow-hidden">
-                  <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "5px 5px", opacity: 0.03 }} />
-                  <div className="relative z-10 p-5">
+                <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[12px_12px_0_#0a0a0a] overflow-hidden">
+                  <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                  <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-15%", width: "50%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
+                  <div className="relative z-20 p-5">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>stats</span>
+                    </div>
                     <div className="mb-4 flex items-center gap-2">
                       <Users className="size-4 text-[#f8672d]" />
-                      <h3 className="protocol-font text-xs font-black uppercase tracking-[0.15em]">{t("simulator.poolSummary")}</h3>
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.poolSummary")}</h3>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between border-b-[2px] border-[#0a0a0a] pb-2">
@@ -269,18 +274,23 @@ export default function SimulatorPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-semibold text-[#555555]">{t("simulator.poolDuration")}</span>
-                        <span className="protocol-font text-lg font-black">{poolDurationMonths} bulan ({poolDurationDays}h)</span>
+                        <span className="protocol-font text-lg font-black">{poolDurationMonths} mo ({poolDurationDays}d)</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[5px_5px_0_#0a0a0a] overflow-hidden">
-                  <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "5px 5px", opacity: 0.03 }} />
-                  <div className="relative z-10 p-5">
+                <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[12px_12px_0_#0a0a0a] overflow-hidden">
+                  <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                  <div className="absolute pointer-events-none" style={{ bottom: "-10%", left: "-10%", width: "45%", height: "35%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
+                  <div className="relative z-20 p-5">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>you</span>
+                    </div>
                     <div className="mb-4 flex items-center gap-2">
                       <ShieldCheck className="size-4 text-[#f8672d]" />
-                      <h3 className="protocol-font text-xs font-black uppercase tracking-[0.15em]">{t("simulator.yourPosition")}</h3>
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.yourPosition")}</h3>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between border-b-[2px] border-[#0a0a0a] pb-2">
@@ -301,29 +311,52 @@ export default function SimulatorPage() {
               </div>
 
               {/* Gas comparison */}
-              <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[5px_5px_0_#0a0a0a] overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "5px 5px", opacity: 0.03 }} />
-                <div className="relative z-10 p-5">
+              <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[12px_12px_0_#0a0a0a] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-10%", width: "40%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
+                <div className="relative z-20 p-5">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>compare</span>
+                  </div>
                   <div className="flex items-center gap-2 mb-4">
                     <Clock className="size-4 text-[#f8672d]" />
-                    <h3 className="protocol-font text-xs font-black uppercase tracking-[0.15em]">{t("simulator.compareTitle")}</h3>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.compareTitle")}</h3>
                   </div>
                   <p className="mb-5 text-sm font-semibold leading-6 text-[#555555]">{t("simulator.compareDesc")}</p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 text-center shadow-[3px_3px_0_#0a0a0a]">
-                      <p className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("simulator.suiFee")}</p>
-                      <p className="protocol-font text-2xl font-black">~{suiTotalGas.toFixed(4)} SUI</p>
-                      <p className="protocol-font text-xs font-semibold text-[#14b8a6] mt-1">&lt; $0.01</p>
+                    <div className="relative border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 text-center shadow-[8px_8px_0_#0a0a0a] overflow-hidden">
+                      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                      <div className="relative z-10">
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.suiFee")}</p>
+                        <p className="mt-1 text-2xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>~{suiTotalGas.toFixed(4)} SUI</p>
+                        <p className="protocol-font text-xs font-semibold text-[#14b8a6] mt-1">&lt; $0.01</p>
+                        <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex justify-center">
+                          <div className="w-8 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                        </div>
+                      </div>
                     </div>
-                    <div className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 text-center shadow-[3px_3px_0_#0a0a0a]">
-                      <p className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("simulator.ethFee")}</p>
-                      <p className="protocol-font text-2xl font-black">${ethTotalGas.toFixed(2)}</p>
-                      <p className="protocol-font text-xs font-semibold text-[#555555] mt-1">{participants + 1} tx</p>
+                    <div className="relative border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 text-center shadow-[8px_8px_0_#0a0a0a] overflow-hidden">
+                      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                      <div className="relative z-10">
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.ethFee")}</p>
+                        <p className="mt-1 text-2xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>${ethTotalGas.toFixed(2)}</p>
+                        <p className="text-xs font-semibold text-[#555555] mt-1">{participants + 1} tx</p>
+                        <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex justify-center">
+                          <div className="w-8 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                        </div>
+                      </div>
                     </div>
-                    <div className="border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 text-center shadow-[3px_3px_0_#0a0a0a]">
-                      <p className="protocol-font text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]">{t("simulator.savings")}</p>
-                      <p className="protocol-font text-2xl font-black">~99.9%</p>
-                      <p className="protocol-font text-xs font-semibold text-[#555555] mt-1">lebih hemat</p>
+                    <div className="relative border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 text-center shadow-[8px_8px_0_#0a0a0a] overflow-hidden">
+                      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+                      <div className="relative z-10">
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.savings")}</p>
+                        <p className="mt-1 text-2xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>~99.9%</p>
+                        <p className="text-xs font-semibold text-[#555555] mt-1">lower cost</p>
+                        <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex justify-center">
+                          <div className="w-8 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

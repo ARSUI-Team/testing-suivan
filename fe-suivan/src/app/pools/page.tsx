@@ -247,27 +247,52 @@ export default function PoolsPage() {
           {/* Stats */}
           {pools && pools.length > 0 && (
             <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-              <div className="border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[4px_4px_0_#0a0a0a]">
-                <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("pools.totalPools")}</p>
-                <p className="mt-2 text-3xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.length}</p>
+              <div className="relative border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[10px_10px_0_#0a0a0a] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
+                <div className="relative z-10">
+                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.totalPools")}</p>
+                  <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.length}</p>
+                  <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
+                    <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>live</span>
+                  </div>
+                </div>
               </div>
-              <div className="border-[3px] border-[#0a0a0a] bg-[var(--success-soft)] p-4 shadow-[4px_4px_0_#0a0a0a]">
-                <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("pools.open")}</p>
-                <p className="mt-2 text-3xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                  {pools.filter((p) => p.status === "open").length}
-                </p>
+              <div className="relative border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[10px_10px_0_#0a0a0a] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
+                <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-10%", width: "40%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
+                <div className="relative z-10">
+                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.open")}</p>
+                  <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => p.status === "open").length}</p>
+                  <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
+                    <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>ready</span>
+                  </div>
+                </div>
               </div>
-              <div className="border-[3px] border-[#0a0a0a] bg-[var(--accent-soft)] p-4 shadow-[4px_4px_0_#0a0a0a]">
-                <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("pools.active")}</p>
-                <p className="mt-2 text-3xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                  {pools.filter((p) => ["ready", "active", "action_required"].includes(p.status)).length}
-                </p>
+              <div className="relative border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 shadow-[10px_10px_0_#0a0a0a] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
+                <div className="absolute pointer-events-none" style={{ bottom: "-10%", left: "-10%", width: "35%", height: "35%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
+                <div className="relative z-10">
+                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.active")}</p>
+                  <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => ["ready", "active", "action_required"].includes(p.status)).length}</p>
+                  <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
+                    <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>running</span>
+                  </div>
+                </div>
               </div>
-              <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[4px_4px_0_#0a0a0a]">
-                <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("pools.usdc")}</p>
-                <p className="mt-2 text-3xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                  {isConnected ? `${usdcBalance.toLocaleString()} USDC` : "---"}
-                </p>
+              <div className="relative border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 shadow-[10px_10px_0_#0a0a0a] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
+                <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-15%", width: "50%", height: "50%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
+                <div className="relative z-10">
+                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.usdc")}</p>
+                  <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{isConnected ? `${usdcBalance.toLocaleString()} USDC` : "---"}</p>
+                  <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
+                    <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>balance</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { BrainCircuit } from "lucide-react";
@@ -90,7 +89,7 @@ export default function YieldSignalsPage() {
           className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.28),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(168,164,154,0.18),transparent_26%)]"
         />
         <div className="mx-auto max-w-6xl">
-          <p className="gsap-up protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[4px_4px_0_#0a0a0a]">
+          <p className="gsap-up protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[10px_10px_0_#0a0a0a]">
             <BrainCircuit className="size-4" />
             {t("ai.badge")}
           </p>
@@ -109,7 +108,7 @@ export default function YieldSignalsPage() {
           )}
 
           {error && (
-            <div className="mt-10 border-[3px] border-[#0a0a0a] bg-[#fee2e2] p-5 shadow-[4px_4px_0_#0a0a0a]">
+            <div className="mt-10 border-[3px] border-[#0a0a0a] bg-[#fee2e2] p-5 shadow-[10px_10px_0_#0a0a0a]">
               <p className="protocol-font text-xs font-black text-[#0a0a0a]">{t("ai.errorTitle")}</p>
               <p className="mt-2 font-semibold text-[#0a0a0a]">{error}</p>
             </div>
@@ -118,25 +117,25 @@ export default function YieldSignalsPage() {
           {data && (
             <>
               <div className="gsap-up mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <div className="border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 shadow-[10px_10px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("ai.avgApy")}</p>
                   <p className="protocol-font mt-2 text-3xl font-black text-[#0a0a0a]">{data.stats.avgApy.toFixed(2)}%</p>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[10px_10px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("ai.maxApy")}</p>
                   <p className="protocol-font mt-2 text-3xl font-black text-[#0a0a0a]">{data.stats.maxApy.toFixed(2)}%</p>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 shadow-[10px_10px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("ai.protocols")}</p>
                   <p className="protocol-font mt-2 text-3xl font-black text-[#0a0a0a]">{data.stats.protocolCount}</p>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[10px_10px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{t("ai.totalTvl")}</p>
                   <p className="protocol-font mt-2 text-3xl font-black text-[#0a0a0a]">${(data.stats.totalTvl / 1e6).toFixed(1)}M</p>
                 </div>
               </div>
 
-              <div className="gsap-up mt-8 border-[3px] border-[#0a0a0a] bg-[#ffffff] p-5 shadow-[4px_4px_0_#0a0a0a]">
+              <div className="gsap-up mt-8 border-[3px] border-[#0a0a0a] bg-[#ffffff] p-5 shadow-[10px_10px_0_#0a0a0a]">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("ai.protocolYields")}</h2>
                   <span className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">
@@ -172,7 +171,7 @@ export default function YieldSignalsPage() {
               </div>
 
               <div className="gsap-up mt-8 grid gap-4 md:grid-cols-2">
-                <div className="border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-5 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-5 shadow-[10px_10px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black uppercase tracking-[0.1em] text-[#555555]">{t("ai.marketConditions")}</p>
                   <div className="mt-4 space-y-3">
                     <div className="flex justify-between">
@@ -195,7 +194,7 @@ export default function YieldSignalsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-5 shadow-[4px_4px_0_#0a0a0a]">
+                <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-5 shadow-[10px_10px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black uppercase tracking-[0.1em] text-[#555555]">{t("ai.yieldRecommendation")}</p>
                   <p className="mt-4 text-lg font-black text-[#0a0a0a]">
                     {t("ai.topProtocol")}: {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.name || "N/A"} — {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.apy.toFixed(2) || "0"}%
@@ -213,7 +212,7 @@ export default function YieldSignalsPage() {
                     <button
                       onClick={generateStrategy}
                       disabled={loadingRec}
-                      className="protocol-font mt-4 inline-flex border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50"
+                      className="protocol-font mt-4 inline-flex border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black text-[#0a0a0a] shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50"
                     >
                       {loadingRec ? t("ai.loading") : t("ai.generateStrategy")}
                     </button>
@@ -225,7 +224,7 @@ export default function YieldSignalsPage() {
 
           <div className="mt-10">
             <Link
-              className="protocol-font inline-flex border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-6 py-3 text-sm font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="protocol-font inline-flex border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-6 py-3 text-sm font-black text-[#0a0a0a] shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
               href="/pools"
             >
               {t("ai.explorePools")}
@@ -233,7 +232,6 @@ export default function YieldSignalsPage() {
           </div>
         </div>
       </section>
-      <Footer />
     </main>
   );
 }
