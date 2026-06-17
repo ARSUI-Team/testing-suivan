@@ -80,7 +80,7 @@ export default function PoolsPage() {
   const { createPool, isPending: creating } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
   const creatingRef = useRef(false);
-  const { claimUSDC, isPending: claimPending } = useClaimUSDC();
+  const { claimUSDC, isPending: claimPending, error: claimError } = useClaimUSDC();
   const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
@@ -93,6 +93,14 @@ export default function PoolsPage() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [showCreateModal, selectedPool]);
+
+  useEffect(() => {
+    if (!claimError) return;
+    const msg = claimError.message || "";
+    if (msg.includes("abort code: 1") || msg.includes("cooldown")) {
+      errorToast("⚠️ Faucet Cooldown", "1 claim per 24 hours. Use a different wallet or try again later.");
+    }
+  }, [claimError, errorToast]);
 
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)

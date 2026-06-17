@@ -138,7 +138,11 @@ export default function FaucetPage() {
       onClaimSuccess(digest);
     } catch (fallbackErr) {
       setClaimStatus("error");
-      errorToast(fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error"));
+      let errMsg = fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error");
+      if (errMsg.includes("abort code: 1") || errMsg.includes("cooldown")) {
+        errMsg = "⚠️ Faucet cooldown — 1 claim per 24 hours. Try again later.";
+      }
+      errorToast(errMsg);
       setTimeout(() => setClaimStatus("idle"), 2500);
     }
   }, [address, errorToast, onClaimSuccess, t]);
