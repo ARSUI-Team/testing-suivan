@@ -506,7 +506,7 @@ export default function LeaderboardPage() {
           <div className="mt-10 text-center">
             <Link
               href="/pools"
-              className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-8 text-base font-black text-[#0a0a0a] shadow-[12px_12px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="protocol-font inline-flex h-14 items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-8 text-base font-black text-[#0a0a0a] shadow-[12px_12px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
             >
               {t("leaderboard.cta")}
               <ArrowRight className="size-5" />
