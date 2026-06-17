@@ -39,7 +39,7 @@ async function findPoolAdminCap(agentAddr: string, poolId: string) {
   });
   const found = caps.data.find(c => {
     const f = (c.data?.content as { fields?: Record<string, unknown> })?.fields;
-    const pid = String(f?.pool_id || "");
+    const pid = ((f?.pool_id as { id?: string })?.id) || String(f?.pool_id || "");
     return pid === poolId;
   });
   return found?.data?.objectId || null;
@@ -58,6 +58,7 @@ async function handlePool(poolId: string, keypair: Ed25519Keypair, agentAddr: st
   const config = (fields.config as { fields?: Record<string, unknown> })?.fields;
   const started = Boolean(fields.is_started);
   const ended = Boolean(fields.is_ended);
+  const isActive = Boolean(fields.is_active);
   const currentCycle = Number(fields.current_cycle || 0);
   const startTime = Number(fields.pool_start_time_ms || 0);
   const cycleMs = Number(config?.cycle_duration_ms || 0);
@@ -80,7 +81,7 @@ async function handlePool(poolId: string, keypair: Ed25519Keypair, agentAddr: st
   }
 
   // If active, check deadline
-  if (started && !ended && currentCycle > 0 && startTime > 0 && cycleMs > 0) {
+  if (started && !ended && isActive && currentCycle > 0 && startTime > 0 && cycleMs > 0) {
     const deadlineMs = startTime + currentCycle * cycleMs;
     if (Date.now() < deadlineMs) return actions; // deadline not reached
 

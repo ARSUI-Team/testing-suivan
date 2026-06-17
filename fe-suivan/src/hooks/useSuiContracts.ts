@@ -837,6 +837,7 @@ export function useTransferAdminCap() {
       arguments: [tx.object(poolAdminCapId), tx.pure.address(newOwnerAddress)],
       typeArguments: [`${SUI_PACKAGE_ID}::arisan_pool::PoolAdminCap`],
     });
+    tx.setGasBudget(10_000_000);
 
     signAndExecute({ transaction: tx }, {
       onSuccess: () => {
