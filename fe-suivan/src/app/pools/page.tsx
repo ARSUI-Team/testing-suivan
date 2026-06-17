@@ -827,17 +827,12 @@ export default function PoolsPage() {
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
                   <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>No USDC Balance</p>
                   <p className="mt-1 text-sm font-semibold" style={{ color: "#555555" }}>Get free test USDC first to create a pool.</p>
-                  <button
-                    onClick={() => {
-                      if (!faucetId) return;
-                      claimUSDC(faucetId);
-                      setTimeout(() => refetchPools(), 1000);
-                    }}
-                    disabled={!faucetId || claimPending}
-                    className="protocol-font mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  <Link
+                    href="/faucet"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
                   >
-                    {claimPending ? "Claiming..." : "Get 500 USDC from Faucet →"}
-                  </button>
+                    Get 500 USDC from Faucet →
+                  </Link>
                 </div>
               )}
 
