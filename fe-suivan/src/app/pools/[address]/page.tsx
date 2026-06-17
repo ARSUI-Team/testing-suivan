@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import SharePool from "@/components/SharePool";
 import SuiFeeProfile from "@/components/SuiFeeProfile";
 import PoolAnalyticsChart from "@/components/PoolAnalyticsChart";
@@ -342,25 +341,24 @@ export default function PoolDetailPage() {
 
   if (poolLoading) {
     return (
-      <main className="min-h-screen bg-[var(--background)]">
+      <main className="min-h-screen bg-grid-brutal">
         <Header />
         <div className="flex items-center justify-center pb-16 pt-32">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--border)] border-b-sky-400"></div>
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-sky-400"></div>
           <span className="protocol-font ml-4 text-sm font-black text-[var(--muted)]">Loading pool data...</span>
         </div>
-        <Footer />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-grid-brutal text-[#0a0a0a]">
       <Header />
 
-      <section className="relative isolate overflow-hidden px-5 pb-10 pt-32 md:px-10 lg:px-12">
+      <section className="relative isolate overflow-hidden px-5 pb-6 pt-32 md:px-10 lg:px-12">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_22%_18%,rgba(94,200,255,0.32),transparent_30%)]" />
         <div className="mx-auto max-w-6xl">
-          <Link href="/pools" className="protocol-font mb-6 inline-flex items-center rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5">
+          <Link href="/pools" className="protocol-font mb-6 inline-flex items-center rounded-full border-2 border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5">
             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -370,14 +368,14 @@ export default function PoolDetailPage() {
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="mb-4 flex items-center gap-3">
-                <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] text-[var(--foreground)] md:text-7xl">
+                <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] text-[#0a0a0a] md:text-7xl" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
                   {poolName}
                 </h1>
-                <span className={`protocol-font rounded-full border-2 border-[var(--border)] px-3 py-1 text-xs font-black ${getStatusColor(status)}`}>
+                <span className={`protocol-font rounded-full border-2 border-[#0a0a0a] px-3 py-1 text-xs font-black ${getStatusColor(status)}`}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
               </div>
-              <div className="protocol-font inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-xs font-black text-[var(--muted)] shadow-[4px_4px_0_var(--border)]">
+              <div className="protocol-font inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border-2 border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black text-[var(--muted)] shadow-[4px_4px_0_#0a0a0a]">
                 <span className="max-w-[200px] truncate md:max-w-none">{poolAddress}</span>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-9 4h12M7 8h10" />
@@ -406,24 +404,24 @@ export default function PoolDetailPage() {
             {/* Left Column - Pool Info */}
             <div className="lg:col-span-2 space-y-6">
               {/* Pool Stats */}
-              <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
-                <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.poolInfo")}</h2>
+              <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
+                <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">{t("detail.poolInfo")}</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-grid-brutal p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.deposit")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{depositAmount} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{depositAmount} USDC</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--accent-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.members")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{currentParticipants}/{maxParticipants}</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{currentParticipants}/{maxParticipants}</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--warn-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.cycle")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{currentCycle}/{maxParticipants}</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{currentCycle}/{maxParticipants}</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--success-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.funds")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">${totalFunds.toFixed(2)}</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">${totalFunds.toFixed(2)}</p>
                   </div>
                 </div>
 
@@ -431,13 +429,13 @@ export default function PoolDetailPage() {
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="protocol-font text-xs font-black text-[var(--muted)]">{t("detail.capacity")}</span>
-                    <span className="protocol-font text-sm font-black text-[var(--foreground)]">
+                    <span className="protocol-font text-sm font-black text-[#0a0a0a]">
                       {Math.round((currentParticipants / maxParticipants) * 100)}%
                     </span>
                   </div>
-                  <div className="h-3 w-full overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--surface-hover)]">
+                  <div className="h-3 w-full overflow-hidden rounded-full border-2 border-[#0a0a0a] bg-[var(--surface-hover)]">
                     <div
-                      className="h-full bg-[var(--accent)] transition-all duration-500"
+                      className="h-full bg-[#38bdf8] transition-all duration-500"
                       style={{ width: `${(currentParticipants / maxParticipants) * 100}%` }}
                     />
                   </div>
@@ -446,8 +444,8 @@ export default function PoolDetailPage() {
 
               {/* Walrus Metadata Description */}
               {walrusMeta?.description && (
-                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
-                  <h2 className="mb-2 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">About</h2>
+                <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
+                  <h2 className="mb-2 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">About</h2>
                   <p className="font-semibold leading-relaxed text-[var(--muted)]">{walrusMeta.description}</p>
                   {walrusMeta.creator && (
                     <p className="mt-3 text-xs font-bold text-[var(--muted)]">
@@ -457,39 +455,39 @@ export default function PoolDetailPage() {
                 </div>
               )}
               {poolInfo?.walrusMetadataBlobId && (
-                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
+                <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
                   <div className="flex items-center gap-2">
                     <svg className="h-4 w-4 text-[var(--success)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <p className="protocol-font text-xs font-black text-[var(--muted)]">Walrus Metadata Linked</p>
                   </div>
-                  <p className="mt-1 text-[10px] font-mono text-[var(--muted)] break-all">{poolInfo.walrusMetadataBlobId}</p>
+                  <p className="mt-1 text-xs font-mono text-[var(--muted)] break-all">{poolInfo.walrusMetadataBlobId}</p>
                 </div>
               )}
 
               {/* Yield Info */}
-              <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
+              <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.yieldSection")}</h2>
+                  <h2 className="text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">{t("detail.yieldSection")}</h2>
                   <SuiFeeProfile transactionType="join" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--purple-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--purple-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Cumulative Yield (Gacha)</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{cumYield.toFixed(2)} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{cumYield.toFixed(2)} USDC</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--accent-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Collateral Yield (Proportional)</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{collYield.toFixed(2)} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{collYield.toFixed(2)} USDC</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--success-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.estApy")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{liveApy}%</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{liveApy}%</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--warn-soft)] p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.collateral")}</p>
-                    <p className="protocol-font text-xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
+                    <p className="protocol-font text-xl font-black text-[#0a0a0a]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                   </div>
                 </div>
               </div>
@@ -502,8 +500,8 @@ export default function PoolDetailPage() {
               />
 
               {/* Participants List */}
-              <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
-                <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">
+              <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
+                <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">
                   {t("detail.participants", { count: participantCount })}
                 </h2>
                 {participantsLoading ? (
@@ -517,20 +515,20 @@ export default function PoolDetailPage() {
                         key={addr}
                         className={`flex items-center justify-between p-4 rounded-xl ${
                           addr.toLowerCase() === address?.toLowerCase()
-                            ? "border-2 border-[var(--border)] bg-[var(--success-soft)]"
-                            : "border-2 border-[var(--border)] bg-[var(--surface-hover)]"
+                            ? "border-2 border-[#0a0a0a] bg-[var(--success-soft)]"
+                            : "border-2 border-[#0a0a0a] bg-[var(--surface-hover)]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`protocol-font flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--border)] font-black text-[var(--foreground)] ${
+                          <div className={`protocol-font flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#0a0a0a] font-black text-[#0a0a0a] ${
                             poolInfo?.gachaWinner?.toLowerCase() === addr.toLowerCase()
                               ? "bg-[var(--yellow)] text-black"
-                              : "bg-[var(--accent)]"
+                              : "bg-[#38bdf8]"
                           }`}>
                             {index + 1}
                           </div>
                           <div>
-                            <p className="protocol-font text-sm font-bold text-[var(--foreground)]">
+                            <p className="protocol-font text-sm font-bold text-[#0a0a0a]">
                               {addr.slice(0, 6)}...{addr.slice(-4)}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -564,17 +562,17 @@ export default function PoolDetailPage() {
             <div className="space-y-6">
               {/* User Status Card */}
               {isConnected && (
-                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
-                  <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.yourStatus")}</h2>
+                <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
+                  <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">{t("detail.yourStatus")}</h2>
 
                   {isParticipant ? (
                     <div className="space-y-4">
-                      <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                      <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--success-soft)] p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <svg className="w-5 h-5 text-[var(--success-deep)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className="font-black text-[var(--foreground)]">{t("detail.activeParticipant")}</span>
+                          <span className="font-black text-[#0a0a0a]">{t("detail.activeParticipant")}</span>
                         </div>
                         <p className="text-sm font-semibold text-[var(--muted)]">{t("detail.youAreIn")}</p>
                       </div>
@@ -601,15 +599,15 @@ export default function PoolDetailPage() {
                         <button
                           onClick={() => startPool(poolAddress, adminCapId)}
                           disabled={starting}
-                          className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                          className={`protocol-font w-full rounded-xl border-2 border-[#0a0a0a] py-3 font-black transition-all ${
                             starting
                               ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                              : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                              : "bg-[#38bdf8] text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] hover:-translate-y-0.5"
                           }`}
                         >
                           {starting ? (
                             <span className="flex items-center justify-center gap-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0a0a0a] border-b-[var(--accent)]" />
                               Starting Pool...
                             </span>
                           ) : "Start Pool"}
@@ -620,7 +618,7 @@ export default function PoolDetailPage() {
                       {status === "active" && isStarted && (
                         <button
                           onClick={() => setShowDepositModal(true)}
-                          className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                          className="protocol-font w-full rounded-xl border-2 border-[#0a0a0a] bg-[#38bdf8] py-3 font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5"
                         >
                           {t("detail.makeDeposit")}
                         </button>
@@ -628,13 +626,13 @@ export default function PoolDetailPage() {
 
                       {/* AI Agent Status */}
                       {agentInfo && (
-                        <div className={`rounded-xl border-2 p-4 ${isManagedByAgent ? "border-[var(--success-deep)] bg-[var(--success-soft)]" : "border-[var(--border)] bg-[var(--surface)]"}`}>
+                        <div className={`rounded-xl border-2 p-4 ${isManagedByAgent ? "border-[var(--success-deep)] bg-[var(--success-soft)]" : "border-[#0a0a0a] bg-[#38bdf8]"}`}>
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="protocol-font text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
                                 {isManagedByAgent ? "🤖 AI Agent" : "AI Agent"}
                               </p>
-                              <p className={`mt-1 text-sm font-black ${isManagedByAgent ? "text-[var(--success-deep)]" : "text-[var(--foreground)]"}`}>
+                              <p className={`mt-1 text-sm font-black ${isManagedByAgent ? "text-[var(--success-deep)]" : "text-[#0a0a0a]"}`}>
                                 {isManagedByAgent
                                   ? "Managing this pool automatically"
                                   : adminCapId
@@ -646,7 +644,7 @@ export default function PoolDetailPage() {
                               <button
                                 onClick={handleDelegateToAgent}
                                 disabled={delegating}
-                                className="protocol-font rounded-xl border-2 border-[var(--accent-deep)] bg-[var(--accent)] px-4 py-2 text-xs font-black shadow-[2px_2px_0_var(--border)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                                className="protocol-font rounded-xl border-2 border-[var(--accent-deep)] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[2px_2px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50"
                               >
                                 {delegating ? "Delegating..." : "Delegate"}
                               </button>
@@ -660,15 +658,15 @@ export default function PoolDetailPage() {
                         <button
                           onClick={() => selectWinner(poolAddress, adminCapId)}
                           disabled={selecting}
-                          className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                          className={`protocol-font w-full rounded-xl border-2 border-[#0a0a0a] py-3 font-black transition-all ${
                             selecting
                               ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                              : "bg-[var(--yellow)] text-black shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                              : "bg-[var(--yellow)] text-black shadow-[4px_4px_0_#0a0a0a] hover:-translate-y-0.5"
                           }`}
                         >
                           {selecting ? (
                             <span className="flex items-center justify-center gap-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0a0a0a] border-b-[var(--accent)]" />
                               Selecting Winner...
                             </span>
                           ) : "Select Winner"}
@@ -677,8 +675,8 @@ export default function PoolDetailPage() {
 
                       {/* Claim section for completed pool */}
                       {status === "completed" && (participantInfo?.collateralAmount ?? 0) > 0 && (
-                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
-                          <h3 className="mb-2 font-black text-[var(--foreground)]">{t("detail.collateralAvailable")}</h3>
+                        <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--warn-soft)] p-4">
+                          <h3 className="mb-2 font-black text-[#0a0a0a]">{t("detail.collateralAvailable")}</h3>
                           <p className="mb-3 text-sm font-semibold text-[var(--muted)]">
                             {t("detail.collateralReturned")}
                           </p>
@@ -695,15 +693,15 @@ export default function PoolDetailPage() {
                           <button
                             onClick={() => claimFinal(poolAddress)}
                             disabled={claiming}
-                            className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                            className={`protocol-font w-full rounded-xl border-2 border-[#0a0a0a] py-3 font-black transition-all ${
                               claiming
                                 ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                                : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                                : "bg-[#38bdf8] text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] hover:-translate-y-0.5"
                             }`}
                           >
                             {claiming ? (
                               <span className="flex items-center justify-center gap-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]" />
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0a0a0a] border-b-[var(--accent)]" />
                                 Claiming...
                               </span>
                             ) : "Claim Collateral + Yield"}
@@ -713,14 +711,14 @@ export default function PoolDetailPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                      <div className="rounded-2xl border-2 border-[#0a0a0a] bg-grid-brutal p-4">
                         <p className="font-semibold text-[var(--muted)]">{t("detail.notParticipant")}</p>
                       </div>
 
                       {status === "open" && !isFull && (
                         <button
                           onClick={() => setShowJoinModal(true)}
-                          className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                          className="protocol-font w-full rounded-xl border-2 border-[#0a0a0a] bg-[#38bdf8] py-3 font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5"
                         >
                           {t("detail.joinThisPool")}
                         </button>
@@ -732,11 +730,11 @@ export default function PoolDetailPage() {
 
               {/* Wallet Balance */}
               {isConnected && (
-                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
-                  <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.yourWallet")}</h2>
-                  <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+                <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
+                  <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">{t("detail.yourWallet")}</h2>
+                  <div className="rounded-2xl border-2 border-[#0a0a0a] bg-grid-brutal p-4">
                     <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("detail.usdcBalance")}</p>
-                    <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{usdcBalance.toFixed(2)} USDC</p>
+                    <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{usdcBalance.toFixed(2)} USDC</p>
                     {usdcCoins.length > 0 && (
                       <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{usdcCoins.length} coin{usdcCoins.length > 1 ? 's' : ''} available</p>
                     )}
@@ -746,29 +744,29 @@ export default function PoolDetailPage() {
 
               {/* Pool Metadata Editor */}
               {isConnected && (
-                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)]">
+                <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 shadow-[6px_6px_0_#0a0a0a]">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Pool Metadata</h2>
-                    {walrusMeta && <span className="protocol-font text-[10px] font-black text-[var(--success)]">✓ Walrus</span>}
+                    <h2 className="text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">Pool Metadata</h2>
+                    {walrusMeta && <span className="protocol-font text-xs font-black text-[var(--success)]">✓ Walrus</span>}
                   </div>
 
                   {!showMetaEditor ? (
                     <div className="space-y-3">
                       {walrusMeta ? (
-                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-3">
+                        <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--success-soft)] p-3">
                           <p className="protocol-font text-xs font-black">&quot;{walrusMeta.name}&quot;</p>
                           {walrusMeta.description && (
                             <p className="mt-1 text-xs text-[var(--muted)] line-clamp-2">{walrusMeta.description}</p>
                           )}
                         </div>
                       ) : (
-                        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-3">
+                        <div className="rounded-2xl border-2 border-[#0a0a0a] bg-grid-brutal p-3">
                           <p className="text-xs text-[var(--muted)]">No Walrus metadata linked. Add a name and description.</p>
                         </div>
                       )}
                       <button
                         onClick={() => setShowMetaEditor(true)}
-                        className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                        className="protocol-font w-full rounded-xl border-2 border-[#0a0a0a] bg-[#38bdf8] py-3 font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5"
                       >
                         {walrusMeta ? "Edit Metadata" : "Add Metadata"}
                       </button>
@@ -776,53 +774,53 @@ export default function PoolDetailPage() {
                   ) : (
                     <div className="space-y-3">
                       <div>
-                        <label className="protocol-font mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">Pool Name</label>
+                        <label className="protocol-font mb-1 block text-xs font-black uppercase tracking-[0.14em] text-[var(--muted)]">Pool Name</label>
                         <input
                           type="text"
                           maxLength={64}
                           value={metaName}
                           onChange={(e) => setMetaName(e.target.value)}
                           placeholder="My Awesome Pool"
-                          className="min-h-[44px] w-full rounded-xl border-2 border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none"
+                          className="min-h-[44px] w-full rounded-xl border-2 border-[#0a0a0a] bg-grid-brutal px-4 py-3 text-sm font-semibold text-[#0a0a0a] outline-none"
                         />
                       </div>
                       <div>
-                        <label className="protocol-font mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">Description</label>
+                        <label className="protocol-font mb-1 block text-xs font-black uppercase tracking-[0.14em] text-[var(--muted)]">Description</label>
                         <textarea
                           maxLength={500}
                           value={metaDesc}
                           onChange={(e) => setMetaDesc(e.target.value)}
                           placeholder="Brief description..."
                           rows={3}
-                          className="min-h-[44px] w-full rounded-xl border-2 border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none"
+                          className="min-h-[44px] w-full rounded-xl border-2 border-[#0a0a0a] bg-grid-brutal px-4 py-3 text-sm font-semibold text-[#0a0a0a] outline-none"
                         />
                       </div>
                       {!adminCapId && (
                         <div>
-                          <label className="protocol-font mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">PoolAdminCap ID</label>
+                          <label className="protocol-font mb-1 block text-xs font-black uppercase tracking-[0.14em] text-[var(--muted)]">PoolAdminCap ID</label>
                           <input
                             type="text"
                             value={adminCapId}
                             onChange={(e) => setAdminCapId(e.target.value)}
                             placeholder="0x... (required to link metadata)"
-                            className="min-h-[44px] w-full rounded-xl border-2 border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] outline-none"
+                            className="min-h-[44px] w-full rounded-xl border-2 border-[#0a0a0a] bg-grid-brutal px-4 py-3 text-sm font-semibold text-[#0a0a0a] outline-none"
                           />
                         </div>
                       )}
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowMetaEditor(false)}
-                          className="protocol-font flex-1 rounded-xl border-2 border-[var(--border)] bg-[var(--background)] py-3 font-black text-[var(--foreground)] transition hover:-translate-y-0.5"
+                          className="protocol-font flex-1 rounded-xl border-2 border-[#0a0a0a] bg-grid-brutal py-3 font-black text-[#0a0a0a] transition hover:-translate-y-0.5"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={handleSaveMetadata}
                           disabled={publishingMeta || linkingMeta}
-                          className={`protocol-font flex-1 rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                          className={`protocol-font flex-1 rounded-xl border-2 border-[#0a0a0a] py-3 font-black transition-all ${
                             publishingMeta || linkingMeta
                               ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                              : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                              : "bg-[#38bdf8] text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] hover:-translate-y-0.5"
                           }`}
                         >
                           {publishingMeta ? "Publishing..." : linkingMeta ? "Linking..." : "Save & Link"}
@@ -835,8 +833,8 @@ export default function PoolDetailPage() {
 
               {/* Connect Wallet CTA */}
               {!isConnected && (
-                <div className="rounded-[1.5rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 text-center shadow-[6px_6px_0_var(--border)]">
-                  <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.getStarted")}</h2>
+                <div className="rounded-[1.5rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-5 text-center shadow-[6px_6px_0_#0a0a0a]">
+                  <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">{t("detail.getStarted")}</h2>
                   <p className="mb-4 font-semibold text-[var(--muted)]">{t("detail.connectPrompt")}</p>
                   <ConnectSuiWallet variant="header" scrolled={true} />
                 </div>
@@ -850,10 +848,10 @@ export default function PoolDetailPage() {
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowJoinModal(false)} />
-          <div className="relative w-full max-w-md rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-6 shadow-[8px_8px_0_var(--border)]">
+          <div className="relative w-full max-w-md rounded-[1.75rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-6 shadow-[8px_8px_0_#0a0a0a]">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">Join {poolName}</h3>
-              <button onClick={() => setShowJoinModal(false)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--accent)] p-2 text-[var(--foreground)] transition hover:-translate-y-0.5">
+              <h3 className="text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">Join {poolName}</h3>
+              <button onClick={() => setShowJoinModal(false)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-[#0a0a0a] bg-[#38bdf8] p-2 text-[#0a0a0a] transition hover:-translate-y-0.5">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -861,29 +859,29 @@ export default function PoolDetailPage() {
             </div>
 
             <div className="space-y-4 mb-6">
-              <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+              <div className="rounded-2xl border-2 border-[#0a0a0a] bg-grid-brutal p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("pools.deposit")}</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{depositAmount} USDC</p>
+                <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{depositAmount} USDC</p>
               </div>
 
-              <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
+              <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--accent-soft)] p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">{t("pools.collateral")}</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
+                <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{Math.ceil(depositAmount * 125 / 100)} USDC</p>
                 <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Returned at the end of the cycle with yield bonus when available</p>
               </div>
 
               {usdcBalance > 0 ? (
-                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--success-soft)] p-4">
                   <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">USDC Balance</p>
-                  <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{usdcBalance.toFixed(2)} USDC</p>
+                  <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{usdcBalance.toFixed(2)} USDC</p>
                 </div>
               ) : (
-                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
+                <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--warn-soft)] p-4">
                   <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Insufficient USDC</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Get free test USDC from the Faucet page before joining.</p>
                   <Link
                     href="/faucet"
-                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-2 text-xs font-black shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5"
                   >
                     Go to Faucet →
                   </Link>
@@ -894,7 +892,7 @@ export default function PoolDetailPage() {
             <div className="space-y-3">
               <button
                 onClick={openBridgeModal}
-                className="protocol-font w-full rounded-xl border-2 border-[var(--border)] bg-[var(--purple)] py-3 font-black text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                className="protocol-font w-full rounded-xl border-2 border-[#0a0a0a] bg-[var(--purple)] py-3 font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5"
               >
                 <span className="flex items-center justify-center gap-2">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -907,15 +905,15 @@ export default function PoolDetailPage() {
               <button
                 onClick={handleJoinPool}
                 disabled={joining}
-                className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                className={`protocol-font w-full rounded-xl border-2 border-[#0a0a0a] py-3 font-black transition-all ${
                   joining
                     ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                    : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                    : "bg-[#38bdf8] text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] hover:-translate-y-0.5"
                 }`}
               >
                   {joining ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0a0a0a] border-b-[var(--accent)]"></div>
                     Joining...
                   </span>
                 ) : (
@@ -938,10 +936,10 @@ export default function PoolDetailPage() {
       {showDepositModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDepositModal(false)} />
-          <div className="relative w-full max-w-md rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-6 shadow-[8px_8px_0_var(--border)]">
+          <div className="relative w-full max-w-md rounded-[1.75rem] border-2 border-[#0a0a0a] bg-[#38bdf8] p-6 shadow-[8px_8px_0_#0a0a0a]">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-black tracking-[-0.04em] text-[var(--foreground)]">{t("detail.makeDeposit")}</h3>
-              <button onClick={() => setShowDepositModal(false)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--accent)] p-2 text-[var(--foreground)] transition hover:-translate-y-0.5">
+              <h3 className="text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]">{t("detail.makeDeposit")}</h3>
+              <button onClick={() => setShowDepositModal(false)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 border-[#0a0a0a] bg-[#38bdf8] p-2 text-[#0a0a0a] transition hover:-translate-y-0.5">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -949,28 +947,28 @@ export default function PoolDetailPage() {
             </div>
 
             <div className="space-y-4 mb-6">
-              <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
+              <div className="rounded-2xl border-2 border-[#0a0a0a] bg-grid-brutal p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Deposit Amount</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{depositAmount} USDC</p>
+                <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{depositAmount} USDC</p>
               </div>
 
-              <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
+              <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--accent-soft)] p-4">
                 <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Current Cycle</p>
-                <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{currentCycle} of {maxParticipants}</p>
+                <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{currentCycle} of {maxParticipants}</p>
               </div>
 
               {usdcBalance > 0 ? (
-                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--success-soft)] p-4">
+                <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--success-soft)] p-4">
                   <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">USDC Balance</p>
-                  <p className="protocol-font text-2xl font-black text-[var(--foreground)]">{usdcBalance.toFixed(2)} USDC</p>
+                  <p className="protocol-font text-2xl font-black text-[#0a0a0a]">{usdcBalance.toFixed(2)} USDC</p>
                 </div>
               ) : (
-                <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--warn-soft)] p-4">
+                <div className="rounded-2xl border-2 border-[#0a0a0a] bg-[var(--warn-soft)] p-4">
                   <p className="protocol-font mb-1 text-xs font-black text-[var(--muted)]">Insufficient USDC</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Get free test USDC from the Faucet page first.</p>
                   <Link
                     href="/faucet"
-                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[var(--border)] bg-[var(--accent)] py-2 text-xs font-black shadow-[4px_4px_0_var(--border)] transition hover:-translate-y-0.5"
+                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5"
                   >
                     Go to Faucet →
                   </Link>
@@ -982,15 +980,15 @@ export default function PoolDetailPage() {
               <button
                 onClick={handleMakeDeposit}
                 disabled={depositing}
-                className={`protocol-font w-full rounded-xl border-2 border-[var(--border)] py-3 font-black transition-all ${
+                className={`protocol-font w-full rounded-xl border-2 border-[#0a0a0a] py-3 font-black transition-all ${
                   depositing
                     ? "cursor-not-allowed bg-[var(--surface-hover)] text-[var(--muted)]"
-                    : "bg-[var(--accent)] text-[var(--foreground)] shadow-[4px_4px_0_var(--border)] hover:-translate-y-0.5"
+                    : "bg-[#38bdf8] text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] hover:-translate-y-0.5"
                 }`}
               >
                 {depositing ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--border)] border-b-[var(--accent)]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0a0a0a] border-b-[var(--accent)]"></div>
                     Depositing...
                   </span>
                 ) : (
@@ -1010,7 +1008,6 @@ export default function PoolDetailPage() {
         onClose={() => setShowSuccessCelebration(false)}
       />
 
-      <Footer />
     </main>
   );
 }

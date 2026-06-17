@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ClientProviders } from "./ClientProviders";
+import LandingFooter from "@/components/features/LandingFooter";
 import "./globals.css";
 
 // Primary font - Inter (clean, modern, highly readable)
@@ -72,6 +73,7 @@ export default function RootLayout({
           <ClientProviders>
             <LanguageProvider>
               {children}
+              <LandingFooter />
             </LanguageProvider>
           </ClientProviders>
         </ThemeProvider>

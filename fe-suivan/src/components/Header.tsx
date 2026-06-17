@@ -14,16 +14,9 @@ const ConnectSuiWallet = dynamic(() => import("./ConnectSuiWallet"), { ssr: fals
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggle: toggleTheme } = useTheme();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -44,90 +37,89 @@ export default function Header() {
     { label: t("nav.simulator"), href: "/simulator" },
     { label: t("nav.yield"), href: "/ai" },
     { label: t("nav.leaderboard"), href: "/leaderboard" },
-    { label: "Demo", href: "/demo-video" },
     { label: t("nav.profile"), href: "/profile" },
     { label: t("nav.faq"), href: "/faq" },
   ];
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-[999] px-4 transition-all duration-300 ${scrolled ? "py-2" : "py-4"}`}
+      className="fixed inset-x-0 top-0 z-[999] flex items-center justify-between px-4 py-4 backdrop-blur-sm"
       data-lenis-prevent
     >
-      <nav
-        className="mx-auto flex max-w-6xl items-center justify-between border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] px-4 py-2 shadow-[8px_8px_0_var(--brutal-ink)] transition-colors md:py-2.5"
-        data-lenis-prevent
-      >
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid size-14 shrink-0 place-items-center overflow-hidden bg-[var(--brutal-bg)]">
-            <SuivanLogo className="size-14" priority size={56} />
+      <Link href="/" className="flex items-center gap-2.5 shrink-0">
+        <SuivanLogo className="size-10" priority size={40} />
+        <span className="flex flex-col items-start leading-none">
+          <span
+            className="text-2xl font-black text-[#0a0a0a] dark:text-[#f5f0eb]"
+            style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", letterSpacing: "0.02em" }}
+          >
+            SUIVAN
           </span>
-          <div className="leading-none">
-            <span className="block text-2xl font-black text-[var(--brutal-ink)] md:text-3xl" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", letterSpacing: "0.02em" }}>SUIVAN</span>
-            <span className="mt-1 inline-block border-[2px] border-[var(--brutal-accent)] bg-[var(--brutal-accent)] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-[var(--brutal-bg)] md:text-[9px]">NO LOSS · JUST PROFIT</span>
-          </div>
-        </Link>
+          <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-[#38bdf8]">
+            COMMUNITY WEALTH PROTOCOL
+          </span>
+        </span>
+      </Link>
 
-        <div className="hidden items-center gap-1 lg:flex">
-          {navItems.map((item) => (
-            <Link
-              className={`px-3.5 py-2 text-[11px] font-black transition-all ${
-                isActive(item.href)
-                  ? "bg-[var(--brutal-accent)] text-[var(--brutal-ink)]"
-                  : "bg-[var(--brutal-bg)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-ink)]"
-              }`}
-              href={item.href}
-              key={item.href}
-              style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", letterSpacing: "0.08em" }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
+      <div className="hidden items-center gap-1 lg:flex">
+        {navItems.map((item) => (
+          <Link
+            className={`px-3 py-2 text-[11px] font-black border-[2px] transition-colors ${
+              isActive(item.href)
+                ? "bg-[#0a0a0a] text-[#38bdf8] border-[#0a0a0a] dark:bg-[#38bdf8] dark:text-[#0a0a0a] dark:border-[#38bdf8]"
+                : "bg-transparent text-[#0a0a0a] border-transparent hover:bg-[#0a0a0a] hover:text-[#38bdf8] dark:text-[#f5f0eb] dark:hover:bg-[#38bdf8] dark:hover:text-[#0a0a0a]"
+            }`}
+            href={item.href}
+            key={item.href}
+            style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", letterSpacing: "0.08em" }}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            aria-label="Toggle dark mode"
-            onClick={toggleTheme}
-            className="grid size-9 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] text-[var(--brutal-ink)] shadow-[3px_3px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)]"
-            type="button"
-          >
-            {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-          </button>
-          <button
-            aria-label="Switch language"
-            className="grid size-9 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] text-[10px] font-black text-[var(--brutal-ink)] shadow-[3px_3px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)]"
-            onClick={() => setLanguage(language === "en" ? "id" : "en")}
-            type="button"
-            style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}
-          >
-            {language === "en" ? "ID" : "EN"}
-          </button>
-          {needsWalletProvider ? (
-            <ConnectSuiWallet variant="header" />
-          ) : (
-            <DeferredConnectSuiWallet scrolled={scrolled} />
-          )}
-          <button
-            aria-label="Toggle navigation menu"
-            className="grid size-9 place-items-center border-[3px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] text-[var(--brutal-ink)] shadow-[3px_3px_0_var(--brutal-ink)] transition hover:bg-[var(--brutal-accent)] lg:hidden"
-            onClick={() => setMenuOpen((value) => !value)}
-            type="button"
-          >
-            {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
-          </button>
-        </div>
-      </nav>
+      <div className="flex items-center gap-1.5">
+        <button
+          aria-label="Toggle dark mode"
+          onClick={toggleTheme}
+          className="grid size-9 place-items-center border-[3px] border-[#0a0a0a] bg-white dark:bg-[#1a1a1a] text-[#0a0a0a] dark:text-[#f5f0eb] dark:border-[#f5f0eb] shadow-[4px_4px_0_#0a0a0a] dark:shadow-[4px_4px_0_#f5f0eb] transition hover:bg-[#38bdf8] dark:hover:bg-[#38bdf8]"
+          type="button"
+        >
+          {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+        </button>
+        <button
+          aria-label="Switch language"
+          className="grid size-9 place-items-center border-[3px] border-[#0a0a0a] bg-white dark:bg-[#1a1a1a] text-[10px] font-black text-[#0a0a0a] dark:text-[#f5f0eb] dark:border-[#f5f0eb] shadow-[4px_4px_0_#0a0a0a] dark:shadow-[4px_4px_0_#f5f0eb] transition hover:bg-[#38bdf8] dark:hover:bg-[#38bdf8]"
+          onClick={() => setLanguage(language === "en" ? "id" : "en")}
+          type="button"
+          style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}
+        >
+          {language === "en" ? "ID" : "EN"}
+        </button>
+        {needsWalletProvider ? (
+          <ConnectSuiWallet variant="header" />
+        ) : (
+          <DeferredConnectSuiWallet scrolled />
+        )}
+        <button
+          aria-label="Toggle navigation menu"
+          className="grid size-9 place-items-center border-[3px] border-[#0a0a0a] bg-white dark:bg-[#1a1a1a] text-[#0a0a0a] dark:text-[#f5f0eb] dark:border-[#f5f0eb] shadow-[4px_4px_0_#0a0a0a] dark:shadow-[4px_4px_0_#f5f0eb] transition hover:bg-[#38bdf8] dark:hover:bg-[#38bdf8] lg:hidden"
+          onClick={() => setMenuOpen((value) => !value)}
+          type="button"
+        >
+          {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+        </button>
+      </div>
 
       {menuOpen && (
-        <div className="mx-auto mt-2 max-w-6xl border-[4px] border-[var(--brutal-ink)] bg-[var(--brutal-bg)] p-3 shadow-[8px_8px_0_var(--brutal-ink)]">
+        <div className="absolute inset-x-4 top-full mt-2 border-[4px] border-[#0a0a0a] bg-[#fbf7ed] dark:bg-[#0d0d0d] dark:border-[#f5f0eb] p-3 shadow-[8px_8px_0_#0a0a0a] dark:shadow-[8px_8px_0_#f5f0eb]">
           <div className="grid gap-1">
             {navItems.map((item) => (
               <Link
                 className={`px-4 py-3 text-sm font-black transition ${
                   isActive(item.href)
-                    ? "bg-[var(--brutal-accent)] text-[var(--brutal-ink)]"
-                    : "bg-[var(--brutal-bg)] text-[var(--brutal-ink)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-ink)]"
+                    ? "bg-[#0a0a0a] text-[#38bdf8] dark:bg-[#38bdf8] dark:text-[#0a0a0a]"
+                    : "bg-transparent text-[#0a0a0a] dark:text-[#f5f0eb] hover:bg-[#0a0a0a] hover:text-[#38bdf8] dark:hover:bg-[#38bdf8] dark:hover:text-[#0a0a0a]"
                 }`}
                 href={item.href}
                 key={item.href}
