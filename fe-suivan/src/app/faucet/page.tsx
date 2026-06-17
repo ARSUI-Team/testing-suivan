@@ -162,6 +162,13 @@ export default function FaucetPage() {
     const msg = claimError.message;
     if (msg === lastErrorRef.current) return;
     lastErrorRef.current = msg;
+    if (msg.includes("abort code: 1") || msg.includes("cooldown")) {
+      setClaimStatus("error");
+      setCooldown(FAUCET_COOLDOWN_S);
+      errorToast("⚠️ Faucet Cooldown", "1 claim per 24 hours. Use a different wallet or try later.");
+      setTimeout(() => setClaimStatus("idle"), 3000);
+      return;
+    }
     trySponsor();
   }, [claimError, claimStatus, trySponsor]);
 
