@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
@@ -79,6 +79,7 @@ export default function PoolsPage() {
   const { joinPool, isPending: joining } = useJoinPool();
   const { createPool, isPending: creating } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
+  const creatingRef = useRef(false);
   const { claimUSDC, isPending: claimPending } = useClaimUSDC();
   const faucetId = useFaucetId();
   const successToast = useSuccessToast();
@@ -139,10 +140,12 @@ export default function PoolsPage() {
   };
 
   const handleCreatePool = async () => {
+    if (creatingRef.current) return;
     if (!createForm.usdcCoinId) {
       errorToast("Validation", "Please select a USDC coin first");
       return;
     }
+    creatingRef.current = true;
 
     let blobId: string | null = null;
     if (createForm.poolName.trim()) {
@@ -157,6 +160,7 @@ export default function PoolsPage() {
 
       if (!blobId) {
         errorToast("Metadata Publish Failed", "Pool was not created because the custom name could not be uploaded.");
+        creatingRef.current = false;
         return;
       }
     }
@@ -166,6 +170,7 @@ export default function PoolsPage() {
       createForm.cycleUnit === "minutes" ? createForm.cycleDuration * 60 * 1000 : createForm.cycleDuration * 24 * 60 * 60 * 1000,
       createForm.usdcCoinId,
       async (response) => {
+        creatingRef.current = false;
         const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
 
         if (!blobId) {
