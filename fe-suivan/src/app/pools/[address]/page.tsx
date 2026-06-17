@@ -81,6 +81,8 @@ export default function PoolDetailPage() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showSuccessCelebration, setShowSuccessCelebration] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: "", message: "" });
+  const [agentRunning, setAgentRunning] = useState(false);
+  const [agentStatus, setAgentStatus] = useState("");
   const [joinCoinId, setJoinCoinId] = useState("");
   const [depositCoinId, setDepositCoinId] = useState("");
   const { t } = useLanguage();
