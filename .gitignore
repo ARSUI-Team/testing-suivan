@@ -1,6 +1,10 @@
 *.md
 !README.md
 !YIELD_COLLATERAL_HANDOFF.md
+!DEMO_VIDEO_SCRIPT.md
+!MENTOR_HANDOFF.md
+!faucet-changelog.md
+!SUI_OVERFLOW_2026_GUIDE.md
 *.txt
 
 migration-docs/
