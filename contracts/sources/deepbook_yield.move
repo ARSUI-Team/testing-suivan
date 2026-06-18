@@ -1,7 +1,7 @@
 /// Module: deepbook_yield
 /// DeepBook V3 flash loan integration for Suivan yield optimization
 ///
-/// This module enables Archa pools to generate yield via:
+/// This module enables Suivan pools to generate yield via:
 /// 1. Flash loan arbitrage — borrow from DeepBook, execute swaps, keep profit
 /// 2. Idle fund deployment — deposit pool funds to DeepBook BalanceManager
 /// 3. Maker rebates — place limit orders on DeepBook to earn maker fees
@@ -181,7 +181,7 @@ module suivan::deepbook_yield {
 
     // ====== Yield Deposit ======
 
-    /// Deposit flash arbitrage profit (USDC) to Archa pool yield_balance
+    /// Deposit flash arbitrage profit (USDC) to Suivan pool yield_balance
     /// Call this after flash_arbitrage when the profit coin is TEST_USDC
     /// PTB-composable: chain after flash_arbitrage in same transaction
     public fun deposit_yield_profit_usdc<CoinType>(
@@ -225,7 +225,7 @@ module suivan::deepbook_yield {
         receipt
     }
 
-    /// Withdraw funds from DeepBook BalanceManager back to Archa pool
+    /// Withdraw funds from DeepBook BalanceManager back to Suivan pool
     /// Consumes YieldWithdrawalReceipt (hot potato)
     public fun withdraw_funds_from_deepbook<CoinType>(
         cap: &PoolAdminCap,

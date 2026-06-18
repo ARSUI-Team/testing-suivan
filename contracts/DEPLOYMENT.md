@@ -13,7 +13,7 @@
 0x72bbfae9cd90e62b1cecb9db218eb52ac6135d322d232eb5e8a35a9b1d41bb1b
 ```
 
-All types use this as prefix: `archa::<module>::<type>`
+All types use this as prefix: `suivan::<module>::<type>`
 
 ---
 
