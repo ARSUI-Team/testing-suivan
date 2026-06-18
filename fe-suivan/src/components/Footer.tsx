@@ -48,14 +48,14 @@ export default function Footer() {
             <div className="mt-5 flex gap-2">
               {communityLinks.map((link) => (
                 <a
-                  className="grid size-9 place-items-center border-[3px] border-[var(--brutal-muted)] text-[var(--brutal-muted)] transition hover:border-[var(--brutal-accent)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-ink)]"
+                  className="grid size-11 place-items-center border-[3px] border-[var(--brutal-muted)] text-[var(--brutal-muted)] transition hover:border-[var(--brutal-accent)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-ink)] touch-manipulation"
                   href={link.href}
                   key={link.label}
                   rel="noopener noreferrer"
                   target="_blank"
                   aria-label={link.label}
                 >
-                  <link.Icon className="size-4" />
+                  <link.Icon className="size-5" />
                 </a>
               ))}
             </div>

@@ -56,7 +56,7 @@ const Hero = () => {
           className="w-full lg:w-[60%] flex justify-center lg:justify-start"
         >
           <h1
-            className="text-[80px] md:text-[110px] lg:text-[130px] leading-none text-[#0a0a0a] font-black scale-y-[1.5] lg:scale-y-[2] tracking-[-0.06em] lg:tracking-[-0.1em] whitespace-nowrap mt-10 lg:mt-0"
+            className="text-[52px] sm:text-[72px] md:text-[100px] lg:text-[130px] leading-none text-[#0a0a0a] font-black scale-y-[1.5] lg:scale-y-[2] tracking-[-0.06em] lg:tracking-[-0.1em] whitespace-nowrap mt-10 lg:mt-0"
             style={{
               textShadow: "6px 6px 0px #38bdf8, 8px 8px 0px #0a0a0a",
               fontFamily: "'Bebas Neue', 'Arial Black', sans-serif",

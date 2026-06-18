@@ -91,9 +91,9 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
               <h2 className="text-xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>Connect Wallet</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="grid size-8 place-items-center border-[3px] border-[#0a0a0a] bg-[white] text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] hover:bg-[#38bdf8]"
+                className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-[white] text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] hover:bg-[#38bdf8] touch-manipulation"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
