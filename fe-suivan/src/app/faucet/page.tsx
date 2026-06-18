@@ -1,25 +1,42 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
-import { useSuccessToast } from "@/components/Toast";
-import { useUSDCBalance } from "@/hooks/useSuiContracts";
-import { FaucetCooldownButton } from "@/components/FaucetCooldownButton";
+import { useSuccessToast, useErrorToast } from "@/components/Toast";
+import { useUSDCBalance, useClaimUSDC } from "@/hooks/useSuiContracts";
+import { useFaucetId } from "@/config/sui";
 import {
   Droplets,
   Wallet,
   CheckCircle2,
+  Clock,
   RefreshCw,
   ArrowRight,
   ExternalLink,
   Shield,
 } from "lucide-react";
 
+type ClaimStatus = "idle" | "loading" | "success" | "error";
+
+const FAUCET_COOLDOWN_S = 86400;
+const LS_KEY = "suivan_faucet_claim";
 const LS_HISTORY_KEY = "suivan_faucet_history";
 const SUISCAN_URL = "https://suiscan.xyz/testnet";
+
+function getLastClaimTime(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = localStorage.getItem(LS_KEY);
+  return raw ? Number(raw) : 0;
+}
+
+function setLastClaimTime() {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LS_KEY, String(Date.now()));
+  }
+}
 
 function loadClaimHistory(): ClaimRecord[] {
   if (typeof window === "undefined") return [];
@@ -43,14 +60,18 @@ export default function FaucetPage() {
   const address = account?.address;
   const isConnected = !!account;
   const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+  const faucetId = useFaucetId();
 
   const { balance: usdcBalance, refetch: refetchBalance } = useUSDCBalance(address);
+  const { claimUSDC, isPending: isWalletClaiming, hash: txHash, error: claimError } = useClaimUSDC();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>("idle");
   const [cooldown, setCooldown] = useState(0);
   const [claimHistory, setClaimHistory] = useState<ClaimRecord[]>(loadClaimHistory);
+  const lastSavedHash = useRef<string | undefined>(undefined);
 
   const addToHistory = useCallback((record: ClaimRecord) => {
     setClaimHistory((h) => {
@@ -68,12 +89,93 @@ export default function FaucetPage() {
     });
   }, []);
 
-  // Called by FaucetCooldownButton after a successful claim.
-  const handleClaimed = useCallback((digest?: string) => {
-    addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest });
+  const cooldownActive = cooldown > 0;
+
+  useEffect(() => {
+    if (!cooldownActive || cooldown <= 0) return;
+    const id = setInterval(() => {
+      setCooldown((c) => {
+        const next = c - 1;
+        if (next <= 0) return 0;
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldownActive, cooldown]);
+
+  // Restore cooldown from localStorage on mount
+  useEffect(() => {
+    const last = getLastClaimTime();
+    if (last) {
+      const elapsed = Date.now() - last;
+      const remaining = Math.max(0, FAUCET_COOLDOWN_S - Math.floor(elapsed / 1000));
+      if (remaining > 0) {
+        setCooldown(remaining);
+      }
+    }
+  }, []);
+
+  const onClaimSuccess = useCallback((digest?: string) => {
+    setClaimStatus("success");
+    setLastClaimTime();
+    setCooldown(FAUCET_COOLDOWN_S);
+    addToHistory({ token: "usdc", amount: "500", time: Date.now(), txDigest: digest || txHash });
     refetchBalance();
     successToast(t("faucet.success"));
-  }, [addToHistory, refetchBalance, successToast, t]);
+    setTimeout(() => setClaimStatus((s) => (s === "success" ? "idle" : s)), 3000);
+  }, [addToHistory, refetchBalance, successToast, t, txHash]);
+
+  const trySponsor = useCallback(async () => {
+    if (!address) return;
+    try {
+      const res = await fetch("/api/sponsor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "claim_usdc", userAddress: address }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Sponsor failed");
+      const { digest } = await res.json();
+      onClaimSuccess(digest);
+    } catch (fallbackErr) {
+      setClaimStatus("error");
+      errorToast(fallbackErr instanceof Error ? fallbackErr.message : t("faucet.error"));
+      setTimeout(() => setClaimStatus("idle"), 2500);
+    }
+  }, [address, errorToast, onClaimSuccess, t]);
+
+  const lastErrorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!txHash || txHash === lastSavedHash.current) return;
+    lastSavedHash.current = txHash;
+    if (claimStatus !== "loading") return;
+    onClaimSuccess(txHash);
+  }, [txHash, claimStatus, onClaimSuccess]);
+
+  // Watch for mutation errors to trigger sponsor fallback
+  useEffect(() => {
+    if (!claimError || claimStatus !== "loading") return;
+    const msg = claimError.message;
+    if (msg === lastErrorRef.current) return;
+    lastErrorRef.current = msg;
+    trySponsor();
+  }, [claimError, claimStatus, trySponsor]);
+
+  const handleClaimDirect = useCallback(() => {
+    if (!address || cooldownActive || isWalletClaiming || !faucetId) return;
+
+    const last = getLastClaimTime();
+    if (last && Date.now() - last < FAUCET_COOLDOWN_S * 1000) {
+      setCooldown(Math.ceil((FAUCET_COOLDOWN_S * 1000 - (Date.now() - last)) / 1000));
+      errorToast("Please wait for cooldown to expire");
+      return;
+    }
+
+    setClaimStatus("loading");
+    lastSavedHash.current = undefined;
+    lastErrorRef.current = null;
+    claimUSDC(faucetId);
+  }, [address, cooldownActive, isWalletClaiming, faucetId, claimUSDC, errorToast]);
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
@@ -224,7 +326,52 @@ export default function FaucetPage() {
                   </div>
                 </div>
 
-                <FaucetCooldownButton variant="full" onClaimed={handleClaimed} />
+                <div className="relative">
+                  <button
+                    onClick={handleClaimDirect}
+                    disabled={cooldownActive || claimStatus === "loading" || isWalletClaiming || !faucetId}
+                    className={`protocol-font relative w-full border-[3px] border-[#0a0a0a] px-5 py-3 text-xs font-black shadow-[10px_10px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+                      claimStatus === "success"
+                        ? "bg-[#ccfbf1] text-[#0a0a0a]"
+                        : cooldownActive
+                        ? "bg-[#fef9c3] text-[#0a0a0a]"
+                        : "bg-[#38bdf8] text-[#0a0a0a] hover:bg-[#0a0a0a] hover:text-[#38bdf8]"
+                    }`}
+                  >
+                    {claimStatus === "loading" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
+                        Confirming in wallet...
+                      </span>
+                    ) : claimStatus === "success" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <CheckCircle2 className="size-3.5" />
+                        Minted 500 USDC!
+                      </span>
+                    ) : cooldownActive ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Clock className="size-3.5" />
+                        {String(Math.floor(cooldown / 3600)).padStart(2, "0")}:
+                        {String(Math.floor((cooldown % 3600) / 60)).padStart(2, "0")}:
+                        {String(cooldown % 60).padStart(2, "0")}
+                      </span>
+                    ) : (
+                      <span>Claim 500 USDC →</span>
+                    )}
+                  </button>
+                  {cooldownActive && (
+                    <div
+                      className="absolute bottom-0 left-0 h-1 bg-[#0a0a0a] opacity-30 transition-all duration-1000"
+                      style={{ width: `${(cooldown / FAUCET_COOLDOWN_S) * 100}%` }}
+                    />
+                  )}
+                </div>
+                {cooldownActive && (
+                  <p className="mt-3 text-center text-xs font-semibold text-[#444444]">
+                    Next claim available in <strong className="text-[#0a0a0a]">{String(Math.floor(cooldown / 3600)).padStart(2, "0")}:{String(Math.floor((cooldown % 3600) / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</strong>. Need more USDC? Get SUI first above, then claim again.
+                  </p>
+                )}
+                </div>
               </div>
 
               <p className="protocol-font mb-3 mt-10 text-xs font-black uppercase tracking-[0.18em] text-[#444444]">

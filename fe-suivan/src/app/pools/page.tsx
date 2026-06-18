@@ -11,8 +11,10 @@ import {
   useAllPoolsWithInfo,
   useJoinAndDeposit,
   useCreatePool,
+  useLinkPoolMetadata,
   useUserUSDCcoins,
   useUSDCBalance,
+  useClaimUSDC,
   FormattedPool,
 } from "@/hooks/useSuiContracts";
 import { useFaucetId, IS_MAINNET } from "@/config/sui";
@@ -69,6 +71,7 @@ export default function PoolsPage() {
 
   const { joinAndDeposit, isPending: joining } = useJoinAndDeposit();
   const { createPool, isPending: creating } = useCreatePool();
+  const { linkMetadata } = useLinkPoolMetadata();
   const creatingRef = useRef(false);
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();

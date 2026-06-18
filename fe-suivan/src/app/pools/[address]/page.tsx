@@ -19,7 +19,7 @@ import {
   usePoolInfo,
   useParticipantInfo,
   useParticipantList,
-  useJoinAndDeposit,
+  useJoinPool,
   useMakeDeposit,
   useStartPool,
   useSelectWinner,
@@ -81,9 +81,6 @@ export default function PoolDetailPage() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showSuccessCelebration, setShowSuccessCelebration] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: "", message: "" });
-  const [agentRunning, setAgentRunning] = useState(false);
-  const [agentStatus, setAgentStatus] = useState("");
-  const [claimAllPhase, setClaimAllPhase] = useState<"idle" | "claiming_payout" | "claiming_collateral">("idle");
   const [joinCoinId, setJoinCoinId] = useState("");
   const [depositCoinId, setDepositCoinId] = useState("");
   const { t } = useLanguage();
@@ -668,7 +665,7 @@ export default function PoolDetailPage() {
 
       {/* Make Deposit Modal */}
       {showDepositModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDepositModal(false)} />
           <div className={`${CARD_CLASS} relative w-full max-w-md max-h-[85vh] overflow-y-auto`}>
             <GrainOverlay />
