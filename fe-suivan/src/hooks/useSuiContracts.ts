@@ -124,7 +124,10 @@ function parsePoolFields(fields: Record<string, unknown>): SuiPoolInfo | null {
       poolStartTimeMs: Number((fields?.pool_start_time_ms as string) || 0),
       activeDepositors: Number((fields?.active_depositors_count as string) || 0),
       pendingWinnerPayouts,
-      gachaWinner: null as string | null,
+      gachaWinner: (() => {
+        const gachaVec = (fields?.gacha_winner as { fields?: { vec?: string[] } })?.fields?.vec;
+        return gachaVec && gachaVec.length > 0 ? gachaVec[0] : null;
+      })(),
       gachaPrize: yieldBalance,
       walrusMetadataBlobId: String((fields?.walrus_metadata_blob_id as string) || ""),
     };

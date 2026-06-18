@@ -20,6 +20,8 @@ const faqItems = [
   ["faq.q12", "faq.a12"],
   ["faq.q13", "faq.a13"],
   ["faq.q14", "faq.a14"],
+  ["faq.q15", "faq.a15"],
+  ["faq.q16", "faq.a16"],
 ] as const;
 
 export default function FAQPage() {

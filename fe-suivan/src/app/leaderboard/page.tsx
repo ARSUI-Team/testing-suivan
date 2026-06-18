@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronDown,
   Info,
+  Gift,
 } from "lucide-react";
 
 type Tier = "diamond" | "platinum" | "gold" | "silver" | "bronze";
@@ -516,8 +517,15 @@ export default function LeaderboardPage() {
               {t("leaderboard.cta")}
               <ArrowRight className="size-5" />
             </Link>
-          </div>
-        </div>
+                </div>
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-5 shadow-[12px_12px_0_#0a0a0a]">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Gift className="size-4 text-[#0a0a0a]" />
+                    <h3 className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("leaderboard.rulesGacha")}</h3>
+                  </div>
+                  <p className="text-sm font-semibold leading-6 text-[#333333]">{t("leaderboard.rulesGachaDesc")}</p>
+                </div>
+              </div>
       </section>
 
     </main>

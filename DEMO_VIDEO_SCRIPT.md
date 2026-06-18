@@ -113,11 +113,11 @@ Too expensive. Too complex. Not for real communities.
 
 **Card 3 — Verifiable Randomness:**
 - Dice icon → transforms into a lock
-- Text: "Seal Threshold Encryption — Provably Fair"
+- Text: "Seal Threshold Encryption — Dual Purpose"
 
-> **Three:** Verifiable randomness via Seal threshold encryption. Validators cannot manipulate the draw. The winner is chosen fairly. Provably.
+> **Three:** Verifiable randomness via Seal threshold encryption. Used for both cycle winner selection and the gacha jackpot draw — different cryptographic salts, same provable fairness. Validators cannot manipulate either draw.
 
-> *Tiga: Randomness verifiable lewat Seal threshold encryption. Validator tidak bisa manipulasi. Pemenang dipilih adil. Terbukti.*
+> *Tiga: Randomness verifiable lewat Seal threshold encryption. Dipakai untuk pemilihan winner siklus dan undian jackpot gacha — salt kriptografis berbeda, keadilan sama. Validator tidak bisa manipulasi.*
 
 **Card 4 — DeFi Yield:**
 - Growth chart icon → DeepBook V3 logo
@@ -214,7 +214,7 @@ Open `/leaderboard` → tier system, points, yield earned. Open `/simulator` →
 
 ---
 
-## ACT 5 — TECH DEEP DIVE (4:05 – 4:30)
+## ACT 5 — TECH DEEP DIVE (4:05 – 4:35)
 
 **VISUAL:** Simplified architecture diagram:
 
@@ -248,13 +248,17 @@ Open `/leaderboard` → tier system, points, yield earned. Open `/simulator` →
 
 > *Di balik layar: sembilan modul Move. 120 test. Dua audit keamanan independen. Semua temuan — fixed.*
 
+> Leaderboard scoring with anti-gaming safeguards. Miss two payments — your score saturates to zero. Zero-score members are excluded from the gacha jackpot. The yield pool belongs to honest participants only.
+
+> *Leaderboard scoring dengan proteksi anti-gaming. Dua kali tidak bayar — skor saturasi ke nol. Skor nol = tidak bisa ikut undian jackpot. Yield pool hanya untuk peserta jujur.*
+
 > Capability-based auth — no sender checks. Hot potato yield pattern — if a receipt isn't consumed in the same block, it aborts. Reentrancy? Impossible.
 
 > *Capability-based auth — tanpa sender checks. Hot potato yield pattern — receipt harus dikonsumsi di blok yang sama, atau abort. Reentrancy? Impossible.*
 
 ---
 
-## ACT 6 — ROADMAP & CLOSING (4:30 – 5:00)
+## ACT 6 — ROADMAP & CLOSING (4:35 – 5:00)
 
 **VISUAL:** Timeline graphic + closing montage.
 

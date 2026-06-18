@@ -99,6 +99,10 @@ const en: Record<string, string> = {
 
   "faq.q14": "Where can I follow the project?",
   "faq.a14": "Join our community on Telegram (t.me/sui_van) and Discord (discord.gg/XxxM958bm). Follow @suivan_id on X/Twitter for updates. The codebase is open-source on GitHub. Suivan is a Sui Overflow 2026 hackathon project — we welcome feedback, contributors, and early testers.",
+  "faq.q15": "How does the gacha jackpot work?",
+  "faq.a15": "Every month, deposited contributions are deployed to earn yield via DeepBook V3 flash loan arbitrage and Sui DeFi protocols. The yield accumulates in a vault throughout the pool's lifetime. At the pool's end, all cumulative yield is distributed to ONE winner via weighted lottery (gacha). Your chance depends on your on-time payment score — each on-time payment earns leaderboard points, which convert to lottery tickets. The more tickets you hold, the higher your chance. Members who miss 2+ payments have their score reduced to zero and lose all gacha eligibility — the jackpot goes only to honest participants.",
+  "faq.q16": "How is my leaderboard tier calculated?",
+  "faq.a16": "Your tier is based on payment punctuality, yield earned, and number of pools joined. Paying between the 1st–10th earns the most points, 11th–15th earns medium, 16th–20th earns low, and after the 20th counts as late. Your cumulative points determine your tier: Bronze (0+), Silver (100+), Gold (200+), Platinum (300+), Diamond (400+). Higher tiers multiply your collateral yield at the pool's end. Points also determine your gacha tickets — but note: leaderboard points and gacha tickets are two separate reward systems.",
 
   "faq.contactTitle": "Still have questions?",
   "faq.contactDesc": "Join the Suivan community channels for updates, feedback, and collaboration.",
@@ -307,6 +311,8 @@ const en: Record<string, string> = {
   "leaderboard.rulesDrawingDesc": "Every 25th, one member is randomly selected to receive the total pot (participants × monthly contribution). All members remain in the cycle.",
   "leaderboard.rulesYield": "Yield Calculation",
   "leaderboard.rulesYieldDesc": "Two yields at cycle end: (1) Collateral Yield — base return × tier multiplier. (2) Cumulative Yield — pooled from all monthly contributions. Higher tier = bigger multiplier.",
+  "leaderboard.rulesGacha": "Gacha Jackpot",
+  "leaderboard.rulesGachaDesc": "All cumulative yield from monthly deposits is collected into a jackpot. At the pool's end, one winner is drawn via weighted lottery. Your on-time payment score determines how many tickets you get — the more consistent you are, the higher your chance. Members who miss 2+ payments lose all eligibility.",
   "leaderboard.cta": "Join a Pool",
 
   "nav.simulator": "Simulator",
@@ -471,6 +477,10 @@ const id: Record<string, string> = {
 
   "faq.q14": "Di mana saya bisa mengikuti proyek ini?",
   "faq.a14": "Gabung komunitas kami di Telegram (t.me/sui_van) dan Discord (discord.gg/XxxM958bm). Ikuti @suivan_id di X/Twitter untuk update. Kode sumber open-source di GitHub. Suivan adalah proyek hackathon Sui Overflow 2026 — kami menyambut masukan, kontributor, dan penguji awal.",
+  "faq.q15": "Bagaimana cara kerja jackpot gacha?",
+  "faq.a15": "Setiap bulan, iuran yang disetor dideploy untuk menghasilkan yield melalui arbitrase flash loan DeepBook V3 dan protokol DeFi Sui. Yield terkumpul di vault selama masa pool. Di akhir pool, semua yield kumulatif dibagikan ke SATU pemenang via lotere berbobot (gacha). Peluang Anda bergantung pada skor pembayaran tepat waktu — setiap pembayaran tepat waktu menghasilkan poin leaderboard, yang dikonversi menjadi tiket lotere. Semakin banyak tiket, semakin tinggi peluang. Anggota yang melewatkan 2+ pembayaran skornya menjadi nol dan kehilangan semua eligibilitas gacha — jackpot hanya untuk peserta jujur.",
+  "faq.q16": "Bagaimana tingkat (tier) leaderboard saya dihitung?",
+  "faq.a16": "Tingkat Anda berdasarkan ketepatan pembayaran, yield yang dihasilkan, dan jumlah pool yang diikuti. Membayar antara tanggal 1–10 mendapat poin terbanyak, 11–15 menengah, 16–20 rendah, setelah tanggal 20 dianggap terlambat. Poin kumulatif menentukan tingkat: Bronze (0+), Silver (100+), Gold (200+), Platinum (300+), Diamond (400+). Tingkat lebih tinggi melipatgandakan yield collateral di akhir pool. Poin juga menentukan tiket gacha — namun perlu dicatat: poin leaderboard dan tiket gacha adalah dua sistem reward terpisah.",
 
   "faq.contactTitle": "Masih ada pertanyaan?",
   "faq.contactDesc": "Bergabunglah dengan saluran komunitas Suivan untuk pembaruan, umpan balik, dan kolaborasi.",
@@ -679,6 +689,8 @@ const id: Record<string, string> = {
   "leaderboard.rulesDrawingDesc": "Setiap tanggal 25, satu anggota dipilih secara acak untuk menerima total pot (peserta × iuran bulanan). Semua anggota tetap dalam siklus.",
   "leaderboard.rulesYield": "Perhitungan Yield",
   "leaderboard.rulesYieldDesc": "Dua yield di akhir siklus: (1) Yield Collateral — hasil dasar × pengali tingkat. (2) Yield Kumulatif — dikumpulkan dari semua iuran bulanan. Tingkat lebih tinggi = pengali lebih besar.",
+  "leaderboard.rulesGacha": "Jackpot Gacha",
+  "leaderboard.rulesGachaDesc": "Semua yield kumulatif dari iuran bulanan dikumpulkan menjadi jackpot. Di akhir pool, satu pemenang diundi via lotere berbobot. Skor pembayaran tepat waktu menentukan jumlah tiket Anda — semakin konsisten, semakin tinggi peluang. Anggota yang melewatkan 2+ pembayaran kehilangan semua eligibilitas gacha.",
   "leaderboard.cta": "Gabung Pool",
 
   "nav.simulator": "Simulator",
