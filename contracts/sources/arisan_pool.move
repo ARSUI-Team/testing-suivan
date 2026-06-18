@@ -1209,7 +1209,7 @@ module suivan::arisan_pool {
         let pool_id = object::id(pool);
         let new_leaderboard = if (current_leaderboard >= LEADERBOARD_SLASH_PENALTY) {
             current_leaderboard - LEADERBOARD_SLASH_PENALTY
-        } else { 1 };
+        } else { 0 };
         let executed_slash = if (current_collateral >= slash_amount) { slash_amount } else { current_collateral };
         let covered_cycle = executed_slash == slash_amount;
         let new_collateral = current_collateral - executed_slash;
