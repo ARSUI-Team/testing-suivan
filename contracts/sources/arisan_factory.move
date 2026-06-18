@@ -1,12 +1,12 @@
 /// Module: arisan_factory
 /// Factory for creating ArisanPool instances with predefined templates
-module archa::arisan_factory {
+module suivan::arisan_factory {
     use sui::event;
     use sui::table::{Self, Table};
     use sui::coin::Coin;
     use std::string::{Self, String};
 
-    use archa::arisan_pool;
+    use suivan::arisan_pool;
 
     // ====== Constants ======
     const E_INVALID_TEMPLATE: u64 = 101;

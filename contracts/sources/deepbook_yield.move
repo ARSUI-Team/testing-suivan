@@ -14,12 +14,12 @@
 /// 5. If loss: tx aborts (FlashLoan cannot be unwrapped → rollback)
 ///
 /// PTB composition: flash_arbitrage → deposit_yield_profit_usdc (if USDC)
-module archa::deepbook_yield {
+module suivan::deepbook_yield {
     use sui::coin::{Self, Coin};
     use sui::clock::Clock;
     use sui::event;
 
-    use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap, YieldWithdrawalReceipt};
+    use suivan::arisan_pool::{Self, ArisanPool, PoolAdminCap, YieldWithdrawalReceipt};
     use deepbook::pool::{Self as deepbook_pool, Pool as DeepBookPool};
     use deepbook::balance_manager::{Self as balance_manager, BalanceManager};
     use token::deep::DEEP;
@@ -182,7 +182,7 @@ module archa::deepbook_yield {
     // ====== Yield Deposit ======
 
     /// Deposit flash arbitrage profit (USDC) to Archa pool yield_balance
-    /// Call this after flash_arbitrage when the profit coin is TEST_USDC
+    /// Call this after flash_arbitrage when the profit coin is USDC
     /// PTB-composable: chain after flash_arbitrage in same transaction
     public fun deposit_yield_profit_usdc<CoinType>(
         cap: &PoolAdminCap,

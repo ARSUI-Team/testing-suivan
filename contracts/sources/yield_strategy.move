@@ -14,13 +14,13 @@
 /// - M2: Minimum deposit check to prevent dust/zero shares
 /// - C-02: Removed simulated yield — total_deposits always matches actual balance
 #[allow(unused_field)]
-module archa::yield_strategy {
+module suivan::yield_strategy {
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use sui::event;
     use sui::table::{Self, Table};
 
-    use archa::test_usdc::TEST_USDC;
+    use wormhole_usdc::coin::COIN as USDC;
 
 
 
@@ -68,7 +68,7 @@ module archa::yield_strategy {
 
     fun init(otw: YIELD_STRATEGY, ctx: &mut TxContext) {
         let strategy_id = object::new(ctx);
-        let strategy = YieldStrategy<TEST_USDC> {
+        let strategy = YieldStrategy<USDC> {
             id: strategy_id,
             owner: ctx.sender(),
             ai_optimizer: ctx.sender(),

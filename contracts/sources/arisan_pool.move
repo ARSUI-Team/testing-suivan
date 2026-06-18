@@ -9,7 +9,7 @@
 /// - H1: deposits_this_cycle bool + last_deposit_cycle u64
 /// - C3: end_pool_internal sets flags; TODO: withdraw from strategy before ending
 #[allow(unused_field, lint(self_transfer))]
-module archa::arisan_pool {
+module suivan::arisan_pool {
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use sui::event;
