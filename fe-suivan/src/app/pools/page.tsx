@@ -26,6 +26,7 @@ import { PoolName } from "@/components/PoolName";
 import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
+import CreatePoolWizard from "@/components/CreatePoolWizard";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
@@ -732,170 +733,84 @@ export default function PoolsPage() {
         onBridgeComplete={handleBridgeComplete}
       />
 
-      {/* Create Pool Modal */}
+      {/* Create Pool Wizard */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowCreateModal(false)} />
-          <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[8px_8px_0_#0a0a0a]">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="protocol-font text-xs font-black uppercase tracking-[0.18em]" style={{ color: "#e8180a" }}>create_pool</p>
-                <h3 className="mt-1 text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("pools.createTitle")}</h3>
-              </div>
-              <button onClick={() => setShowCreateModal(false)} className="grid size-10 place-items-center border-[3px] border-[#0a0a0a] bg-[#f8672d] shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mb-6 space-y-4">
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Pool Name</label>
-                <input
-                  type="text"
-                  maxLength={64}
-                  value={createForm.poolName}
-                  onChange={(e) => setCreateForm({ ...createForm, poolName: e.target.value })}
-                  placeholder="My Awesome Pool"
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Description (optional)</label>
-                <textarea
-                  maxLength={500}
-                  value={createForm.poolDescription}
-                  onChange={(e) => setCreateForm({ ...createForm, poolDescription: e.target.value })}
-                  placeholder="Brief description of your pool..."
-                  rows={3}
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.deposit")} (USDC)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={createForm.depositAmount}
-                  onChange={(e) => setCreateForm({ ...createForm, depositAmount: Number(e.target.value) })}
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Max Participants (2-50)</label>
-                <input
-                  type="number"
-                  min="2"
-                  max="50"
-                  value={createForm.maxParticipants}
-                  onChange={(e) => setCreateForm({ ...createForm, maxParticipants: Number(e.target.value) })}
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Cycle Duration</label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={IS_MAINNET ? 30 : 1}
-                    value={createForm.cycleDuration}
-                    onChange={(e) => setCreateForm({ ...createForm, cycleDuration: Number(e.target.value) })}
-                    className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                  />
-                  <select
-                    value={createForm.cycleUnit}
-                    onChange={(e) => setCreateForm({ ...createForm, cycleUnit: e.target.value as "days" | "minutes" })}
-                    className="min-h-[44px] border-[3px] border-[#0a0a0a] bg-[#ffffff] px-3 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                  >
-                    {!IS_MAINNET && <option value="minutes">Minutes</option>}
-                    <option value="days">Days</option>
-                  </select>
-                </div>
-              </div>
-
-              {usdcBalance > 0 ? (
-                <div className="border-[3px] border-[#0a0a0a] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>USDC Balance</p>
-                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {usdcBalance.toFixed(2)} USDC
-                  </p>
-                </div>
-              ) : (
-                <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>No USDC Balance</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "#333333" }}>Get free test USDC first to create a pool.</p>
-                  <Link
-                    href="/faucet"
-                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
-                  >
-                    Get 500 USDC from Faucet →
-                  </Link>
-                </div>
-              )}
-
-              <div className="space-y-2 border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#333333" }}>Total Pool per Cycle</span>
-                  <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {createForm.depositAmount * createForm.maxParticipants} USDC
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#333333" }}>Total Duration</span>
-                  <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {createForm.cycleUnit === "minutes"
-                      ? (createForm.cycleDuration * createForm.maxParticipants < 60
-                          ? `${createForm.cycleDuration * createForm.maxParticipants}m`
-                          : `${Math.round(createForm.cycleDuration * createForm.maxParticipants / 60)}h`)
-                      : `${createForm.cycleDuration * createForm.maxParticipants} days`}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#333333" }}>{t("pools.requiredCollateral")}</span>
-                  <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {getRequiredCollateralAmount(
-                      createForm.depositAmount,
-                      createForm.maxParticipants,
-                      COLLATERAL_MULTIPLIER,
-                    )} USDC
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleCreatePool}
-              disabled={creating || linkingMeta || publishingMetadata}
-              className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] ${
-                creating || linkingMeta || publishingMetadata
-                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#333333] opacity-50"
-                  : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"
-              }`}
-            >
-              {publishingMetadata ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Publishing metadata...
-                </span>
-              ) : creating ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Creating pool...
-                </span>
-              ) : linkingMeta ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Linking metadata...
-                </span>
-              ) : "Create Pool"}
-            </button>
-          </div>
-        </div>
+        <CreatePoolWizard
+          isOpen={showCreateModal}
+          usdcBalance={usdcBalance}
+          usdcCoinId={createForm.usdcCoinId || usdcCoins[0]?.coinObjectId || ""}
+          onClose={() => setShowCreateModal(false)}
+          onComplete={async (form) => {
+            if (!form.usdcCoinId) {
+              errorToast("Validation", "Please select a USDC coin first");
+              return;
+            }
+            let blobId: string | null = null;
+            if (form.poolName.trim()) {
+              blobId = await publishPoolMetadata(
+                form.poolName.trim(),
+                form.poolDescription.trim(),
+                account?.address || "",
+                "",
+              );
+              if (!blobId) {
+                errorToast("Metadata Publish Failed", "Pool was not created because the custom name could not be uploaded.");
+                return;
+              }
+            }
+            const durationMs = form.cycleUnit === "minutes"
+              ? form.cycleDuration * 60 * 1000
+              : form.cycleDuration * 24 * 60 * 60 * 1000;
+            createPool(
+              form.depositAmount,
+              form.maxParticipants,
+              durationMs,
+              form.usdcCoinId,
+              async (response) => {
+                const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
+                if (!blobId) {
+                  await waitForDigest(suiClient, response.digest);
+                  setShowCreateModal(false);
+                  resetCreateForm();
+                  refetchPools();
+                  successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
+                  return;
+                }
+                const poolChange = findObjectChange(response, "::ArisanPool");
+                const capChange = findObjectChange(response, "::PoolAdminCap");
+                if (!poolChange?.objectId || !capChange?.objectId) {
+                  await waitForDigest(suiClient, response.digest);
+                  setShowCreateModal(false);
+                  resetCreateForm();
+                  refetchPools();
+                  errorToast("Pool Created Without Name", `The pool was created, but its metadata could not be linked.${createTxMsg}`);
+                  return;
+                }
+                linkMetadata(
+                  poolChange.objectId,
+                  blobId,
+                  capChange.objectId,
+                  async (linkResponse) => {
+                    await waitForDigest(suiClient, linkResponse.digest);
+                    setShowCreateModal(false);
+                    resetCreateForm();
+                    refetchPools();
+                    successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
+                  },
+                  (linkError) => {
+                    setShowCreateModal(false);
+                    resetCreateForm();
+                    refetchPools();
+                    errorToast("Pool Created Without Name", linkError?.message || `The pool was created, but the custom name could not be linked.${createTxMsg}`);
+                  }
+                );
+              },
+              (createError) => {
+                errorToast("Create Pool Failed", createError?.message || "Transaction failed");
+              },
+            );
+          }}
+        />
       )}
 
     </main>
