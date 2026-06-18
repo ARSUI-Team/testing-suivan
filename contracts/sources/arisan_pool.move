@@ -1312,7 +1312,7 @@ module suivan::arisan_pool {
     /// Deposit yield profit into pool's yield_balance
     /// Called by external yield modules (e.g. deepbook_yield) after profitable arbitrage
     /// Requires PoolAdminCap to authorize
-    /// public(package) — only callable within archa package (S1-2/H-03 fix)
+    /// public(package) — only callable within suivan package (S1-2/H-03 fix)
     public(package) fun deposit_yield_balance<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
@@ -1326,7 +1326,7 @@ module suivan::arisan_pool {
 
     /// Deposit pool funds directly (for seeding or topping up pool_funds_balance)
     /// Does NOT require a receipt — this is for adding new funds, not returning borrowed ones
-    /// public(package) — only callable within archa package
+    /// public(package) — only callable within suivan package
     public(package) fun deposit_pool_funds<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,
@@ -1340,7 +1340,7 @@ module suivan::arisan_pool {
     /// Withdraw pool funds for yield generation (flash loan / deposit to external protocol)
     /// Returns (Coin, YieldWithdrawalReceipt) — receipt MUST be consumed in same PTB
     /// YieldWithdrawalReceipt has no abilities → tx aborts if not returned
-    /// public(package) — only callable within archa package (S1-2/H-03 fix)
+    /// public(package) — only callable within suivan package (S1-2/H-03 fix)
     /// Sets strategy_id as sentinel to prevent ending pool while funds deployed
     public(package) fun withdraw_pool_funds_for_yield<CoinType>(
         cap: &PoolAdminCap,
@@ -1370,7 +1370,7 @@ module suivan::arisan_pool {
     /// Splits principal → pool_funds_balance, profit → yield_balance
     /// Consumes YieldWithdrawalReceipt (hot potato) — enforces return in same PTB
     /// Clears strategy_id sentinel to allow end_pool
-    /// public(package) — only callable within archa package (S1-2/H-03 fix)
+    /// public(package) — only callable within suivan package (S1-2/H-03 fix)
     public(package) fun return_pool_funds_from_yield<CoinType>(
         cap: &PoolAdminCap,
         pool: &mut ArisanPool<CoinType>,

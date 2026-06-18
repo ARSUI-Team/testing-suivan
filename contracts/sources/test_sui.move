@@ -20,7 +20,7 @@ module suivan::test_sui {
             b"TEST_SUI".to_string(),
             b"Test SUI".to_string(),
             b"Mock SUI for Archa testing".to_string(),
-            b"https://archa.app/logo.png".to_string(),
+            b"https://suivan.fun/logo.png".to_string(),
             ctx,
         );
 
