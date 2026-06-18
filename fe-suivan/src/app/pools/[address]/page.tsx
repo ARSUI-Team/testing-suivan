@@ -83,6 +83,7 @@ export default function PoolDetailPage() {
   const [successMessage, setSuccessMessage] = useState({ title: "", message: "" });
   const [agentRunning, setAgentRunning] = useState(false);
   const [agentStatus, setAgentStatus] = useState("");
+  const [claimAllPhase, setClaimAllPhase] = useState<"idle" | "claiming_payout" | "claiming_collateral">("idle");
   const [joinCoinId, setJoinCoinId] = useState("");
   const [depositCoinId, setDepositCoinId] = useState("");
   const { t } = useLanguage();
