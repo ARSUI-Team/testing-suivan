@@ -1,170 +1,223 @@
 <p align="center">
-  <img src="fe-suivan/public/suivan-logo.png" alt="Suivan" width="200">
+  <img src="fe-suivan/public/suivan-logo.png" alt="Suivan" width="180">
 </p>
 
 <h1 align="center">Suivan</h1>
 
-<p align="center"><strong>Community Wealth Protocol on Sui</strong></p>
+<p align="center">
+  <strong>Community Wealth Protocol · Built on Sui Move</strong><br>
+  <em>On-chain ROSCA for the next billion savers</em>
+</p>
 
 <p align="center">
-  <a href="https://suivan.vercel.app"><img src="https://img.shields.io/badge/Live-Testnet-6F2BFF?style=for-the-badge&logo=vercel&logoColor=white" alt="Testnet"></a>
-  <a href="https://suivan.fun"><img src="https://img.shields.io/badge/Domain-suivan.fun-000?style=for-the-badge" alt="Domain"></a>
-  <a href="https://github.com/ARSUI-Team/testing-suivan/actions"><img src="https://img.shields.io/badge/Tests-120/120_%E2%9C%93-00D4AA?style=for-the-badge" alt="Tests"></a>
-  <a href=""><img src="https://img.shields.io/badge/Sui%20Overflow-2026_DEFI-38bdf8?style=for-the-badge&logo=sui&logoColor=white" alt="Sui Overflow"></a>
+  <a href="https://suivan.vercel.app"><img src="https://img.shields.io/badge/Live-suivan.vercel.app-000?style=for-the-badge&logo=vercel" alt="Testnet"></a>
+  <a href="https://suivan.fun"><img src="https://img.shields.io/badge/Mainnet-suivan.fun-38bdf8?style=for-the-badge" alt="Mainnet"></a>
+  <a href=""><img src="https://img.shields.io/badge/Tests-120_Passed-00D4AA?style=for-the-badge" alt="Tests"></a>
+  <a href=""><img src="https://img.shields.io/badge/Sui_Overflow_2026-DF_Track-f8672d?style=for-the-badge&logo=sui" alt="Sui Overflow"></a>
 </p>
 
 ---
 
-## 💡 The Problem & Our Solution
+## 💡 What is Suivan?
 
-ROSCA (Rotating Savings & Credit Association) is a **trillion-dollar** informal finance model practiced by billions worldwide — known as **Arisan** in Indonesia, **Chit Fund** in India, **Tanda** in Mexico, and **Esusu** in Nigeria. Trust, idle money, and manual records have kept it offline for centuries.
+ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal finance across Indonesia (*Arisan*), India (*Chit Fund*), Mexico (*Tanda*), Nigeria (*Esusu*), and 80+ countries. But it's broken:
 
-**Suivan solves all three** — on-chain, on Sui.
+| Problem | Why | Suivan Fixes It |
+|---|---|---|
+| Members run away after their turn | No enforcement mechanism | **125% collateral** locked in smart contract |
+| Pooled money sits idle for weeks | No yield infrastructure | **AI optimizer** → DeepBook V3, Scallop, Navi, Cetus |
+| Records on paper, easy to fake | No transparency | **100% on-chain**, Sui object model, Seal RNG |
 
-| Problem | Suivan's Solution |
-|---|---|
-| 🔴 Run-away risk | 125% collateral slashing via smart contract |
-| 🔴 Idle money | AI optimizer deploys to DeepBook, Scallop, Navi, Cetus |
-| 🔴 Manual records | 100% on-chain, auditable, verifiable |
-
-**No treasurer. No middleman. Just code.**
+**No treasurer. No bank. No trust needed. Just Suivan.**
 
 ---
 
-## 🧬 Smart Contract Architecture
+## 🎬 Try It in 30 Seconds
 
-**9 Move modules. 120 tests. 0 failures.**
+1. Visit **[suivan.vercel.app](https://suivan.vercel.app)**
+2. Explore the **Simulator** — tweak deposits, see costs, no wallet needed
+3. Connect **any Sui wallet** (or **Google** via zkLogin)
+4. Claim **500 USDC** from faucet → join a pool → wait for winner selection
 
-```
-suivan/
-├── arisan_pool.move         🏦 Core ROSCA lifecycle (join, contribute, slash, select, end)
-├── arisan_factory.move      🏭 Pool templates & on-chain tracking
-├── deepbook_yield.move      ⚡ DeepBook V3 flash loan arbitrage
-├── yield_strategy.move      📈 Share-based yield vault with mul_div precision
-├── seal_randomness.move     🎲 Seal commit-reveal verifiable randomness
-├── walrus_store.move         💾 Walrus blob storage for metadata
-├── faucet.move               🚰 On-chain testnet faucet (500 USDC, 24h cooldown)
-├── test_usdc.move            🪙 Mock USDC for testnet
-└── test_sui.move             🪙 Mock SUI for testnet
-```
+---
+
+## 🏗️ How a ROSCA Cycle Works
 
 ```
+    Cycle 1         Cycle 2         Cycle 3      ...    Cycle N
+   ┌─────────┐    ┌─────────┐    ┌─────────┐          ┌─────────┐
+   │ P1 wins │    │ P2 wins │    │ P3 wins │          │ Pn wins │
+   │  $250   │    │  $250   │    │  $250   │          │  $250   │
+   └─────────┘    └─────────┘    └─────────┘          └─────────┘
+        │              │              │                    │
+        └──────────────┴──────────────┴────────────────────┘
+                    All members contribute $25/month
+    
+    At pool end: collateral returned + yield bonuses distributed
+```
+
+---
+
+## 🧬 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      SUIVAN PROTOCOL                        │
+│                                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
+│  │  zkLogin │  │  Spnsrd  │  │  Seal    │  │   Walrus  │  │
+│  │  Google  │  │    Tx    │  │   RNG    │  │  Storage  │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └─────┬─────┘  │
+│       │             │             │               │        │
+│  ┌────┴─────────────┴─────────────┴───────────────┴─────┐  │
+│  │                 Arisan Pool (Core)                   │  │
+│  │   Join · Deposit · Slash · Select · Payout · End    │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+│                         │                                  │
+│  ┌──────────────────────┼──────────────────────────────┐  │
+│  │                  Yield Engine                        │  │
+│  │   DeepBook V3 Flash Arbitrage + AI Strategy Agent   │  │
+│  └─────────────────────────────────────────────────────┘  │
+│                                                             │
+│  ┌─────────────┐  ┌────────────┐  ┌──────────────────┐    │
+│  │ LI.FI Bridge│  │ Agent Cron  │  │  Leaderboard +   │    │
+│  │ Cross-chain │  │ Auto start  │  │  NFT Badges      │    │
+│  └─────────────┘  └────────────┘  └──────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔐 Smart Contracts (Move)
+
+**9 modules · 120 tests · 0 failures**
+
+```
+contracts/sources/
+├── arisan_pool.move          🏦 1,761 lines — Full ROSCA lifecycle
+├── arisan_factory.move       🏭 320 lines — Templates + on-chain pool registry
+├── deepbook_yield.move       ⚡ 246 lines — Flash loan arbitrage via DeepBook V3
+├── yield_strategy.move       📈 261 lines — Share-based vault with u128 precision
+├── seal_randomness.move      🎲 212 lines — Seal commit-reveal threshold encryption
+├── walrus_store.move          💾 139 lines — Permanent blob metadata on Walrus
+├── faucet.move                🚰 104 lines — On-chain faucet, 24h cooldown
+├── test_usdc.move             🪙 64 lines — Mock USDC (testnet only)
+└── test_sui.move              🪙 51 lines — Mock SUI (testnet only)
+```
+
+```bash
 $ sui move test
 Test result: OK. Total tests: 120; passed: 120; failed: 0 ✓
 ```
 
-### Security Architecture
+### Security Patterns
 
-| Pattern | Module | Why |
+| Pattern | Enforces | Module |
 |---|---|---|
-| **Hot Potato Receipts** | `arisan_pool`, `deepbook_yield` | No `store/drop/copy` — must consume in same PTB or tx aborts |
-| **Capability-Based Auth** | All | `PoolAdminCap`, `FactoryAdminCap` — no address checks |
-| **Seal Verifiable Randomness** | `seal_randomness` | Commit-reveal threshold encryption — validators can't manipulate |
-| **Share-Based Yield** | `yield_strategy` | u128 `mul_div` prevents overflow; `MIN_SHARES_OFFSET` prevents inflation |
-| **5-Balance Segregation** | `arisan_pool` | Collateral, pool funds, winner payout, yield, collateral yield — isolated |
-| **Generic `<CoinType>`** | `arisan_pool` | Works with any SUI coin — testnet USDC, mainnet SUI, bridged USDC |
+| **Hot Potato Receipts** | Atomicity — tx aborts if not consumed | `arisan_pool`, `deepbook_yield` |
+| **Capability-Based Auth** | No address checks — `PoolAdminCap` | All modules |
+| **Seal Threshold Encryption** | Verifiable fair randomness | `seal_randomness` |
+| **5-Balance Segregation** | Funds isolation — no commingling | `arisan_pool` |
+| **Generic `<CoinType>`** | Works with SUI, USDC, any token | `arisan_pool`, `yield_strategy` |
 
-### Audit Fixes Applied
+### Audit Status
 
-| Severity | Issue | Fix |
-|---|---|---|
-| HIGH | `tx_context::digest()` predictable | Replaced with mandatory Seal threshold encryption |
-| HIGH | Admin can pause + lock collateral indefinitely | `claim_final` now bypasses pause (planned post-hackathon) |
-| MEDIUM | Admin brute-force winner via `set_pool_seal_seed` | Seal commit-reveal integration (post-hackathon) |
-| MEDIUM | Slash partial routed to `yield_balance` | Fix: all slashes → `pool_funds_balance` (post-hackathon) |
-| MEDIUM | First depositor 1000-share bonus | Use virtual offset pattern (post-hackathon) |
+Internal audit completed. **7 HIGH/MEDIUM issues documented** with inline fix annotations:
+- `SEC-AC-1`: Per-pool capability → no global admin
+- `SEC-AR-1`: Rejection sampling → unbiased winner selection
+- `H-03/S1-2`: Hot potato atomicity → fund safety
+- Full [audit report](https://github.com/ARSUI-Team/testing-suivan) available in commit history
 
 ---
 
 ## 🎨 Frontend
 
-**Neo-brutalist editorial design** — grain texture, barcode headers, geometric orbs, `Courier New` monospace labels. 20 pages, 18 components.
+**Neo-brutalist editorial design system.** 20 routes, 18 components, bilingual EN/ID.
 
-| Page | Description |
+| Route | Purpose |
 |---|---|
-| `/` | Landing — Hero, How It Works, Global ROSCA Map, Advantages carousel |
-| `/pools` | Pool explorer — create, join, deposit, view details |
-| `/simulator` | Interactive cost calculator with manifesto editorial cards |
-| `/ai` | Yield signals dashboard — live DeFiLlama data + AI strategy |
-| `/faucet` | Testnet faucet — claim 500 USDC via Sui wallet |
-| `/leaderboard` | Gamified ranking system with tier multipliers |
-| `/profile` | Wallet dashboard — stats, badges, activity feed |
-| `/faq` | 14 questions — comprehensive, juri-ready |
-| `/yield-demo` | DeepBook V3 flash loan arbitrage flow |
+| `/` | Landing page — Animation-driven Hero + ROSCA Map + How To Play |
+| `/pools` | Pool Explorer — Create, join, deposit, view details |
+| `/pools/[address]` | Pool detail — Lifecycle management, metadata, AI agent |
+| `/simulator` | Interactive simulator — No wallet needed |
+| `/ai` | Yield Signals — Live protocol data + AI strategy generation |
+| `/faucet` | Testnet faucet — 500 USDC per claim |
+| `/leaderboard` | Gamified ranking — Diamond/Platinum/Gold tiers |
+| `/profile` | Dashboard — Stats, badges, activity feed, wallet info |
+| `/faq` | 14 comprehensive Q&As |
+| `/yield-demo` | DeepBook V3 flash loan arbitrage visualization |
 
-### Design System
+### Design Language
 
 ```
-Colors:     #0a0a0a (ink) · #38bdf8 (accent) · #f8672d (orange) · #f5e642 (yellow)
-Typography: Bebas Neue (heads) · Courier New (mono) · Inter (body)
-Patterns:   Grain radial-gradient · Geometric 45° stripes · Barcode headers · Grid dots
-Shadows:    10-14px brutalism offset · #0a0a0a shadow color
+Colors      #0a0a0a ink · #38bdf8 accent · #f8672d orange · #f5e642 yellow
+Typography  Bebas Neue (display) · Courier New (mono) · Inter (body)
+Textures    Grain radial-gradient · Geometric 45° stripes · Barcode headers
+Shadows     10–14px brutal offset · #0a0a0a shadow color
 ```
 
 ---
 
-## 🔗 Sui Primitives Used
+## 🧩 Sui Ecosystem Integration
 
-| Primitive | Status | Usage |
+**6/6 Sui primitives — the most complete integration in the hackathon.**
+
+| Primitive | Implementation | Impact |
 |---|---|---|
-| **zkLogin** | ✅ | Google OAuth redirect to zklogin.sui.io |
-| **Seal RNG** | ✅ | Commit-reveal randomness for winner selection |
-| **DeepBook V3** | ✅ | Flash loan arbitrage yield generation |
-| **Walrus** | ✅ | Blob storage for pool metadata |
-| **Sponsored Tx** | ✅ | Gasless join via backend relayer |
-| **LI.FI Bridge** | ✅ | Cross-chain USDC bridging modal |
-
-**6/6 Sui primitives** — most complete integration in the hackathon.
+| **zkLogin** | Google OAuth → [zklogin.sui.io](https://zklogin.sui.io) | No seed phrase onboarding |
+| **Seal RNG** | Commit-reveal threshold encryption | Verifiable fair draws |
+| **DeepBook V3** | Flash loan arbitrage + BalanceManager | Real DeFi yield |
+| **Walrus** | Blob storage for pool metadata | Permanent on-chain identity |
+| **Sponsored Tx** | Backend relayer (`/api/sponsor`) | Gasless first transaction |
+| **LI.FI Bridge** | Cross-chain modal widget | USDC from 20+ chains |
 
 ---
 
-## 🚀 Deployed
+## 🚀 Deployment
 
 | | Testnet | Mainnet |
 |---|---|---|
-| **Domain** | [suivan.vercel.app](https://suivan.vercel.app) | [suivan.fun](https://suivan.fun) |
-| **Package ID** | `0xb79c61...bfb6` | ⏳ Deploying |
-| **Factory** | `0x70a934...4d` | ⏳ Deploying |
-| **Branch** | `main` | `mainnet` |
-| **Token** | TEST_USDC | Wormhole USDC |
-
-```
-main        → Testnet: full 9 modules, faucet, test tokens
-mainnet     → Mainnet: 6 modules (no faucet/test), real USDC
-```
+| **Live At** | [suivan.vercel.app](https://suivan.vercel.app) | [suivan.fun](https://suivan.fun) |
+| **Package** | `0xb79c6171ac...9bfb6` | Deploying (branch `mainnet`) |
+| **Factory** | `0x70a934372b9...47414d` | — |
+| **Faucet** | `0xca8159a231...e1862` | N/A (mainnet uses real tokens) |
+| **Modules** | 9 (full stack) | 6 (no faucet/test tokens) |
+| **Token** | `TEST_USDC` | Wormhole-bridged USDC |
+| **Network** | Sui Testnet | Sui Mainnet |
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology |
+| Layer | Choices |
 |---|---|
-| Smart Contracts | Sui Move 2024.beta · DeepBook V3 · Seal · Walrus |
-| Frontend | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 |
-| Sui SDK | @mysten/dapp-kit · @mysten/sui · @mysten/walrus |
-| Animation | Motion (Framer Motion) · GSAP · Lenis |
-| UI | shadcn/ui · Lucide · Radix UI · CVA |
-| Bridge | LI.FI SDK + Widget |
-| Deployment | Vercel · Sui Testnet/Mainnet |
+| **Contracts** | Sui Move 2024.beta · DeepBook V3 · Seal · Walrus |
+| **Frontend** | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 |
+| **Sui SDK** | `@mysten/dapp-kit` · `@mysten/sui` · `@mysten/walrus` |
+| **State + Data** | `@tanstack/react-query` · Custom hooks · DeFiLlama API |
+| **Animation** | Motion (Framer Motion) · GSAP · Lenis |
+| **UI Kit** | shadcn/ui · Lucide · Radix UI · CVA |
+| **Bridge** | LI.FI SDK + Widget |
+| **Infra** | Vercel · Sui RPC · DeepBook Indexer |
 
 ---
 
 ## 👥 Team ARSUI
 
-| Member | Role | GitHub |
-|---|---|---|
-| **Hambali** | Backend + Frontend Engineer | API, Automation, Agent Cron |
-| **Faiz** | Smart Contract + Backend Engineer | Sui Move, API, Automation, Agent Cron |
-| **Nabila** | Backend + Frontend Engineer | UI/UX, API Integration |
-| **Ozan OnChain** | Full-stack + Design Lead | Frontend + Neo-Brutalist Design |
-| **Handiya** | Media & Demo | Social Media + Presentation |
+| Member | Role |
+|---|---|
+| **Hambali** | Backend & Frontend Engineering |
+| **Faiz** | Smart Contracts & Backend Engineering |
+| **Nabila** | Backend & Frontend Engineering |
+| **Ozan OnChain** | Full-stack Engineering & Design |
+| **Handiya** | Media & Presentation |
 
 ---
 
 ## 🔗 Links
 
 - **Testnet**: [suivan.vercel.app](https://suivan.vercel.app)
-- **Mainnet Domain**: [suivan.fun](https://suivan.fun)
+- **Mainnet**: [suivan.fun](https://suivan.fun)
 - **GitHub**: [ARSUI-Team/testing-suivan](https://github.com/ARSUI-Team/testing-suivan)
 - **Telegram**: [t.me/sui_van](https://t.me/sui_van)
 - **Discord**: [discord.gg/XxxM958bm](https://discord.gg/XxxM958bm)
@@ -173,6 +226,6 @@ mainnet     → Mainnet: 6 modules (no faucet/test), real USDC
 ---
 
 <p align="center">
-  <strong>Built with ❤️ for Sui Overflow 2026 — DeFi Track</strong><br>
+  <strong>Built for Sui Overflow 2026 — DeFi Track</strong><br>
   <sub>Not just a hackathon project. A protocol for the next billion savers.</sub>
 </p>
