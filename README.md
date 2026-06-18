@@ -135,19 +135,6 @@ mainnet     → Mainnet: 6 modules (no faucet/test), real USDC
 
 ---
 
-## 📊 Scoring (Self-Assessment)
-
-```
-Innovation & Originality:  ████████████████████░░░░  26/30
-Technical Execution:       ████████████████████████  30/35
-UX & Design:               █████████████████░░░░░░░  17/20
-Adoption & Impact:         █████████████░░░░░░░░░░░  13/15
-─────────────────────────────────────────────────────
-Weighted Total:            86/100
-```
-
----
-
 ## 🛠 Tech Stack
 
 | Layer | Technology |
