@@ -24,11 +24,11 @@ function parseSecretKey(raw: string): Uint8Array {
 }
 
 const SPONSOR_SECRET_KEY = process.env.SPONSOR_SECRET_KEY || "";
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0xb79c6171ac1ce89d864f1ce59329b8393d7f540e6e31b30cad0b71c54729bfb6";
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x63ad9b5fb0fa7f286ac05892182e4eb5896cc9165f9bd2b7d0ba1de87b81b515";
 
-const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || "0x14b081894ab1473c3f0440b82b6dc3204c1b29ae332ff18a585b8f1af5e0d825::test_usdc::TEST_USDC";
-const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0xe2587c933fdd1f4fa4bab04655a773a23d896bab18738e0efafdc6c6f36f5558";
-const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0xc7ab25a1c78d708441bf311929782fc95d32a9521027d4c3f868debdcfac46b4";
+const USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE || `${PACKAGE_ID}::test_usdc::TEST_USDC`;
+const FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID || "0x4484b70fdea8a4aefcfef9c6a33e13d975b2cde0ce6a2085cb8eb18cf5e6af32";
+const FAUCET_ID = process.env.NEXT_PUBLIC_FAUCET_ID || "0xb0d0ce15b6c58af48216877c9df20d0ed91409b093f214fe79b29e71c103e311";
 
 const MAX_GAS_BUDGET = 50_000_000;
 

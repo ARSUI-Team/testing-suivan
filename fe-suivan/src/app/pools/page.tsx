@@ -129,10 +129,28 @@ export default function PoolsPage() {
 
   const handleCreatePool = async () => {
     if (creatingRef.current) return;
-    if (!createForm.usdcCoinId) {
-      errorToast("Validation", "Please select a USDC coin first");
+    // Auto-pick first USDC coin if none selected
+    const coinId = createForm.usdcCoinId || usdcCoins[0]?.coinObjectId || "";
+    if (!coinId) {
+      errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
+
+    // Balance check: creator needs collateral + cycle-1 deposit
+    const requiredCollateralAmt = getRequiredCollateralAmount(
+      createForm.depositAmount,
+      createForm.maxParticipants,
+      DEFAULT_COLLATERAL_MULTIPLIER,
+    );
+    const totalRequired = requiredCollateralAmt + createForm.depositAmount;
+    if (usdcBalance < totalRequired) {
+      errorToast(
+        "Insufficient USDC",
+        `You need ${totalRequired.toFixed(2)} USDC (collateral ${requiredCollateralAmt.toFixed(2)} + cycle-1 deposit ${createForm.depositAmount.toFixed(2)}). Your balance is ${usdcBalance.toFixed(2)} USDC.`,
+      );
+      return;
+    }
+
     creatingRef.current = true;
 
     let blobId: string | null = null;
@@ -156,7 +174,7 @@ export default function PoolsPage() {
       createForm.depositAmount,
       createForm.maxParticipants,
       createForm.cycleUnit === "minutes" ? createForm.cycleDuration * 60 * 1000 : createForm.cycleDuration * 24 * 60 * 60 * 1000,
-      createForm.usdcCoinId,
+      coinId,
       blobId || "",
       async (response) => {
         creatingRef.current = false;
@@ -168,9 +186,9 @@ export default function PoolsPage() {
         refetchPools();
 
         if (blobId) {
-          successToast("Pool Created", `Your ROSCA pool is now live and the custom name has been applied.${createTxMsg}`);
+          successToast("Pool Created", `Your ROSCA pool is live with cycle-1 deposit paid and custom name applied.${createTxMsg}`);
         } else {
-          successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
+          successToast("Pool Created", `Your ROSCA pool is live — cycle-1 deposit paid automatically.${createTxMsg}`);
         }
       },
       (createError) => {
@@ -595,7 +613,7 @@ export default function PoolsPage() {
 
       {/* Join Pool Modal */}
       {selectedPool && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedPool(null)} />
           <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[8px_8px_0_#0a0a0a]">
             <div className="mb-6 flex items-center justify-between">

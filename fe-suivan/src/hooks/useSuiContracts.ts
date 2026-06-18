@@ -689,13 +689,17 @@ export function useCreatePool() {
       maxParticipants,
       COLLATERAL_MULTIPLIER,
     );
-    const [collateralCoin] = tx.splitCoins(tx.object(usdcCoinId), [tx.pure.u64(requiredCollateral * 1_000_000)]);
+    const [collateralCoin, depositCoin] = tx.splitCoins(tx.object(usdcCoinId), [
+      tx.pure.u64(requiredCollateral * 1_000_000),
+      tx.pure.u64(depositAmount * 1_000_000),
+    ]);
 
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::arisan_factory::create_custom_pool`,
       arguments: [
         tx.object(SUI_FACTORY_ID),
         collateralCoin,
+        depositCoin,
         tx.pure.u64(depositAmount * 1_000_000),
         tx.pure.u64(maxParticipants),
         tx.pure.u64(cycleDurationMs),

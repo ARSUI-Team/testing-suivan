@@ -170,8 +170,10 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::create_pool(
             collateral,
+            deposit,
             DEPOSIT_AMOUNT,
             MAX_PARTICIPANTS,
             CYCLE_DURATION_MS,
@@ -204,8 +206,10 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL - 1, scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
         arisan_pool::create_pool(
             collateral,
+            deposit,
             DEPOSIT_AMOUNT,
             MAX_PARTICIPANTS,
             CYCLE_DURATION_MS,
@@ -227,7 +231,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -248,7 +253,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -270,7 +276,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -291,7 +298,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -331,7 +339,8 @@ module suivan::arisan_pool_tests {
 
         // Create shared pool via entry function — A gets PoolAdminCap for this pool
         let collateral1 = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral1, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit1 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral1, deposit1, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // Create a separate unit-test pool with different pool_id, extract just the cap
         let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
@@ -366,7 +375,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -392,7 +402,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -408,8 +419,6 @@ module suivan::arisan_pool_tests {
         let clock = scenario.take_shared<Clock>();
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
 
         assert!(arisan_pool::has_deposited_this_cycle(&pool, @0xA) == true);
         assert!(arisan_pool::active_depositors(&pool) == 1);
@@ -440,7 +449,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -476,7 +486,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -485,18 +496,22 @@ module suivan::arisan_pool_tests {
         arisan_pool::join_pool(&mut pool, collateral_b, scenario.ctx());
         test_scenario::return_shared(pool);
 
-        // A starts pool, then deposits wrong amount
+        // A starts pool (A is auto-deposited at create_pool)
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
         let clock = scenario.take_shared<Clock>();
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
+        transfer::public_transfer(cap, @0xA);
+        test_scenario::return_shared(clock);
+        test_scenario::return_shared(pool);
 
+        // B deposits wrong amount (should fail with E_WRONG_DEPOSIT_AMOUNT)
+        scenario.next_tx(@0xB);
+        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let deposit = mint_coin(1_000_000, scenario.ctx());
         arisan_pool::make_deposit(&mut pool, deposit, scenario.ctx());
 
-        transfer::public_transfer(cap, @0xA);
-        test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
         scenario.end();
     }
@@ -511,7 +526,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(20_000_000, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 200, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 200, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -544,8 +560,8 @@ module suivan::arisan_pool_tests {
         assert!(arisan_pool::participant_missed(&p_b) == 1);
         assert!(arisan_pool::participant_is_active(&p_b) == true);
         assert!(arisan_pool::has_deposited_this_cycle(&pool, @0xB));
-        assert!(arisan_pool::active_depositors(&pool) == 1);
-        assert!(arisan_pool::total_pool_funds(&pool) == DEPOSIT_AMOUNT);
+        assert!(arisan_pool::active_depositors(&pool) == 2);
+        assert!(arisan_pool::total_pool_funds(&pool) == DEPOSIT_AMOUNT * 2);
 
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -559,7 +575,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 100, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 100, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -591,8 +608,8 @@ module suivan::arisan_pool_tests {
         assert!(arisan_pool::participant_collateral(&p_b) == 0);
         assert!(arisan_pool::participant_is_active(&p_b) == false);
         assert!(arisan_pool::has_deposited_this_cycle(&pool, @0xB));
-        assert!(arisan_pool::active_depositors(&pool) == 1);
-        assert!(arisan_pool::total_pool_funds(&pool) == DEPOSIT_AMOUNT);
+        assert!(arisan_pool::active_depositors(&pool) == 2);
+        assert!(arisan_pool::total_pool_funds(&pool) == DEPOSIT_AMOUNT * 2);
 
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -608,7 +625,8 @@ module suivan::arisan_pool_tests {
 
         // Create shared pool — A gets cap for this pool
         let collateral = mint_coin(20_000_000, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 200, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 200, string::utf8(b""), option::none(), scenario.ctx());
 
         // Create separate unit-test pool, extract just the cap
         let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
@@ -691,7 +709,8 @@ module suivan::arisan_pool_tests {
 
         // Create pool with 2 participants, short cycle
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -708,8 +727,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -780,7 +797,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -821,7 +839,8 @@ module suivan::arisan_pool_tests {
 
         // Create shared pool — A gets cap for this pool
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // Create separate unit-test pool with different pool_id
         let (other_pool, other_cap) = arisan_pool::test_create_pool_for_unit_test<TEST_USDC>(
@@ -870,7 +889,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -891,11 +911,6 @@ module suivan::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         // ====== Cycle 1 ======
-        scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
-        let dep_a1 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, dep_a1, scenario.ctx());
-        test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -969,7 +984,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -1007,7 +1023,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -1028,11 +1045,6 @@ module suivan::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         // ====== Cycle 1 ======
-        scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
-        let dep_a1 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, dep_a1, scenario.ctx());
-        test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1107,7 +1119,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 51, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 51, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.end();
     }
@@ -1118,7 +1131,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, 0, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, 0, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.end();
     }
@@ -1129,7 +1143,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, 0, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, 0, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.end();
     }
@@ -1140,7 +1155,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, 99, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, 99, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.end();
     }
@@ -1151,7 +1167,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 1, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 1, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.end();
     }
@@ -1176,7 +1193,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 100, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, 100, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1217,7 +1235,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(20_000_000, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1256,7 +1275,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(20_000_000, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1307,7 +1327,8 @@ module suivan::arisan_pool_tests {
 
         // Create pool with 2 participants
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -1328,11 +1349,6 @@ module suivan::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         // Cycle 1: A and B deposit
-        scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
-        test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1425,7 +1441,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B and C join
         scenario.next_tx(@0xB);
@@ -1452,11 +1469,6 @@ module suivan::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         // Only A and B deposit (C misses)
-        scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
-        test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1486,7 +1498,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1501,8 +1514,6 @@ module suivan::arisan_pool_tests {
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -1569,7 +1580,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 100, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, 100, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1603,8 +1615,6 @@ module suivan::arisan_pool_tests {
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(pool);
 
@@ -1636,7 +1646,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1651,8 +1662,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -1692,7 +1701,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1707,8 +1717,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -1760,7 +1768,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1775,8 +1784,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -1828,7 +1835,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1843,8 +1851,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -1887,7 +1893,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1901,8 +1908,6 @@ module suivan::arisan_pool_tests {
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -1961,7 +1966,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -1975,8 +1981,6 @@ module suivan::arisan_pool_tests {
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -2014,7 +2018,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2034,8 +2039,6 @@ module suivan::arisan_pool_tests {
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -2078,7 +2081,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2092,8 +2096,6 @@ module suivan::arisan_pool_tests {
         let mut clock = scenario.take_shared<Clock>();
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
         test_scenario::return_shared(pool);
@@ -2188,7 +2190,8 @@ module suivan::arisan_pool_tests {
     // Helper: create a pool with 2 participants (A creator, B joiner) via shared objects
     fun setup_two_participant_pool(scenario: &mut test_scenario::Scenario): ArisanPool<TEST_USDC> {
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let join_collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
@@ -2220,7 +2223,8 @@ module suivan::arisan_pool_tests {
     fun test_join_pool_insufficient_collateral() {
         let mut scenario = test_scenario::begin(@0xA);
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
@@ -2239,7 +2243,8 @@ module suivan::arisan_pool_tests {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
         let cap = scenario.take_from_sender<PoolAdminCap>();
@@ -2322,8 +2327,7 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
         test_scenario::return_shared(clock);
-        // A deposits for cycle 1
-        arisan_pool::make_deposit(&mut pool, mint_coin(DEPOSIT_AMOUNT, scenario.ctx()), scenario.ctx());
+        // A is auto-deposited at create_pool (cycle 1)
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(pool);
         // B also deposits for cycle 1
@@ -2390,7 +2394,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2419,7 +2424,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2443,7 +2449,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -2477,7 +2484,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, MAX_PARTICIPANTS, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2522,7 +2530,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // B joins
         scenario.next_tx(@0xB);
@@ -2543,11 +2552,6 @@ module suivan::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         // ====== Cycle 1 ======
-        scenario.next_tx(@0xA);
-        let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
-        let dep_a1 = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, dep_a1, scenario.ctx());
-        test_scenario::return_shared(pool);
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2692,7 +2696,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xA);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2717,7 +2722,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2752,7 +2758,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2781,7 +2788,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2796,8 +2804,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         arisan_pool::pause_pool(&cap, &mut pool);
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -2832,7 +2838,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(20_000_000, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, 200, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2872,7 +2879,8 @@ module suivan::arisan_pool_tests {
         init_random(&mut scenario);
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 2, 1_000_000, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         scenario.next_tx(@0xB);
         let mut pool = scenario.take_shared<ArisanPool<TEST_USDC>>();
@@ -2887,8 +2895,6 @@ module suivan::arisan_pool_tests {
         clock.set_for_testing(1000);
         arisan_pool::start_pool(&cap, &mut pool, &clock, scenario.ctx());
 
-        let deposit_a = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
-        arisan_pool::make_deposit(&mut pool, deposit_a, scenario.ctx());
         arisan_pool::pause_pool(&cap, &mut pool);
         transfer::public_transfer(cap, @0xA);
         test_scenario::return_shared(clock);
@@ -2925,7 +2931,8 @@ module suivan::arisan_pool_tests {
         scenario.create_system_objects();
 
         let collateral = mint_coin(REQUIRED_COLLATERAL, scenario.ctx());
-        arisan_pool::create_pool(collateral, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
+        let deposit = mint_coin(DEPOSIT_AMOUNT, scenario.ctx());
+        arisan_pool::create_pool(collateral, deposit, DEPOSIT_AMOUNT, 3, CYCLE_DURATION_MS, COLLATERAL_MULTIPLIER, string::utf8(b""), option::none(), scenario.ctx());
 
         // Pause
         scenario.next_tx(@0xA);

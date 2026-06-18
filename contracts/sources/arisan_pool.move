@@ -552,6 +552,7 @@ module suivan::arisan_pool {
     /// - Creator becomes first participant automatically
     public fun create_pool<CoinType>(
         collateral: Coin<CoinType>,
+        deposit_coin: Coin<CoinType>,
         deposit_amount: u64,
         max_participants: u64,
         cycle_duration_ms: u64,
@@ -571,6 +572,7 @@ module suivan::arisan_pool {
             collateral_multiplier,
         );
         assert!(coin::value(&collateral) >= required, E_COLLATERAL_TOO_LOW);
+        assert!(coin::value(&deposit_coin) == deposit_amount, E_WRONG_DEPOSIT_AMOUNT);
 
         let sender = ctx.sender();
         let pool_id = object::new(ctx);
@@ -590,8 +592,8 @@ module suivan::arisan_pool {
                 has_received_payout: false,
                 is_active: true,
                 joined_at_ms: 0, // will be set on start_pool
-                last_deposit_cycle: 0,
-                deposits_this_cycle: false,
+                last_deposit_cycle: 1, // creator pre-deposits cycle 1
+                deposits_this_cycle: true, // creator pre-deposits cycle 1
                 proportional_yield_earned: 0,
                 leaderboard_score: 10,  // join bonus
                 gacha_claimed: false,
@@ -620,9 +622,9 @@ module suivan::arisan_pool {
             participant_list,
             participants,
             cycle_winners: table::new(ctx),
-            active_depositors_count: 0,
+            active_depositors_count: 1, // creator pre-deposited cycle 1
             collateral_balance: coin::into_balance(collateral),
-            pool_funds_balance: balance::zero(),
+            pool_funds_balance: coin::into_balance(deposit_coin),
             winner_payout_balance: balance::zero(),
             yield_balance: balance::zero(),
             collateral_yield_balance: balance::zero(),
@@ -643,6 +645,14 @@ module suivan::arisan_pool {
             deposit_amount,
             max_participants,
             collateral_multiplier,
+        });
+
+        // Emit DepositMade event for creator's pre-deposit of cycle 1
+        event::emit(DepositMade {
+            pool_id,
+            participant: sender,
+            amount: deposit_amount,
+            cycle: 1,
         });
 
         // Share the pool so anyone can access it
