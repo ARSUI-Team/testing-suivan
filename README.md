@@ -162,13 +162,15 @@ Weighted Total:            86/100
 
 ---
 
-## 👥 Team
+## 👥 Team ARSUI
 
-| Member | Role |
-|---|---|
-| **Ham** | Smart Contract Engineer — Sui Move |
-| **Faiz** | Smart Contract Engineer — Sui Move |
-| **You** | Full-stack + Design |
+| Member | Role | GitHub |
+|---|---|---|
+| **Ham** | Smart Contract Engineer | Sui Move |
+| **Faiz** | Smart Contract Engineer | Sui Move |
+| **Nabila** | Frontend Engineer | UI/UX |
+| **Ozan OnChain** | Full-stack + Design Lead | Frontend + Neo-Brutalist Design |
+| **Handiya** | Media & Demo | Social Media + Presentation |
 
 ---
 
