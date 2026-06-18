@@ -19,7 +19,7 @@ import {
   usePoolInfo,
   useParticipantInfo,
   useParticipantList,
-  useJoinPool,
+  useJoinAndDeposit,
   useMakeDeposit,
   useStartPool,
   useSelectWinner,

@@ -9,13 +9,11 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Layers } from "lucide-react";
 import {
   useAllPoolsWithInfo,
-  useJoinPool,
+  useJoinAndDeposit,
   useCreatePool,
   useUserUSDCcoins,
   useUSDCBalance,
-  useLinkPoolMetadata,
   FormattedPool,
-  type TransactionResult,
 } from "@/hooks/useSuiContracts";
 import { useFaucetId, IS_MAINNET } from "@/config/sui";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
@@ -29,12 +27,6 @@ import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/li
 import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
 type PoolStatus = "all" | PoolLifecycleStatus;
-
-function findObjectChange(response: TransactionResult, objectType: string) {
-  return response.objectChanges?.find((change) =>
-    "objectId" in change && !!change.objectId && change.objectType?.includes(objectType)
-  );
-}
 
 async function waitForDigest(client: ReturnType<typeof useSuiClient>, digest: string) {
   try {
@@ -75,9 +67,8 @@ export default function PoolsPage() {
   const { coins: usdcCoins } = useUserUSDCcoins(account?.address);
   const { balance: usdcBalance } = useUSDCBalance(account?.address);
 
-  const { joinPool, isPending: joining } = useJoinPool();
+  const { joinAndDeposit, isPending: joining } = useJoinAndDeposit();
   const { createPool, isPending: creating } = useCreatePool();
-  const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
   const creatingRef = useRef(false);
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
@@ -127,12 +118,12 @@ export default function PoolsPage() {
       selectedPool.maxParticipants,
       COLLATERAL_MULTIPLIER,
     );
-    joinPool(selectedPool.address, collateralAmt, coinId, (response) => {
+    joinAndDeposit(selectedPool.address, collateralAmt, selectedPool.depositAmount, coinId, (response) => {
       setSelectedPool(null);
       setJoinCoinId("");
       refetchPools();
       const txMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
-      successToast("Joined Pool", `You are now a participant. Your collateral is locked.${txMsg}`);
+      successToast("Joined & Deposited", `You joined and deposited cycle 1 atomically. Collateral is locked.${txMsg}`);
     });
   };
 
@@ -166,51 +157,21 @@ export default function PoolsPage() {
       createForm.maxParticipants,
       createForm.cycleUnit === "minutes" ? createForm.cycleDuration * 60 * 1000 : createForm.cycleDuration * 24 * 60 * 60 * 1000,
       createForm.usdcCoinId,
+      blobId || "",
       async (response) => {
         creatingRef.current = false;
         const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
 
-        if (!blobId) {
-          await waitForDigest(suiClient, response.digest);
-          setShowCreateModal(false);
-          resetCreateForm();
-          refetchPools();
+        await waitForDigest(suiClient, response.digest);
+        setShowCreateModal(false);
+        resetCreateForm();
+        refetchPools();
+
+        if (blobId) {
+          successToast("Pool Created", `Your ROSCA pool is now live and the custom name has been applied.${createTxMsg}`);
+        } else {
           successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
-          return;
         }
-
-        const poolChange = findObjectChange(response, "::ArisanPool");
-        const capChange = findObjectChange(response, "::PoolAdminCap");
-        if (!poolChange?.objectId || !capChange?.objectId) {
-          await waitForDigest(suiClient, response.digest);
-          setShowCreateModal(false);
-          resetCreateForm();
-          refetchPools();
-          errorToast("Pool Created Without Name", `The pool was created, but its metadata could not be linked.${createTxMsg}`);
-          return;
-        }
-
-        linkMetadata(
-          poolChange.objectId,
-          blobId,
-          capChange.objectId,
-          async (linkResponse) => {
-            await waitForDigest(suiClient, linkResponse.digest);
-            setShowCreateModal(false);
-            resetCreateForm();
-            refetchPools();
-            successToast("Pool Created", `Your ROSCA pool is now live and the custom name has been applied.${createTxMsg}`);
-          },
-          (linkError) => {
-            setShowCreateModal(false);
-            resetCreateForm();
-            refetchPools();
-            errorToast(
-              "Pool Created Without Name",
-              linkError?.message || `The pool was created, but the custom name could not be linked.${createTxMsg}`,
-            );
-          }
-        );
       },
       (createError) => {
         errorToast("Create Pool Failed", createError?.message || "Transaction failed");

@@ -177,6 +177,7 @@ module suivan::arisan_factory {
         factory: &mut ArisanFactory,
         collateral: Coin<CoinType>,
         template_id: u64,
+        delegate_to: Option<address>,
         ctx: &mut TxContext,
     ) {
         assert!(!factory.paused, E_FACTORY_PAUSED);
@@ -196,6 +197,7 @@ module suivan::arisan_factory {
             template.cycle_duration_ms,
             template.collateral_multiplier,
             string::utf8(b""),
+            delegate_to,
             ctx,
         );
 
@@ -230,6 +232,8 @@ module suivan::arisan_factory {
         max_participants: u64,
         cycle_duration_ms: u64,
         collateral_multiplier: u64,
+        metadata_blob_id: String,
+        delegate_to: Option<address>,
         ctx: &mut TxContext,
     ) {
         assert!(!factory.paused, E_FACTORY_PAUSED);
@@ -243,7 +247,8 @@ module suivan::arisan_factory {
             max_participants,
             cycle_duration_ms,
             collateral_multiplier,
-            string::utf8(b""),
+            metadata_blob_id,
+            delegate_to,
             ctx,
         );
 

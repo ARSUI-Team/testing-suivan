@@ -557,6 +557,7 @@ module suivan::arisan_pool {
         cycle_duration_ms: u64,
         collateral_multiplier: u64,
         metadata_blob_id: String,
+        delegate_to: Option<address>,
         ctx: &mut TxContext,
     ): ID {
         assert!(deposit_amount > 0, E_WRONG_DEPOSIT_AMOUNT);
@@ -648,11 +649,17 @@ module suivan::arisan_pool {
         transfer::share_object(pool);
 
         // Create per-pool PoolAdminCap and transfer to creator (SEC-AC-1 fix)
+        // If delegate_to is Some(addr), cap is auto-delegated to that address (e.g., agent)
         let admin_cap = PoolAdminCap {
             id: object::new(ctx),
             pool_id,
         };
-        transfer::public_transfer(admin_cap, sender);
+        let cap_recipient = if (option::is_some(&delegate_to)) {
+            *option::borrow(&delegate_to)
+        } else {
+            sender
+        };
+        transfer::public_transfer(admin_cap, cap_recipient);
 
         pool_id
     }
@@ -720,6 +727,91 @@ module suivan::arisan_pool {
             participant: sender,
             collateral: collateral_amount,
             participant_count: vector::length(&pool.participant_list),
+        });
+    }
+
+    /// Join an existing pool AND pre-deposit cycle 1 in a single atomic transaction.
+    /// - Same pre-conditions as join_pool (active, not started, not full, not already joined)
+    /// - Additionally validates deposit amount == deposit_amount exactly
+    /// - Participant is marked with deposits_this_cycle=true and last_deposit_cycle=1
+    /// - This pre-deposit state is honored when start_pool runs (it does NOT reset these fields)
+    /// - After start_pool, participant cannot call make_deposit for cycle 1 (already pre-deposited)
+    /// - active_depositors_count is incremented so select_winner eligibility works correctly
+    public fun join_and_deposit<CoinType>(
+        pool: &mut ArisanPool<CoinType>,
+        collateral: Coin<CoinType>,
+        deposit: Coin<CoinType>,
+        ctx: &mut TxContext,
+    ) {
+        assert_not_paused(pool);
+        let sender = ctx.sender();
+
+        // === PRE-CONDITIONS (same as join_pool) ===
+        assert!(pool.is_active, E_POOL_NOT_ACTIVE);
+        assert!(!pool.is_started, E_POOL_ALREADY_STARTED);
+        assert!(!pool.is_ended, E_POOL_ENDED);
+        assert!(!table::contains(&pool.participants, sender), E_ALREADY_JOINED);
+        assert!(!pool.is_full, E_POOL_FULL);
+
+        // Validate collateral amount (>= 125%)
+        let required_collateral = required_collateral_for_config(
+            pool.config.deposit_amount,
+            pool.config.max_participants,
+            pool.config.collateral_multiplier,
+        );
+        assert!(coin::value(&collateral) >= required_collateral, E_COLLATERAL_TOO_LOW);
+
+        // Validate deposit amount (exact match, like make_deposit)
+        assert!(coin::value(&deposit) == pool.config.deposit_amount, E_WRONG_DEPOSIT_AMOUNT);
+
+        let collateral_amount = coin::value(&collateral);
+        let deposit_amount = coin::value(&deposit);
+
+        // === ADD PARTICIPANT WITH PRE-DEPOSIT STATE FOR CYCLE 1 ===
+        vector::push_back(&mut pool.participant_list, sender);
+        table::add(
+            &mut pool.participants,
+            sender,
+            Participant {
+                collateral_amount,
+                missed_payments: 0,
+                has_received_payout: false,
+                is_active: true,
+                joined_at_ms: 0, // will be set on start_pool
+                last_deposit_cycle: 1,           // PRE-DEPOSIT: marked for upcoming cycle 1
+                deposits_this_cycle: true,        // PRE-DEPOSIT: honored after start_pool runs
+                proportional_yield_earned: 0,
+                leaderboard_score: 10,            // join bonus (same as create_pool + join_pool)
+                gacha_claimed: false,
+                pending_winner_payout: 0,
+                winner_payout_claimed: false,
+            },
+        );
+
+        // === ADD BOTH BALANCES ===
+        balance::join(&mut pool.collateral_balance, coin::into_balance(collateral));
+        balance::join(&mut pool.pool_funds_balance, coin::into_balance(deposit));
+
+        // === INCREMENT DEPOSITOR COUNT (so select_winner eligibility works correctly) ===
+        pool.active_depositors_count = pool.active_depositors_count + 1;
+
+        // === CHECK POOL FULL ===
+        if (vector::length(&pool.participant_list) >= pool.config.max_participants) {
+            pool.is_full = true;
+        };
+
+        // === EMIT EVENTS ===
+        event::emit(ParticipantJoined {
+            pool_id: object::id(pool),
+            participant: sender,
+            collateral: collateral_amount,
+            participant_count: vector::length(&pool.participant_list),
+        });
+        event::emit(DepositMade {
+            pool_id: object::id(pool),
+            participant: sender,
+            amount: deposit_amount,
+            cycle: 1, // pre-deposit for the upcoming cycle 1
         });
     }
 

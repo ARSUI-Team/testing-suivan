@@ -4,7 +4,7 @@ import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from "@
 import { Transaction } from "@mysten/sui/transactions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID } from "@/config/sui";
+import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID, SUI_AGENT_ADDRESS } from "@/config/sui";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 import { derivePoolLifecycle, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
@@ -600,6 +600,52 @@ export function useJoinPool() {
   };
 }
 
+export function useJoinAndDeposit() {
+  const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction();
+  const queryClient = useQueryClient();
+
+  const joinAndDeposit = (
+    poolId: string,
+    collateralAmount: number,
+    depositAmount: number,
+    usdcCoinId: string,
+    onSuccess?: (response: TransactionResult) => void,
+  ) => {
+    const tx = new Transaction();
+
+    // Split parent USDC coin into 2 sub-coins in a single call (avoids reusing spent input)
+    const [collateralCoin, depositCoin] = tx.splitCoins(tx.object(usdcCoinId), [
+      tx.pure.u64(collateralAmount * 1_000_000),
+      tx.pure.u64(depositAmount * 1_000_000),
+    ]);
+
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::arisan_pool::join_and_deposit`,
+      arguments: [
+        tx.object(poolId),
+        collateralCoin,
+        depositCoin,
+      ],
+      typeArguments: [SUI_USDC_TYPE],
+    });
+
+    signAndExecute({ transaction: tx }, {
+      onSuccess: (response) => {
+        queryClient.invalidateQueries({ queryKey: ["suivan"] });
+        onSuccess?.(response);
+      },
+    });
+  };
+
+  return {
+    joinAndDeposit,
+    hash: txData?.digest,
+    isPending,
+    isSuccess: !!txData,
+    error,
+  };
+}
+
 export function useCreatePool() {
   const client = useSuiClient();
   const { mutate: signAndExecute, isPending, data: txData, error } = useSignAndExecuteTransaction<TransactionResult>({
@@ -632,6 +678,7 @@ export function useCreatePool() {
     maxParticipants: number,
     cycleDurationMs: number,
     usdcCoinId: string,
+    metadataBlobId: string,
     onSuccess?: (response: TransactionResult) => void,
     onError?: (error: Error) => void,
   ) => {
@@ -653,6 +700,8 @@ export function useCreatePool() {
         tx.pure.u64(maxParticipants),
         tx.pure.u64(cycleDurationMs),
         tx.pure.u64(COLLATERAL_MULTIPLIER),
+        tx.pure.string(metadataBlobId),
+        tx.pure.option("address", SUI_AGENT_ADDRESS),
       ],
       typeArguments: [SUI_USDC_TYPE],
     });
