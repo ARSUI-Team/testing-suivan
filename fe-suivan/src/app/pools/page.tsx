@@ -236,7 +236,7 @@ export default function PoolsPage() {
           >
             {t("pools.title")}
           </h1>
-          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#555555]">
+          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("pools.subtitle")}
           </p>
         </div>
@@ -250,11 +250,11 @@ export default function PoolsPage() {
               <div className="relative border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[10px_10px_0_#0a0a0a] overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.totalPools")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.totalPools")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>live</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>live</span>
                   </div>
                 </div>
               </div>
@@ -262,11 +262,11 @@ export default function PoolsPage() {
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-10%", width: "40%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.open")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.open")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => p.status === "open").length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>ready</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>ready</span>
                   </div>
                 </div>
               </div>
@@ -274,11 +274,11 @@ export default function PoolsPage() {
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="absolute pointer-events-none" style={{ bottom: "-10%", left: "-10%", width: "35%", height: "35%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.active")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.active")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => ["ready", "active", "action_required"].includes(p.status)).length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>running</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>running</span>
                   </div>
                 </div>
               </div>
@@ -286,11 +286,11 @@ export default function PoolsPage() {
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-15%", width: "50%", height: "50%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.usdc")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.usdc")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{isConnected ? `${usdcBalance.toLocaleString()} USDC` : "---"}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>balance</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>balance</span>
                   </div>
                 </div>
               </div>
@@ -316,7 +316,7 @@ export default function PoolsPage() {
                   className={`protocol-font whitespace-nowrap px-4 py-2 text-sm font-black tracking-[0.05em] transition-all ${
                     filter === status
                       ? status === "all" ? "bg-[#0a0a0a] text-[#38bdf8]" : "bg-[#f8672d] text-[#0a0a0a]"
-                      : "text-[#555555] hover:bg-[#e8e1d9] hover:text-[#0a0a0a]"
+                      : "text-[#333333] hover:bg-[#e8e1d9] hover:text-[#0a0a0a]"
                   }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -338,7 +338,7 @@ export default function PoolsPage() {
               </button>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold" style={{ color: "#555555" }}>{t("pools.connectWallet")}</span>
+                <span className="text-sm font-semibold" style={{ color: "#333333" }}>{t("pools.connectWallet")}</span>
                 <ConnectSuiWallet variant="header" scrolled={true} />
               </div>
             )}
@@ -476,7 +476,7 @@ export default function PoolsPage() {
                           fontSize: "0.5rem",
                           fontWeight: 700,
                           letterSpacing: "0.2em",
-                          color: "#555555",
+                          color: "#333333",
                           textTransform: "uppercase",
                           marginBottom: 1,
                           fontFamily: "var(--font-mono)",
@@ -558,7 +558,7 @@ export default function PoolsPage() {
                               fontSize: "0.45rem",
                               fontWeight: 700,
                               letterSpacing: "0.15em",
-                              color: "#555555",
+                              color: "#333333",
                               textTransform: "uppercase",
                               display: "block",
                               marginTop: 1,
@@ -570,7 +570,7 @@ export default function PoolsPage() {
                             style={{
                               fontSize: "0.4rem",
                               fontWeight: 600,
-                              color: "#555555",
+                              color: "#333333",
                               textTransform: "uppercase",
                               letterSpacing: "0.1em",
                             }}
@@ -622,7 +622,7 @@ export default function PoolsPage() {
                 </svg>
               </div>
               <h3 className="mb-2 text-2xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("pools.emptyTitle")}</h3>
-              <p className="font-semibold" style={{ color: "#555555" }}>
+              <p className="font-semibold" style={{ color: "#333333" }}>
                 {pools && pools.length === 0
                   ? t("pools.emptyDesc")
                   : t("pools.emptyFilter", { filter })}
@@ -651,34 +651,34 @@ export default function PoolsPage() {
 
             <div className="mb-6 space-y-4">
               <div className="border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.deposit")}</p>
+                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.deposit")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{selectedPool.depositAmount} USDC</p>
               </div>
 
               <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.collateral")}</p>
+                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.collateral")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                   {Math.ceil(selectedPool.depositAmount * 125 / 100)} USDC
                 </p>
-                <p className="mt-1 text-xs font-semibold" style={{ color: "#555555" }}>{t("pools.collateralDesc")}</p>
+                <p className="mt-1 text-xs font-semibold" style={{ color: "#333333" }}>{t("pools.collateralDesc")}</p>
               </div>
 
               <div className="border-[3px] border-[#0a0a0a] bg-[var(--accent-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.estimatedApy")}</p>
+                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.estimatedApy")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{selectedPool.apy}%</p>
               </div>
 
               {usdcBalance > 0 ? (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>USDC Balance</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>USDC Balance</p>
                   <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                     {usdcBalance.toFixed(2)} USDC
                   </p>
                 </div>
               ) : (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>Insufficient USDC</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "#555555" }}>Get free test USDC from the Faucet page before joining.</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>Insufficient USDC</p>
+                  <p className="mt-1 text-sm font-semibold" style={{ color: "#333333" }}>Get free test USDC from the Faucet page before joining.</p>
                   <Link
                     href="/faucet"
                     className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
@@ -706,7 +706,7 @@ export default function PoolsPage() {
               disabled={joining}
               className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] mt-3 ${
                 joining
-                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#555555] opacity-50"
+                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#333333] opacity-50"
                   : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"
               }`}
             >
@@ -718,7 +718,7 @@ export default function PoolsPage() {
               ) : t("pools.join")}
             </button>
 
-            <p className="mt-4 text-center text-xs font-semibold" style={{ color: "#555555" }}>
+            <p className="mt-4 text-center text-xs font-semibold" style={{ color: "#333333" }}>
               {t("pools.agree", { count: selectedPool.maxParticipants })}
             </p>
           </div>
@@ -751,7 +751,7 @@ export default function PoolsPage() {
 
             <div className="mb-6 space-y-4">
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Pool Name</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Pool Name</label>
                 <input
                   type="text"
                   maxLength={64}
@@ -763,7 +763,7 @@ export default function PoolsPage() {
               </div>
 
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Description (optional)</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Description (optional)</label>
                 <textarea
                   maxLength={500}
                   value={createForm.poolDescription}
@@ -775,7 +775,7 @@ export default function PoolsPage() {
               </div>
 
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.deposit")} (USDC)</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.deposit")} (USDC)</label>
                 <input
                   type="number"
                   min="1"
@@ -786,7 +786,7 @@ export default function PoolsPage() {
               </div>
 
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Max Participants (2-50)</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Max Participants (2-50)</label>
                 <input
                   type="number"
                   min="2"
@@ -798,7 +798,7 @@ export default function PoolsPage() {
               </div>
 
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Cycle Duration</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>Cycle Duration</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -820,15 +820,15 @@ export default function PoolsPage() {
 
               {usdcBalance > 0 ? (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>USDC Balance</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>USDC Balance</p>
                   <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                     {usdcBalance.toFixed(2)} USDC
                   </p>
                 </div>
               ) : (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>No USDC Balance</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "#555555" }}>Get free test USDC first to create a pool.</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>No USDC Balance</p>
+                  <p className="mt-1 text-sm font-semibold" style={{ color: "#333333" }}>Get free test USDC first to create a pool.</p>
                   <Link
                     href="/faucet"
                     className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
@@ -840,13 +840,13 @@ export default function PoolsPage() {
 
               <div className="space-y-2 border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[3px_3px_0_#0a0a0a]">
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#555555" }}>Total Pool per Cycle</span>
+                  <span className="font-semibold" style={{ color: "#333333" }}>Total Pool per Cycle</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                     {createForm.depositAmount * createForm.maxParticipants} USDC
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#555555" }}>Total Duration</span>
+                  <span className="font-semibold" style={{ color: "#333333" }}>Total Duration</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                     {createForm.cycleUnit === "minutes"
                       ? (createForm.cycleDuration * createForm.maxParticipants < 60
@@ -856,7 +856,7 @@ export default function PoolsPage() {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#555555" }}>{t("pools.requiredCollateral")}</span>
+                  <span className="font-semibold" style={{ color: "#333333" }}>{t("pools.requiredCollateral")}</span>
                   <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                     {getRequiredCollateralAmount(
                       createForm.depositAmount,
@@ -873,7 +873,7 @@ export default function PoolsPage() {
               disabled={creating || linkingMeta || publishingMetadata}
               className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] ${
                 creating || linkingMeta || publishingMetadata
-                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#555555] opacity-50"
+                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#333333] opacity-50"
                   : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"
               }`}
             >

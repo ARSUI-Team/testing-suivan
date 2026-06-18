@@ -123,7 +123,7 @@ export default function YieldDemoPage() {
      >
       Yield Engine
      </h1>
-     <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#555555]">
+     <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
       Pool funds are deployed via YIELD SIGNALS flash loan arbitrage. Hot potato receipts enforce atomic return — if the arbitrage fails, the transaction rolls back. Profit is split: principal back to pool funds, profit to yield balance for winner bonuses.
      </p>
     </div>
@@ -133,21 +133,21 @@ export default function YieldDemoPage() {
     <div className="mx-auto max-w-6xl">
      <div className="grid gap-6 md:grid-cols-3">
       <div className=" border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[12px_12px_0_#0a0a0a]">
-       <p className="protocol-font text-xs font-black text-[#555555]">Pool Funds</p>
+       <p className="protocol-font text-xs font-black text-[#333333]">Pool Funds</p>
        <p className="protocol-font mt-2 text-4xl font-black text-[#0a0a0a]">${poolFundsDisplay}</p>
-       <p className="mt-1 text-xs text-[#555555]">Available for yield deployment</p>
+       <p className="mt-1 text-xs text-[#333333]">Available for yield deployment</p>
       </div>
       <div className=" border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[12px_12px_0_#0a0a0a]">
-       <p className="protocol-font text-xs font-black text-[#555555]">Yield Earned</p>
-       <p className={`protocol-font mt-2 text-4xl font-black ${Number(yieldDisplay) > 0 ? "text-[#14b8a6]" : "text-[#555555]"}`}>
+       <p className="protocol-font text-xs font-black text-[#333333]">Yield Earned</p>
+       <p className={`protocol-font mt-2 text-4xl font-black ${Number(yieldDisplay) > 0 ? "text-[#14b8a6]" : "text-[#333333]"}`}>
         ${yieldDisplay}
        </p>
-       <p className="mt-1 text-xs text-[#555555]">Accumulated winner bonuses</p>
+       <p className="mt-1 text-xs text-[#333333]">Accumulated winner bonuses</p>
       </div>
       <div className=" border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[12px_12px_0_#0a0a0a]">
-       <p className="protocol-font text-xs font-black text-[#555555]">Collateral</p>
+       <p className="protocol-font text-xs font-black text-[#333333]">Collateral</p>
        <p className="protocol-font mt-2 text-4xl font-black text-[#0a0a0a]">${collateralDisplay}</p>
-       <p className="mt-1 text-xs text-[#555555]">Participant security deposits</p>
+       <p className="mt-1 text-xs text-[#333333]">Participant security deposits</p>
       </div>
      </div>
     </div>
@@ -163,7 +163,7 @@ export default function YieldDemoPage() {
           <Database className="mr-2 inline-block size-5" />
           DeepBook Live Pools
          </h2>
-         <p className="mt-1 text-xs text-[#555555]">
+         <p className="mt-1 text-xs text-[#333333]">
           {dbPools?.length ?? ALL_POOL_KEYS.length} live pools - depth {orderbookDepth > 0 ? orderbookDepth.toFixed(2) : "pending"}
          </p>
         </div>
@@ -182,32 +182,32 @@ export default function YieldDemoPage() {
       {dbPoolInfo && (
        <div className="grid gap-4 p-6 md:grid-cols-4">
         <div className=" border-[3px] border-[#0a0a0a] bg-[var(--background)] p-4">
-         <p className="protocol-font mb-1 text-xs font-black text-[#555555]">Mid Price</p>
+         <p className="protocol-font mb-1 text-xs font-black text-[#333333]">Mid Price</p>
          <p className="protocol-font text-xl font-black text-[#0a0a0a]">
           {midPrice > 0 ? midPrice.toFixed(midPrice < 1 ? 6 : 4) : "—"}
          </p>
-         <p className="mt-1 text-xs text-[#555555]">{dbPoolInfo.quoteAsset}/{dbPoolInfo.baseAsset}</p>
+         <p className="mt-1 text-xs text-[#333333]">{dbPoolInfo.quoteAsset}/{dbPoolInfo.baseAsset}</p>
         </div>
         <div className=" border-[3px] border-[#0a0a0a] bg-[var(--background)] p-4">
-         <p className="protocol-font mb-1 text-xs font-black text-[#555555]">Spread</p>
+         <p className="protocol-font mb-1 text-xs font-black text-[#333333]">Spread</p>
          <p className={`protocol-font text-xl font-black ${spread < 1 ? "text-[#14b8a6]" : "text-[var(--warn)]"}`}>
           {spread > 0 ? spread.toFixed(3) + "%" : "—"}
          </p>
-         <p className="mt-1 text-xs text-[#555555]">Bid-ask spread</p>
+         <p className="mt-1 text-xs text-[#333333]">Bid-ask spread</p>
         </div>
         <div className=" border-[3px] border-[#0a0a0a] bg-[var(--background)] p-4">
-         <p className="protocol-font mb-1 text-xs font-black text-[#555555]">Bid Depth</p>
+         <p className="protocol-font mb-1 text-xs font-black text-[#333333]">Bid Depth</p>
          <p className="protocol-font text-xl font-black text-[#0a0a0a]">
           {bidDepth > 0 ? bidDepth.toFixed(2) : "—"}
          </p>
-         <p className="mt-1 text-xs text-[#555555]">{dbPoolInfo.quoteAsset}</p>
+         <p className="mt-1 text-xs text-[#333333]">{dbPoolInfo.quoteAsset}</p>
         </div>
         <div className=" border-[3px] border-[#0a0a0a] bg-[var(--background)] p-4">
-         <p className="protocol-font mb-1 text-xs font-black text-[#555555]">Ask Depth</p>
+         <p className="protocol-font mb-1 text-xs font-black text-[#333333]">Ask Depth</p>
          <p className="protocol-font text-xl font-black text-[#0a0a0a]">
           {askDepth > 0 ? askDepth.toFixed(2) : "—"}
          </p>
-         <p className="mt-1 text-xs text-[#555555]">{dbPoolInfo.quoteAsset}</p>
+         <p className="mt-1 text-xs text-[#333333]">{dbPoolInfo.quoteAsset}</p>
         </div>
        </div>
       )}
@@ -220,10 +220,10 @@ export default function YieldDemoPage() {
           {orderbook.bids.slice(0, 8).map((level, i) => (
            <div key={i} className="flex items-center justify-between bg-[var(--background)] px-3 py-1.5 text-xs">
             <span className="font-bold text-[#14b8a6]">{level.price.toFixed(dbPoolInfo?.quoteAsset === "DBUSDC" ? 4 : 6)}</span>
-            <span className="text-[#555555]">{level.quantity.toFixed(2)}</span>
+            <span className="text-[#333333]">{level.quantity.toFixed(2)}</span>
            </div>
           ))}
-          {orderbook.bids.length === 0 && <p className="text-xs text-[#555555]">No bids</p>}
+          {orderbook.bids.length === 0 && <p className="text-xs text-[#333333]">No bids</p>}
          </div>
         </div>
         <div className="p-4">
@@ -232,10 +232,10 @@ export default function YieldDemoPage() {
           {orderbook.asks.slice(0, 8).map((level, i) => (
            <div key={i} className="flex items-center justify-between bg-[var(--background)] px-3 py-1.5 text-xs">
             <span className="font-bold text-[var(--warn)]">{level.price.toFixed(dbPoolInfo?.quoteAsset === "DBUSDC" ? 4 : 6)}</span>
-            <span className="text-[#555555]">{level.quantity.toFixed(2)}</span>
+            <span className="text-[#333333]">{level.quantity.toFixed(2)}</span>
            </div>
           ))}
-          {orderbook.asks.length === 0 && <p className="text-xs text-[#555555]">No asks</p>}
+          {orderbook.asks.length === 0 && <p className="text-xs text-[#333333]">No asks</p>}
          </div>
         </div>
        </div>
@@ -249,7 +249,7 @@ export default function YieldDemoPage() {
      <div className="overflow-hidden border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[12px_12px_0_#0a0a0a]">
       <div className="border-b-[3px] border-[#0a0a0a] p-6">
        <h2 className="protocol-font text-lg font-black">Flash Loan Arbitrage Flow</h2>
-       <p className="mt-2 text-sm text-[#555555]">
+       <p className="mt-2 text-sm text-[#333333]">
         Atomic yield generation via YIELD SIGNALS — hot potato pattern guarantees fund safety.
        </p>
       </div>
@@ -278,10 +278,10 @@ export default function YieldDemoPage() {
           }`}>
            {isActive ? "✅" : step.icon}
           </div>
-          <h3 className={`protocol-font text-sm font-black ${isActive || isCurrent ? "" : "text-[#555555]"}`}>
+          <h3 className={`protocol-font text-sm font-black ${isActive || isCurrent ? "" : "text-[#333333]"}`}>
            {step.title}
           </h3>
-          <p className={`mt-1 text-xs leading-relaxed ${isActive || isCurrent ? "text-[#0a0a0a]" : "text-[#555555]"}`}>
+          <p className={`mt-1 text-xs leading-relaxed ${isActive || isCurrent ? "text-[#0a0a0a]" : "text-[#333333]"}`}>
            {step.desc}
           </p>
          </div>
@@ -315,7 +315,7 @@ export default function YieldDemoPage() {
         <p className="protocol-font text-sm font-black text-teal-700 dark:text-teal-400">
          ✅ Yield flow completed — profit deposited to yield_balance
         </p>
-        <p className="protocol-font mt-1 text-xs text-[#555555]">{txDigest}</p>
+        <p className="protocol-font mt-1 text-xs text-[#333333]">{txDigest}</p>
        </div>
       )}
 
@@ -349,7 +349,7 @@ export default function YieldDemoPage() {
          ].map((item) => (
           <div key={item.fn} className=" border border-[#0a0a0a] p-3">
            <p className="protocol-font text-xs font-black">{item.fn}</p>
-           <p className="mt-1 text-xs text-[#555555]">{item.desc}</p>
+           <p className="mt-1 text-xs text-[#333333]">{item.desc}</p>
           </div>
          ))}
         </div>
@@ -359,19 +359,19 @@ export default function YieldDemoPage() {
         <div className="mt-3 space-y-3">
          <div className=" border-[3px] border-teal-500/30 bg-teal-50 p-4 dark:bg-teal-950/20">
           <p className="protocol-font text-xs font-black text-teal-700 dark:text-teal-400">Hot Potato Receipt</p>
-          <p className="mt-1 text-xs text-[#555555]">
+          <p className="mt-1 text-xs text-[#333333]">
            YieldWithdrawalReceipt has no store/copy/drop/key abilities. If not consumed in same PTB, the entire transaction aborts. Same pattern as DeepBook FlashLoan.
           </p>
          </div>
          <div className=" border-[3px] border-sky-500/30 bg-sky-50 p-4 dark:bg-sky-950/20">
           <p className="protocol-font text-xs font-black text-sky-700 dark:text-sky-400">Slippage Protection</p>
-          <p className="mt-1 text-xs text-[#555555]">
+          <p className="mt-1 text-xs text-[#333333]">
            min_profit parameter ensures tx aborts if arbitrage profit is below threshold. Combined with hot potato, this guarantees no loss scenarios.
           </p>
          </div>
          <div className=" border-[3px] border-purple-500/30 bg-purple-50 p-4 dark:bg-purple-950/20">
           <p className="protocol-font text-xs font-black text-purple-700 dark:text-purple-400">Capability Auth</p>
-          <p className="mt-1 text-xs text-[#555555]">
+          <p className="mt-1 text-xs text-[#333333]">
            PoolAdminCap required for all yield operations. Only pool admin (or delegate via transfer) can trigger yield generation.
           </p>
          </div>

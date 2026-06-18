@@ -46,7 +46,7 @@ export default function FAQPage() {
           >
             {t("faq.title")}
           </h1>
-          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#555555]">
+          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("faq.subtitle")}
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function FAQPage() {
                 >
                   {t("faq.contactTitle")}
                 </h2>
-                <p className="mt-3 max-w-xl font-semibold leading-7 text-[#555555]">{t("faq.contactDesc")}</p>
+                <p className="mt-3 max-w-xl font-semibold leading-7 text-[#333333]">{t("faq.contactDesc")}</p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <a

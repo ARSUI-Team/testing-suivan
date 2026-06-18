@@ -97,14 +97,14 @@ export default function YieldSignalsPage() {
           <h1 className="gsap-up mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
             {t("ai.title")}
           </h1>
-          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#555555]">
+          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("ai.subtitle")}
           </p>
 
           {loading && (
             <div className="mt-10 flex items-center justify-center py-16">
               <div className="h-12 w-12 animate-spin border-2 border-[#0a0a0a] border-b-[#555555]" />
-              <span className="protocol-font ml-4 text-sm font-black text-[#555555]">{t("ai.loading")}</span>
+              <span className="protocol-font ml-4 text-sm font-black text-[#333333]">{t("ai.loading")}</span>
             </div>
           )}
 
@@ -129,9 +129,9 @@ export default function YieldSignalsPage() {
                     <div className="relative z-10">
                       <div className="flex justify-between items-center mb-2">
                         <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px)" }} />
-                        <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{String(idx + 1).padStart(2, "0")}</span>
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{String(idx + 1).padStart(2, "0")}</span>
                       </div>
-                      <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{label}</p>
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{label}</p>
                       <p className="mt-2 text-3xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{value}</p>
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export default function YieldSignalsPage() {
               <div className="gsap-up mt-8 border-[3px] border-[#0a0a0a] bg-[#ffffff] p-5 shadow-[12px_12px_0_#0a0a0a]">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("ai.protocolYields")}</h2>
-                  <span className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">
+                  <span className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">
                     {t("ai.trend")}: {getTrendIcon(data.market.trendDirection)} {data.market.trendDirection}
                   </span>
                 </div>
@@ -151,13 +151,13 @@ export default function YieldSignalsPage() {
                       <div className="flex items-center gap-3">
                         <div>
                           <p className="protocol-font text-sm font-black text-[#0a0a0a]">{p.name}</p>
-                          <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">{p.chain}</p>
+                          <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">{p.chain}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="protocol-font text-lg font-black text-[#0a0a0a]">{p.apy.toFixed(2)}%</p>
-                          <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#555555]">${(p.tvl / 1e6).toFixed(1)}M TVL</p>
+                          <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">${(p.tvl / 1e6).toFixed(1)}M TVL</p>
                         </div>
                         <span className={`protocol-font border-[3px] border-[#0a0a0a] px-3 py-1 text-xs font-black ${getRiskColor(p.riskScore)}`}>
                           L{p.riskScore}
@@ -166,7 +166,7 @@ export default function YieldSignalsPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[#555555]">
+                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[#333333]">
                   <span className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] px-2 py-0.5">L1–L3 Low Risk</span>
                   <span className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] px-2 py-0.5">L4–L5 Medium Risk</span>
                   <span className="border-[3px] border-[#0a0a0a] bg-[#fee2e2] px-2 py-0.5">L6+ High Risk</span>
@@ -174,10 +174,10 @@ export default function YieldSignalsPage() {
                 {timestamp && (
                   <div className="mt-4 pt-3 border-t-[2px] border-[#0a0a0a] flex justify-between items-end">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>source</span>
-                      <span className="text-[10px] font-semibold text-[#14b8a6]">Sui RPC testnet</span>
+                      <span className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>source</span>
+                      <span className="text-xs font-semibold text-[#14b8a6]">Sui RPC testnet</span>
                     </div>
-                    <span className="text-[10px] font-semibold text-[#0a0a0a]" style={{ fontFamily: "'Courier New', monospace" }}>
+                    <span className="text-xs font-semibold text-[#0a0a0a]" style={{ fontFamily: "'Courier New', monospace" }}>
                       {new Date(timestamp).toLocaleString("en-GB", { hour12: false })} GMT
                     </span>
                   </div>
@@ -190,26 +190,26 @@ export default function YieldSignalsPage() {
                   <div className="relative z-10">
                   <div className="flex justify-between items-center mb-3">
                     <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px)" }} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>market</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>market</span>
                   </div>
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("ai.marketConditions")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("ai.marketConditions")}</p>
                   <div className="mt-4 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-semibold text-[#555555]">{t("ai.volatilityIndex")}</span>
+                      <span className="text-sm font-semibold text-[#333333]">{t("ai.volatilityIndex")}</span>
                       <span className="inline-flex items-center gap-1.5 font-bold text-[#0a0a0a]">
                         <span className={`inline-block size-2 rounded-full ${data.market.volatilityIndex <= 30 ? 'bg-[#ccfbf1]' : data.market.volatilityIndex <= 60 ? 'bg-[#fef9c3]' : 'bg-[#fee2e2]'}`} />
                         {data.market.volatilityIndex}/100
-                        <span className="text-xs text-[#555555]">
+                        <span className="text-xs text-[#333333]">
                           {data.market.volatilityIndex <= 30 ? "Low" : data.market.volatilityIndex <= 60 ? "Mid" : "High"}
                         </span>
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-semibold text-[#555555]">{t("ai.gasPrice")}</span>
+                      <span className="text-sm font-semibold text-[#333333]">{t("ai.gasPrice")}</span>
                       <span className="font-bold text-[#0a0a0a]">{data.market.suiRefGasPrice} MIST</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-semibold text-[#555555]">{t("ai.direction")}</span>
+                      <span className="text-sm font-semibold text-[#333333]">{t("ai.direction")}</span>
                       <span className="font-bold text-[#0a0a0a]">{data.market.trendDirection}</span>
                     </div>
                   </div>
@@ -220,9 +220,9 @@ export default function YieldSignalsPage() {
                   <div className="relative z-10">
                   <div className="flex justify-between items-center mb-3">
                     <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px)" }} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>yield</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>yield</span>
                   </div>
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("ai.yieldRecommendation")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("ai.yieldRecommendation")}</p>
                   <p className="mt-4 text-lg font-black text-[#0a0a0a]">
                     {t("ai.topProtocol")}: {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.name || "N/A"} — {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.apy.toFixed(2) || "0"}%
                   </p>

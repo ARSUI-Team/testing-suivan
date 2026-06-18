@@ -266,7 +266,7 @@ export default function ProfilePage() {
                                 {item.label}{" "}
                                 <span className="text-[#333333]">{item.poolName}</span>
                               </p>
-                              <p className="text-[11px] font-semibold text-[#333333]">{item.time}</p>
+                              <p className="text-xs font-semibold text-[#333333]">{item.time}</p>
                             </div>
                           </div>
                         );
@@ -303,7 +303,7 @@ export default function ProfilePage() {
                       <p className="text-sm font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1.1 }}>
                         {badge.name}
                       </p>
-                      <p className="mt-1 text-[11px] font-semibold text-[#333333]">{badge.description}</p>
+                      <p className="mt-1 text-xs font-semibold text-[#333333]">{badge.description}</p>
                       {!badge.achieved && badge.progress && (
                         <p className="mt-1 text-xs font-bold text-[#0a0a0a]">{badge.progress}</p>
                       )}
