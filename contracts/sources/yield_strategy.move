@@ -1,5 +1,5 @@
 /// Module: yield_strategy (ORPHANED — FOR FUTURE INTEGRATION)
-/// Yield strategy for Archa — holds pool funds and tracks shares per depositor
+/// Yield strategy for Suivan — holds pool funds and tracks shares per depositor
 /// Real yield comes from DeepBook profits deposited as actual coins (C-02/M-03 fix)
 /// Invariant: total_deposits == balance::value(&funds) at all times
 ///

@@ -1,5 +1,5 @@
 /// Module: test_usdc
-/// Mock USDC coin for testing Archa on Sui testnet
+/// Mock USDC coin for testing Suivan on Sui testnet
 /// Uses coin_registry for custom coin type creation
 #[allow(lint(self_transfer))]
 module suivan::test_usdc {
@@ -24,7 +24,7 @@ module suivan::test_usdc {
             6,                                          // decimals (same as real USDC)
             b"USDC".to_string(),                        // symbol
             b"USD Coin".to_string(),                    // name
-            b"Mock USDC for Archa testing".to_string(), // description
+            b"Mock USDC for Suivan testing".to_string(), // description
             b"https://suivan.fun/logo.png".to_string(),  // icon_url
             ctx,
         );

@@ -1,5 +1,5 @@
 /// Module: arisan_pool
-/// Core arisan (rotating savings) pool logic for Archa on Sui
+/// Core arisan (rotating savings) pool logic for Suivan on Sui
 ///
 /// Design decisions (from audit):
 /// - G2: Per-pool PoolAdminCap for admin auth (SEC-AC-1 fix)

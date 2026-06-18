@@ -1,5 +1,5 @@
 /// Module: test_sui
-/// Mock SUI coin for testing Archa on Sui testnet
+/// Mock SUI coin for testing Suivan on Sui testnet
 #[allow(lint(self_transfer))]
 module suivan::test_sui {
     use sui::coin::{Self, TreasuryCap};
@@ -19,7 +19,7 @@ module suivan::test_sui {
             9,
             b"TEST_SUI".to_string(),
             b"Test SUI".to_string(),
-            b"Mock SUI for Archa testing".to_string(),
+            b"Mock SUI for Suivan testing".to_string(),
             b"https://suivan.fun/logo.png".to_string(),
             ctx,
         );

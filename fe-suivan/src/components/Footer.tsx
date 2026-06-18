@@ -21,9 +21,9 @@ const protocolLinks = [
 ];
 
 const communityLinks = [
-  { label: "Telegram", href: "https://t.me/suivan", Icon: MessageCircle },
-  { label: "X / Twitter", href: "https://x.com/suivan", Icon: X },
-  { label: "GitHub", href: "https://github.com/suivan", Icon: GitBranch },
+  { label: "Telegram", href: "https://t.me/sui_van", Icon: MessageCircle },
+  { label: "X / Twitter", href: "https://x.com/suivan_id", Icon: X },
+  { label: "GitHub", href: "https://github.com/ARSUI-Team/testing-suivan", Icon: GitBranch },
 ];
 
 export default function Footer() {

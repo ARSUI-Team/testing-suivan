@@ -1,5 +1,5 @@
 /// Module: deepbook_yield
-/// DeepBook V3 flash loan integration for Archa yield optimization
+/// DeepBook V3 flash loan integration for Suivan yield optimization
 ///
 /// This module enables Archa pools to generate yield via:
 /// 1. Flash loan arbitrage — borrow from DeepBook, execute swaps, keep profit

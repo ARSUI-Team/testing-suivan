@@ -1,5 +1,5 @@
 /// Module: walrus_store
-/// Walrus blob storage integration for Archa protocol
+/// Walrus blob storage integration for Suivan protocol
 ///
 /// Provides off-chain metadata storage via Walrus blob references.
 /// This module is ISOLATED from core pool financial logic:
