@@ -15,21 +15,23 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
 import { CrossChainBridgeModal } from "@/components/CrossChainBridgeModal";
 import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
+import { triggerPoolStart } from "@/lib/agentTrigger";
+import { derivePoolLifecycle } from "@/lib/poolLifecycle";
+import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 import {
   usePoolInfo,
   useParticipantInfo,
   useParticipantList,
-  useJoinPool,
+  useJoinAndDeposit,
   useMakeDeposit,
-  useStartPool,
-  useSelectWinner,
   useCurrentYield,
   useUSDCBalance,
   useUserUSDCcoins,
   useLinkPoolMetadata,
   useClaimFinal,
+  useClaimWinnerPayout,
 } from "@/hooks/useSuiContracts";
-import { SUI_PACKAGE_ID } from "@/config/sui";
+import { SUI_PACKAGE_ID, SUI_AGENT_ADDRESS } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import { Layers, Users, Clock, DollarSign, ArrowLeft, Sparkles, Shield, Trophy, Gift } from "lucide-react";
 
@@ -100,10 +102,9 @@ export default function PoolDetailPage() {
 
   const { joinPool, isPending: joining, isSuccess: joinSuccess, error: joinError, hash: joinHash } = useJoinPool();
   const { makeDeposit, isPending: depositing, isSuccess: depositSuccess, error: depositError, hash: depositHash } = useMakeDeposit();
-  const { startPool, isPending: starting, isSuccess: startSuccess, error: startError } = useStartPool();
-  const { selectWinner, isPending: selecting, isSuccess: selectSuccess, error: selectError } = useSelectWinner();
   const { linkMetadata, isPending: linkingMeta, isSuccess: linkSuccess } = useLinkPoolMetadata();
   const { claimFinal, isPending: claiming, isSuccess: claimSuccess, hash: claimHash, error: claimError } = useClaimFinal();
+  const { claimWinnerPayout, isPending: claimingWinnerPayout, isSuccess: winnerPayoutSuccess, hash: winnerPayoutHash, error: winnerPayoutError } = useClaimWinnerPayout();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -118,6 +119,7 @@ export default function PoolDetailPage() {
   const [delegating, setDelegating] = useState(false);
   const isManagedByAgent = agentInfo?.managedPools.includes(poolAddress) ?? false;
 
+  // Sync hasDepositedThisCycle from participant info
   useEffect(() => {
     fetch("/api/agent/status").then((r) => r.json()).then((data) => {
       if (data.configured) setAgentInfo({ agentAddress: data.agentAddress, managedPools: (data.managedPools || []).map((p: { poolId: string }) => p.poolId) });
