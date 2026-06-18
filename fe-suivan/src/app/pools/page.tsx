@@ -18,7 +18,7 @@ import {
   FormattedPool,
   type TransactionResult,
 } from "@/hooks/useSuiContracts";
-import { useFaucetId } from "@/config/sui";
+import { useFaucetId, IS_MAINNET } from "@/config/sui";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
 import { CrossChainBridgeModal } from "@/components/CrossChainBridgeModal";
@@ -802,7 +802,7 @@ export default function PoolsPage() {
                 <div className="flex gap-2">
                   <input
                     type="number"
-                    min="1"
+                    min={IS_MAINNET ? 30 : 1}
                     value={createForm.cycleDuration}
                     onChange={(e) => setCreateForm({ ...createForm, cycleDuration: Number(e.target.value) })}
                     className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
@@ -812,7 +812,7 @@ export default function PoolsPage() {
                     onChange={(e) => setCreateForm({ ...createForm, cycleUnit: e.target.value as "days" | "minutes" })}
                     className="min-h-[44px] border-[3px] border-[#0a0a0a] bg-[#ffffff] px-3 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
                   >
-                    <option value="minutes">Minutes</option>
+                    {!IS_MAINNET && <option value="minutes">Minutes</option>}
                     <option value="days">Days</option>
                   </select>
                 </div>

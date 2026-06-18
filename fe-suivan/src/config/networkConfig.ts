@@ -25,7 +25,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } = createNetwork
       packageId: PACKAGE_ID,
       factoryId: FACTORY_ID,
       usdcType: USDC_TYPE,
-      suiType: SUI_TYPE,
+      suiType: "0x2::sui::SUI",
       faucetId: FAUCET_ID,
     },
   },

@@ -25,3 +25,5 @@ export const SUI_FACTORY_ID = process.env.NEXT_PUBLIC_FACTORY_ID!;
 export const SUI_USDC_TYPE = process.env.NEXT_PUBLIC_USDC_TYPE!;
 export const SUI_SUI_TYPE = SUI_PACKAGE_ID + "::test_sui::TEST_SUI";
 export const SUI_CLOCK_ID = "0x6";
+export const SUI_NETWORK = (process.env.NEXT_PUBLIC_NETWORK || "testnet") as "testnet" | "mainnet";
+export const IS_MAINNET = SUI_NETWORK === "mainnet";

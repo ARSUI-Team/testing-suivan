@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { IS_MAINNET } from "@/config/sui";
 import { useLanguage } from "@/context/LanguageContext";
 import { ArrowRight, Calculator, DollarSign, Users, Clock, ShieldCheck } from "lucide-react";
 
@@ -152,7 +153,7 @@ export default function SimulatorPage() {
                     </div>
                     <input
                       type="range"
-                      min="7"
+                      min={IS_MAINNET ? 30 : 7}
                       max="90"
                       step="1"
                       value={cycleDays}

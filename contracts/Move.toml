@@ -1,5 +1,5 @@
 [package]
-name = "archa"
+name = "suivan"
 edition = "2024.beta"
 
 [dependencies]
@@ -9,4 +9,4 @@ deepbook = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "pac
 seal = { local = "./seal-local" }
 
 [addresses]
-archa = "0x0"
+suivan = "0x0"
