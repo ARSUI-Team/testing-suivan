@@ -65,7 +65,7 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
 │                      SUIVAN PROTOCOL                        │
 │                                                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
-│  │  zkLogin │  │  Spnsrd  │  │  Seal    │  │   Walrus  │  │
+│  │  zkLogin │  │   Seal   │  │  Walrus  │  │DeepBook │  │
 │  │  Google  │  │    Tx    │  │   RNG    │  │  Storage  │  │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └─────┬─────┘  │
 │       │             │             │               │        │
@@ -160,7 +160,7 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 
 ## 🧩 Sui Ecosystem Integration
 
-**6/6 Sui primitives — the most complete integration in the hackathon.**
+**5/5 Sui primitives — deep native integration.**
 
 | Primitive | Implementation | Impact |
 |---|---|---|
@@ -168,7 +168,6 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 | **Seal RNG** | Commit-reveal threshold encryption | Verifiable fair draws |
 | **DeepBook V3** | Flash loan arbitrage + BalanceManager | Real DeFi yield |
 | **Walrus** | Blob storage for pool metadata | Permanent on-chain identity |
-| **Sponsored Tx** | Backend relayer (`/api/sponsor`) | Gasless first transaction |
 | **LI.FI Bridge** | Cross-chain modal widget | USDC from 20+ chains |
 
 ---
