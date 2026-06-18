@@ -166,7 +166,7 @@ Weighted Total:            86/100
 
 | Member | Role | GitHub |
 |---|---|---|
-| **Hambali (Ham)** | Backend + Frontend Engineer | API, Automation, Agent Cron |
+| **Hambali** | Backend + Frontend Engineer | API, Automation, Agent Cron |
 | **Faiz** | Smart Contract Engineer | Sui Move |
 | **Nabila** | Backend + Frontend Engineer | UI/UX, API Integration |
 | **Ozan OnChain** | Full-stack + Design Lead | Frontend + Neo-Brutalist Design |
