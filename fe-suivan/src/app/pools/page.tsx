@@ -14,7 +14,6 @@ import {
   useUserUSDCcoins,
   useUSDCBalance,
   useLinkPoolMetadata,
-  useClaimUSDC,
   FormattedPool,
   type TransactionResult,
 } from "@/hooks/useSuiContracts";
@@ -80,8 +79,6 @@ export default function PoolsPage() {
   const { createPool, isPending: creating } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
   const creatingRef = useRef(false);
-  const { claimUSDC, isPending: claimPending, error: claimError } = useClaimUSDC();
-  const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -93,14 +90,6 @@ export default function PoolsPage() {
     }
     return () => { document.body.style.overflow = ""; };
   }, [showCreateModal, selectedPool]);
-
-  useEffect(() => {
-    if (!claimError) return;
-    const msg = claimError.message || "";
-    if (msg.includes("abort code: 1") || msg.includes("cooldown")) {
-      errorToast("⚠️ Faucet Cooldown", "1 claim per 24 hours. Use a different wallet or try again later.");
-    }
-  }, [claimError, errorToast]);
 
   const filteredPools = pools
     ? filter === "all" ? pools : pools.filter((p) => p.status === filter)
@@ -313,9 +302,7 @@ export default function PoolsPage() {
           {/* Faucet */}
           {isConnected && (
             <div className="gsap-up mb-4">
-              <Link href="/faucet" className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                Get Test USDC →
-              </Link>
+<FaucetCooldownButton variant="compact" onClaimed={() => refetchPools()} />
             </div>
           )}
 
