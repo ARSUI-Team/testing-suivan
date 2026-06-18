@@ -104,7 +104,7 @@ export default function YieldDemoPage() {
  };
 
  return (
-  <main className="min-h-screen bg-[#fbf7ed] text-[#0a0a0a]">
+  <main className="min-h-screen bg-grid-brutal text-[#0a0a0a]">
    <Header />
 
    <section className="relative isolate overflow-hidden px-5 pb-6 pt-32 md:px-10 lg:px-12">

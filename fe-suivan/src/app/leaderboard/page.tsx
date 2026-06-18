@@ -119,7 +119,7 @@ export default function LeaderboardPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#fdfdfa] text-[#0a0a0a]">
+      <main className="min-h-screen bg-grid-brutal text-[#0a0a0a]">
         <Header />
         <section className="px-5 pt-36 pb-20 md:px-10 lg:px-12">
           <div className="mx-auto max-w-6xl">
@@ -134,7 +134,7 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fdfdfa] text-[#0a0a0a]">
+    <main className="min-h-screen bg-grid-brutal text-[#0a0a0a]">
       <Header />
 
       <section className="relative isolate overflow-hidden px-5 pb-6 pt-32 md:px-10 lg:px-12">
