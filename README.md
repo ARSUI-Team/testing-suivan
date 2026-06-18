@@ -15,7 +15,7 @@
 
 ---
 
-## 🏆 Why Suivan Wins
+## 💡 The Problem & Our Solution
 
 ROSCA (Rotating Savings & Credit Association) is a **trillion-dollar** informal finance model practiced by billions worldwide — known as **Arisan** in Indonesia, **Chit Fund** in India, **Tanda** in Mexico, and **Esusu** in Nigeria. Trust, idle money, and manual records have kept it offline for centuries.
 
