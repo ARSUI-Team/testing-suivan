@@ -2,7 +2,7 @@
 /// Mock USDC coin for testing Archa on Sui testnet
 /// Uses coin_registry for custom coin type creation
 #[allow(lint(self_transfer))]
-module archa::test_usdc {
+module suivan::test_usdc {
     use sui::coin::{Self, TreasuryCap};
     use sui::coin_registry;
     use sui::event;

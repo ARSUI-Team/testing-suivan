@@ -14,13 +14,13 @@
 /// - M2: Minimum deposit check to prevent dust/zero shares
 /// - C-02: Removed simulated yield — total_deposits always matches actual balance
 #[allow(unused_field)]
-module archa::yield_strategy {
+module suivan::yield_strategy {
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
     use sui::event;
     use sui::table::{Self, Table};
 
-    use archa::test_usdc::TEST_USDC;
+    use suivan::test_usdc::TEST_USDC;
 
 
 

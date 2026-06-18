@@ -16,12 +16,12 @@
 ///   POST /api/faucet { address: "0x..." }
 ///   → signs & executes claim_test_usdc using deployer key
 ///   → returns { digest, amount }
-module archa::faucet {
+module suivan::faucet {
     use sui::table::{Self, Table};
     use sui::clock::{Self, Clock};
     use sui::coin::{Self, TreasuryCap};
     use sui::event;
-    use archa::test_usdc::TEST_USDC;
+    use suivan::test_usdc::TEST_USDC;
 
     const E_COOLDOWN_ACTIVE: u64 = 1;
 

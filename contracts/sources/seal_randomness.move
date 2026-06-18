@@ -11,7 +11,7 @@
 /// - consume: Mark as consumed (replay protection)
 /// - destroy: Clean up after consumption
 #[allow(lint(public_entry))]
-module archa::seal_randomness {
+module suivan::seal_randomness {
     use seal::bf_hmac_encryption::{Self, PublicKey, VerifiedDerivedKey};
     use seal::time;
     use sui::bls12381::G1;

@@ -2,15 +2,15 @@
 /// Comprehensive tests covering pool creation, join, start, deposit, winner selection
 /// Updated for capability-based auth (SEC-AC-1 fix)
 #[test_only]
-module archa::arisan_pool_tests {
+module suivan::arisan_pool_tests {
     use sui::test_scenario;
     use sui::coin::{Self, Coin};
     use sui::balance;
     use sui::transfer;
     use sui::clock::{Self, Clock};
     use sui::random::{Self, Random};
-    use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap};
-    use archa::test_usdc::TEST_USDC;
+    use suivan::arisan_pool::{Self, ArisanPool, PoolAdminCap};
+    use suivan::test_usdc::TEST_USDC;
     use std::string;
 
 
@@ -759,7 +759,7 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(winner);
-        let _payout_coin = scenario.take_from_sender<coin::Coin<archa::test_usdc::TEST_USDC>>();
+        let _payout_coin = scenario.take_from_sender<coin::Coin<suivan::test_usdc::TEST_USDC>>();
         assert!(coin::value(&_payout_coin) == DEPOSIT_AMOUNT * 2);
         let bal = coin::into_balance(_payout_coin);
         balance::destroy_for_testing(bal);
@@ -1209,7 +1209,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_CYCLE_NOT_COMPLETE)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_CYCLE_NOT_COMPLETE)]
     fun test_slash_before_cycle_complete() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -1248,7 +1248,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_ALREADY_DEPOSITED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_ALREADY_DEPOSITED)]
     fun test_slash_participant_who_deposited() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -1416,7 +1416,7 @@ module archa::arisan_pool_tests {
     // =========================================================================
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_DEPOSITS_INCOMPLETE)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_DEPOSITS_INCOMPLETE)]
     fun test_select_winner_rejects_incomplete_deposits() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -1743,7 +1743,7 @@ module archa::arisan_pool_tests {
         test_scenario::return_shared(pool);
 
         scenario.next_tx(winner);
-        let payout = scenario.take_from_sender<coin::Coin<archa::test_usdc::TEST_USDC>>();
+        let payout = scenario.take_from_sender<coin::Coin<suivan::test_usdc::TEST_USDC>>();
         assert!(coin::value(&payout) == DEPOSIT_AMOUNT * 2);
         let bal = coin::into_balance(payout);
         balance::destroy_for_testing(bal);
@@ -1751,7 +1751,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_NO_SEAL_SEED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_NO_SEAL_SEED)]
     fun test_select_winner_without_seal_seed_aborts() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -2655,7 +2655,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_POOL_CAP)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_POOL_CAP)]
     fun test_pause_pool_wrong_cap() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, _cap) = create_test_pool(&mut scenario);
@@ -2669,7 +2669,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_POOL_CAP)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_POOL_CAP)]
     fun test_unpause_pool_wrong_cap() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -2684,7 +2684,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_PAUSED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_PAUSED)]
     fun test_join_pool_rejected_when_paused() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -2709,7 +2709,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_PAUSED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_PAUSED)]
     fun test_make_deposit_rejected_when_paused() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -2744,7 +2744,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_PAUSED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_PAUSED)]
     fun test_start_pool_rejected_when_paused() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -2772,7 +2772,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_PAUSED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_PAUSED)]
     fun test_select_winner_rejected_when_paused() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -2824,7 +2824,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_PAUSED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_PAUSED)]
     fun test_slash_collateral_rejected_when_paused() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();
@@ -2863,7 +2863,7 @@ module archa::arisan_pool_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_PAUSED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_PAUSED)]
     fun test_end_pool_rejected_when_paused() {
         let mut scenario = test_scenario::begin(@0xA);
         scenario.create_system_objects();

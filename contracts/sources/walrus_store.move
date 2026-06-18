@@ -10,10 +10,10 @@
 ///
 /// Architecture:
 ///   Core Protocol (frozen) → Optional Integration Layer → Walrus Storage Adapter
-module archa::walrus_store {
+module suivan::walrus_store {
     use sui::event;
     use std::string::{Self, String};
-    use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap};
+    use suivan::arisan_pool::{Self, ArisanPool, PoolAdminCap};
 
     const E_NOT_POOL_ADMIN: u64 = 1100;
     const E_EMPTY_BLOB_ID: u64 = 1101;

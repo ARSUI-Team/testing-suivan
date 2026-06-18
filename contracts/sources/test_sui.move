@@ -1,7 +1,7 @@
 /// Module: test_sui
 /// Mock SUI coin for testing Archa on Sui testnet
 #[allow(lint(self_transfer))]
-module archa::test_sui {
+module suivan::test_sui {
     use sui::coin::{Self, TreasuryCap};
     use sui::coin_registry;
     use sui::event;

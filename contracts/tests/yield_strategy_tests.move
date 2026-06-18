@@ -1,12 +1,12 @@
 /// Tests for yield_strategy module
 /// C-02 fix: no simulated yield, total_deposits == actual_balance invariant
 #[test_only]
-module archa::yield_strategy_tests {
+module suivan::yield_strategy_tests {
     use sui::test_scenario;
     use sui::coin;
     use sui::balance;
-    use archa::yield_strategy::{Self};
-    use archa::test_usdc::TEST_USDC;
+    use suivan::yield_strategy::{Self};
+    use suivan::test_usdc::TEST_USDC;
 
     const DEPOSIT_100_USDC: u64 = 100_000_000;
     const MIN_SHARES_OFFSET: u64 = 1000;
