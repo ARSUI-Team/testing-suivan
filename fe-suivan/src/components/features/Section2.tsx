@@ -13,7 +13,7 @@ const problems = [
 
 const solutions = [
   { title: "Collateral System", desc: "Deposit collateral upfront, returned + yield if consistent" },
-  { title: "AI Yield Optimizer", desc: "AI automatically selects best DeFi protocols for maximum yield" },
+  { title: "Yield Engine", desc: "Composable DeFi yield across DeepBook V3 and Sui protocols" },
   { title: "100% On-Chain", desc: "Everything recorded on blockchain, cannot be manipulated" },
   { title: "Global Scale", desc: "ROSCA with anyone, anywhere in the world" },
 ];
@@ -116,7 +116,7 @@ const Section2 = () => {
             </h2>
           </div>
           <p className="text-white/60 text-[10px] md:text-xs font-semibold uppercase tracking-[0.15em] mb-6">
-            AI + Blockchain for ROSCA
+            DeFi + Blockchain for ROSCA
           </p>
           <div className="overflow-hidden w-full flex justify-end">
             <motion.div style={{ x: scrollRight }} className="flex gap-4 w-max">

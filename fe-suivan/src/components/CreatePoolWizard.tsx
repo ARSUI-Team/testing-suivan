@@ -270,14 +270,14 @@ export default function CreatePoolWizard({
             </div>
           )}
 
-          {/* Step 2: AI Agent Toggle */}
+          {/* Step 2: Automation Toggle */}
           {step === 2 && (
             <div>
               <h3 className="mb-1 text-2xl font-black tracking-[-0.04em] text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
-                AI Pool Agent
+                Pool Automation
               </h3>
               <p className="mb-6 text-sm font-semibold leading-6 text-[#333333]">
-                Our AI agent can manage your pool automatically — starting cycles, selecting winners via Seal RNG, and ending pools. You retain full control.
+                Our on-chain automation engine can manage your pool autonomously — starting cycles, selecting winners via Seal RNG, and ending pools. Fully deterministic, fully transparent.
               </p>
 
               {/* Agent card */}
@@ -336,7 +336,7 @@ export default function CreatePoolWizard({
                 <div className="mt-4 border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4">
                   <p className="text-xs font-semibold leading-5 text-[#333333]">
                     <strong className="text-[#0a0a0a]">How it works:</strong> After pool creation, your PoolAdminCap will be
-                    delegated to the AI agent address. You retain full visibility — all agent actions are visible on-chain.
+                    delegated to the automation engine address. All actions are fully visible on-chain — no hidden logic.
                     You can revoke delegation anytime.
                   </p>
                 </div>
@@ -409,7 +409,7 @@ export default function CreatePoolWizard({
                     <p className="protocol-font text-[10px] font-black uppercase tracking-[0.2em] text-[#a8a49a]">Automation</p>
                     {delegateAgent ? (
                       <span className="flex items-center gap-1 border-[2px] border-[#0a0a0a] bg-[#f8672d] px-2 py-0.5 text-[10px] font-black text-[#0a0a0a]">
-                        <Sparkles className="size-3" /> AI Agent
+                        <Sparkles className="size-3" /> Auto
                       </span>
                     ) : (
                       <span className="border-[2px] border-[#0a0a0a] bg-[#a8a49a] px-2 py-0.5 text-[10px] font-black text-white">
@@ -419,7 +419,7 @@ export default function CreatePoolWizard({
                   </div>
                   <p className="mt-1 text-sm font-semibold text-[#333333]">
                     {delegateAgent
-                      ? "PoolAdminCap will be delegated to AI agent for autonomous management."
+                      ? "PoolAdminCap will be delegated to the automation engine for autonomous management."
                       : "You will manage the pool manually via the dashboard."}
                   </p>
                 </div>

@@ -59,6 +59,12 @@ module suivan::arisan_pool {
     // Hard cap on leaderboard score — prevents extreme ticket concentration
     const LEADERBOARD_MAX: u64 = 5000;
 
+    // Protocol fee: 50 basis points (0.5%) on each cycle deposit
+    // Fee deducted from deposit, routed to collateral_yield_balance
+    // 10-20x cheaper than traditional ROSCA admin fees (5-10%)
+    // NOTE: disabled on testnet — activated for mainnet deployment
+    const PROTOCOL_FEE_BPS: u64 = 50;
+
     // ====== Structs ======
 
     /// Pool configuration — immutable after creation

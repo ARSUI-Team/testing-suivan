@@ -136,7 +136,7 @@ export default function PoolDetailPage() {
     tx.transferObjects([tx.object(adminCapId)], tx.pure.address(agentInfo.agentAddress));
     signAndExecute({ transaction: tx }, {
       onSuccess: () => {
-        successToast("Delegated to AI Agent", "PoolAdminCap transferred. Agent will now manage this pool.");
+        successToast("Delegated to Automation", "PoolAdminCap transferred. The automation engine will now manage this pool autonomously.");
         setAdminCapId(""); setDelegating(false);
         fetch("/api/agent/tick", { method: "POST" }).catch(() => {});
       },
@@ -224,7 +224,7 @@ export default function PoolDetailPage() {
   const handleJoinPool = () => {
     if (!joinCoinId) { errorToast("Validation", "No USDC coin available. Get USDC from Faucet first."); return; }
     const collateralAmt = getRequiredCollateralAmount(depositAmount, maxParticipants, DEFAULT_COLLATERAL_MULTIPLIER);
-    joinAndDeposit(poolAddress, depositAmount, collateralAmt, joinCoinId);
+    joinAndDeposit(poolAddress, collateralAmt, depositAmount, joinCoinId);
   };
   const handleMakeDeposit = () => { makeDeposit(poolAddress, depositAmount, depositCoinId); };
 
@@ -462,7 +462,7 @@ export default function PoolDetailPage() {
                           <div className={`border-[3px] p-4 ${isManagedByAgent ? "border-[#0d9488] bg-[#ccfbf1]" : "border-[#0a0a0a] bg-[#e0f4ff]"}`}>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#333333]" style={LABEL_MONO}>{isManagedByAgent ? "🤖 AI Agent" : "AI Agent"}</p>
+                                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#333333]" style={LABEL_MONO}>{isManagedByAgent ? "🤖 Auto Manager" : "Auto Manager"}</p>
                                 <p className={`mt-1 text-sm font-black ${isManagedByAgent ? "text-[#0d9488]" : "text-[#0a0a0a]"}`}>{isManagedByAgent ? "Managing automatically" : adminCapId ? "Delegate to automate" : "Available for automation"}</p>
                               </div>
                               {!isManagedByAgent && adminCapId && (

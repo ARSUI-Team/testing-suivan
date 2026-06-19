@@ -60,7 +60,7 @@ const en: Record<string, string> = {
   "faq.subtitle": "Everything you need to know about Suivan, ROSCA pools, and how to start saving on Sui.",
 
   "faq.q1": "What is Suivan?",
-  "faq.a1": "Suivan is an on-chain ROSCA protocol built on Sui Move. It brings traditional rotating savings into DeFi — community members contribute monthly, winners are randomly selected via Seal RNG, and idle funds earn yield through AI-optimized DeFi strategies. No treasurer, no middleman, fully transparent smart contracts.",
+  "faq.a1": "Suivan is an on-chain ROSCA protocol built on Sui Move. It brings traditional rotating savings into DeFi — community members contribute monthly, winners are randomly selected via Seal RNG, and idle funds earn yield through composable DeFi strategies across Sui protocols. No treasurer, no middleman, fully transparent smart contracts.",
 
   "faq.q2": "What is ROSCA?",
   "faq.a2": "ROSCA (Rotating Savings and Credit Association) is a global savings model practiced by billions — known as Arisan in Indonesia, Chit Fund in India, Tanda in Mexico, and many more. Members contribute a fixed amount each cycle. Each cycle, one member receives the entire pooled payout. This repeats until everyone has had a turn.",
@@ -78,7 +78,7 @@ const en: Record<string, string> = {
   "faq.a6": "Winners are selected randomly each cycle using Seal RNG — Sui's native on-chain random number generator. This guarantees fair, verifiable, and tamper-proof selection. No admin, no manual drawing, no bias. The randomness proof is recorded on-chain for anyone to verify.",
 
   "faq.q7": "How does yield work?",
-  "faq.a7": "While funds sit idle between cycles, our AI Yield Optimizer deploys them across Sui DeFi protocols (DeepBook, Bluefin, Cetus, Scallop, Aftermath, Navi, Turbos) to earn the highest available APY. Yield accrues to the pool and is distributed as a bonus to each cycle's winner. On the /ai page, you can see live APY data and AI-generated strategy recommendations.",
+  "faq.a7": "While funds sit idle between cycles, our Yield Engine deploys them across Sui DeFi protocols (DeepBook V3, Cetus, Scallop, Aftermath, Navi, Bluefin, Turbos) to earn available APY. Yield accrues to the pool and is distributed as a jackpot via verifiable Gacha draw at pool end. Visit the Yield Explorer to see live APY data from DeFiLlama across 10+ protocols.",
 
   "faq.q8": "Is Suivan non-custodial?",
   "faq.a8": "Yes. Suivan is fully non-custodial. You remain in control of your assets at all times through your wallet. Smart contracts handle pool logic and collateral on-chain. There is no admin key that can withdraw user funds. The protocol is designed with principle of least privilege — even the pool creator cannot access other participants' deposits.",
@@ -110,7 +110,7 @@ const en: Record<string, string> = {
 
   "landing.badge": "Sui Overflow 2026",
   "landing.title": "Global ROSCA Pools.\nZero Gas. Real Yield.",
-  "landing.subtitle": "Suivan brings Rotating Savings & Credit Associations (ROSCA) on-chain — a proven trillion-dollar informal finance model reimagined for DeFi. Deposit into your pool, let our AI engine deploy capital across the highest-yielding Sui protocols, and watch your returns compound automatically. No gas fees, no middlemen, no lock-ups. Just transparent, auditable smart contracts with zkLogin onboarding and sponsored transactions. Passive yield meets community trust — powered by Sui.",
+  "landing.subtitle": "Suivan brings Rotating Savings & Credit Associations (ROSCA) on-chain — a proven trillion-dollar informal finance model reimagined for DeFi. Deposit into your pool, earn yield across Sui protocols, and let on-chain automation manage cycles autonomously. No gas fees, no middlemen, no lock-ups. Just transparent, auditable smart contracts with sponsored transactions. Community savings meet DeFi — powered by Sui.",
   "landing.explore": "Explore Pools",
   "landing.how": "How It Works",
   "landing.statPools": "POOLS",
@@ -136,7 +136,7 @@ const en: Record<string, string> = {
   "landing.step3Title": "Contribute Monthly",
   "landing.step3Copy": "Each cycle, deposit your share. Track your status: ready, pending, contributed, or paid out.",
   "landing.step4Title": "Earn Yield",
-  "landing.step4Copy": "Idle pool funds earn DeFi yield automatically. AI-optimized strategies maximize returns across Sui protocols.",
+  "landing.step4Copy": "Idle pool funds earn DeFi yield automatically. Composable strategies maximize returns across Sui protocols.",
   "landing.sectionTitle": "Community savings in four steps.",
   "landing.sectionSub": "From zero to yield — no crypto knowledge needed. Just Google login and a few clicks.",
   "landing.poolsBadge": "live_pools",
@@ -441,7 +441,7 @@ const id: Record<string, string> = {
   "faq.subtitle": "Semua yang perlu kamu ketahui tentang Suivan, pool ROSCA, dan cara mulai menabung di Sui.",
 
   "faq.q1": "Apa itu Suivan?",
-  "faq.a1": "Suivan adalah protokol ROSCA on-chain yang dibangun di Sui Move. Menghadirkan tabungan bergilir tradisional ke dalam DeFi — anggota komunitas berkontribusi bulanan, pemenang dipilih secara acak via Seal RNG, dan dana menganggur menghasilkan yield melalui strategi DeFi yang dioptimalkan AI. Tanpa bendahara, tanpa perantara, smart contract transparan penuh.",
+  "faq.a1": "Suivan adalah protokol ROSCA on-chain yang dibangun di Sui Move. Menghadirkan tabungan bergilir tradisional ke dalam DeFi — anggota komunitas berkontribusi bulanan, pemenang dipilih secara acak via Seal RNG, dan dana menganggur menghasilkan yield melalui strategi DeFi yang dapat disusun (composable) di protokol Sui. Tanpa bendahara, tanpa perantara, smart contract transparan penuh.",
 
   "faq.q2": "Apa itu ROSCA?",
   "faq.a2": "ROSCA (Rotating Savings and Credit Association) adalah model tabungan global yang dipraktikkan oleh miliaran orang — dikenal sebagai Arisan di Indonesia, Chit Fund di India, Tanda di Meksiko, dan banyak lagi. Anggota menyetor jumlah tetap setiap siklus. Setiap siklus, satu anggota menerima seluruh pembayaran yang terkumpul. Ini berulang sampai semua mendapat giliran.",
@@ -459,7 +459,7 @@ const id: Record<string, string> = {
   "faq.a6": "Pemenang dipilih secara acak setiap siklus menggunakan Seal RNG — generator angka acak on-chain asli Sui. Ini menjamin pemilihan yang adil, dapat diverifikasi, dan anti-manipulasi. Tanpa admin, tanpa undian manual, tanpa bias. Bukti keacakan tercatat on-chain untuk diverifikasi siapa pun.",
 
   "faq.q7": "Bagaimana yield bekerja?",
-  "faq.a7": "Saat dana menganggur di antara siklus, AI Yield Optimizer kami menyebarkannya ke protokol DeFi Sui (DeepBook, Bluefin, Cetus, Scallop, Aftermath, Navi, Turbos) untuk mendapatkan APY tertinggi yang tersedia. Yield terkumpul ke pool dan didistribusikan sebagai bonus ke pemenang setiap siklus. Di halaman /ai, kamu bisa melihat data APY langsung dan rekomendasi strategi yang dihasilkan AI.",
+  "faq.a7": "Saat dana menganggur di antara siklus, Yield Engine kami menyebarkannya ke protokol DeFi Sui (DeepBook V3, Cetus, Scallop, Aftermath, Navi, Bluefin, Turbos) untuk mendapatkan APY yang tersedia. Yield terkumpul ke pool dan didistribusikan sebagai jackpot via undian Gacha yang dapat diverifikasi di akhir pool. Kunjungi Yield Explorer untuk melihat data APY langsung dari DeFiLlama di 10+ protokol.",
 
   "faq.q8": "Apakah Suivan non-kustodial?",
   "faq.a8": "Ya. Suivan sepenuhnya non-kustodial. Kamu tetap memegang kendali penuh atas asetmu setiap saat melalui wallet-mu. Smart contract menangani logika pool dan jaminan on-chain. Tidak ada kunci admin yang bisa menarik dana pengguna. Protokol dirancang dengan prinsip hak istimewa terendah — bahkan pembuat pool tidak bisa mengakses deposit peserta lain.",
@@ -491,7 +491,7 @@ const id: Record<string, string> = {
 
   "landing.badge": "Sui Overflow 2026",
   "landing.title": "Pool ROSCA Global.\nNol Gas. Yield Nyata.",
-  "landing.subtitle": "Suivan menghadirkan Rotating Savings & Credit Associations (ROSCA) di on-chain — model keuangan informal triliunan dolar yang kini direvolusi di DeFi. Setorkan dana ke pool Anda, biarkan mesin AI kami mengalokasikan modal ke protokol Sui dengan yield tertinggi, dan saksikan return Anda tumbuh secara otomatis. Tanpa gas fee, tanpa perantara, tanpa lock-up. Hanya smart contract yang transparan dan teraudit, dengan onboarding zkLogin serta transaksi disponsori. Yield pasif bertemu kepercayaan komunitas — ditenagai oleh Sui.",
+  "landing.subtitle": "Suivan menghadirkan Rotating Savings & Credit Associations (ROSCA) di on-chain — model keuangan informal triliunan dolar yang kini direvolusi di DeFi. Setorkan dana ke pool Anda, hasilkan yield di protokol Sui, dan biarkan otomatisasi on-chain mengelola siklus secara mandiri. Tanpa gas fee, tanpa perantara, tanpa lock-up. Hanya smart contract yang transparan dan teraudit, dengan transaksi disponsori. Tabungan komunitas bertemu DeFi — ditenagai oleh Sui.",
   "landing.explore": "Jelajahi Pool",
   "landing.how": "Cara Kerja",
   "landing.statPools": "POOL",
@@ -517,7 +517,7 @@ const id: Record<string, string> = {
   "landing.step3Title": "Kontribusi Bulanan",
   "landing.step3Copy": "Setiap siklus, setorkan bagian Anda. Lacak status: siap, tertunda, terkontribusi, atau terbayar.",
   "landing.step4Title": "Hasilkan Yield",
-  "landing.step4Copy": "Dana idle pool menghasilkan yield DeFi secara otomatis. Strategi yang dioptimalkan AI memaksimalkan hasil di seluruh protokol Sui.",
+  "landing.step4Copy": "Dana idle pool menghasilkan yield DeFi secara otomatis. Strategi composable memaksimalkan hasil di seluruh protokol Sui.",
   "landing.sectionTitle": "Tabungan komunitas dalam empat langkah.",
   "landing.sectionSub": "Dari nol hingga yield — tanpa perlu pengetahuan kripto. Cukup login Google dan beberapa klik.",
   "landing.poolsBadge": "pool_langsung",

@@ -1,4 +1,5 @@
-# Suivan — Demo Video Script (Final)
+
+'# Suivan — Demo Video Script (Final)
 ## Track: DeFi & Payments | Sui Overflow 2026
 
 ---
@@ -31,7 +32,7 @@
 **RIGHT —** a single smartphone displaying Suivan:
 - Dark brutalist UI on cream background
 - Live pool cards with moving numbers
-- Google zkLogin popup → instant dashboard
+- Connect wallet button → instant dashboard with zero gas
 
 **SFX:** Left channel: ambient room chatter, glasses clinking → crossfade to right channel: subtle electronic pulse, UI click.
 
@@ -170,12 +171,12 @@ Click a pool card → `/pools/[address]`. Show pool stats, participant list, "Jo
 
 > *Pilih satu. Deposit 10 USDC. 5 peserta. Siklus 30 hari. Klik Join. Sponsored transaction — gas fee nol. Finality kurang dari satu detik. Cek SuiScan. On-chain. Terverifikasi.*
 
-### SCENE 3.4 — AI Yield Dashboard (0:22)
-Open `/ai`. DeFiLlama live data: Cetus, NAVI, Scallop, Aftermath, Turbos, Bluefin, Suilend with risk scores. Click "Generate AI Strategy" → optimized allocation.
+### SCENE 3.4 — Yield Explorer (0:22)
+Open `/ai`. DeFiLlama live data: Cetus, NAVI, Scallop, Aftermath, Turbos, Bluefin, Suilend with real APY. DeepBook V3 orderbook integration. Real-time protocol comparisons.
 
-> Open the AI Yield Dashboard. Live data from DeFiLlama — 10+ Sui protocols with real APY. Click Generate. The AI analyzes risk and reward — then recommends the optimal allocation.
+> Open the Yield Explorer. Live data from DeFiLlama — 10+ Sui protocols with real APY. DeepBook V3 orderbook depth. Protocol comparisons, risk metrics, composable yield routing — all live, all on-chain.
 
-> *Buka AI Yield Dashboard. Data live dari DeFiLlama — 10+ protokol Sui dengan APY nyata. Klik Generate. AI menganalisis risiko dan reward — lalu merekomendasikan alokasi optimal.*
+> *Buka Yield Explorer. Data live dari DeFiLlama — 10+ protokol Sui dengan APY nyata. DeepBook V3 orderbook depth. Perbandingan protokol, risk metrics, composable yield routing — semua live, semua on-chain.*
 
 ### SCENE 3.5 — Leaderboard & Simulator (0:15)
 Open `/leaderboard` → tier system, points, yield earned. Open `/simulator` → cost comparison Sui vs EVM. Highlight: 500x cheaper.
@@ -192,21 +193,22 @@ Open `/leaderboard` → tier system, points, yield earned. Open `/simulator` →
 
 | Factor | Traditional ROSCA | EVM ROSCA | **Suivan (Sui)** |
 |--------|-------------------|-----------|-------------------|
-| Onboarding | Cash, face-to-face | Install MetaMask | **Google Login** |
-| Gas Fee | N/A | $0.05 – $0.50 | **$0.00** |
+| Onboarding | Cash, face-to-face | Install MetaMask | **Sui Wallet (10s)** |
+| Gas Fee | N/A | $0.05 – $0.50 | **$0.00 (sponsored)** |
 | Fair Draw | Manual shuffle | Blockhash (manipulable) | **Seal verifiable** |
 | Yield | 0% | Simple lending | **DeepBook V3 flash loan** |
 | Finality | Days | ~15 sec | **< 1 sec** |
 | Storage | Paper ledger | Expensive on-chain | **Walrus blob** |
+| Admin Fee | 5-10% (informal) | 1-3% | **0.5% (on-chain)** |
 
 ### NARRATOR:
 > Why Sui? Because only Sui has all six primitives in one unified stack.
 
 > *Kenapa Sui? Karena hanya Sui yang punya enam primitif dalam satu stack terpadu.*
 
-> Parallel execution — sub-second finality. zkLogin — onboarding without wallets. Sponsored transactions — free to use. Seal — verifiable randomness. Walrus — cheap blob storage. DeepBook V3 — native DeFi liquidity.
+> Parallel execution — sub-second finality. Sponsored transactions — gas is always free. Seal — verifiable randomness. Walrus — cheap blob storage. DeepBook V3 — native DeFi liquidity.
 
-> *Parallel execution — finality sub-detik. zkLogin — onboarding tanpa wallet. Sponsored transactions — gratis. Seal — randomness verifiable. Walrus — blob storage murah. DeepBook V3 — likuiditas DeFi native.*
+> *Parallel execution — finality sub-detik. Sponsored transactions — gas selalu gratis. Seal — randomness verifiable. Walrus — blob storage murah. DeepBook V3 — likuiditas DeFi native.*
 
 > No other chain offers this stack. **Sui built it. We built on it.**
 
@@ -214,7 +216,23 @@ Open `/leaderboard` → tier system, points, yield earned. Open `/simulator` →
 
 ---
 
-## ACT 5 — TECH DEEP DIVE (4:05 – 4:35)
+## ACT 5 — MONETIZATION & TECH DEEP DIVE (4:05 – 4:35)
+
+**VISUAL:** Revenue model slide first, then architecture.
+
+### SCENE 5.1 — Business Model (0:15)
+
+**VISUAL:** Split screen: left side "Traditional Arisan Fee: 5-10%" with red X, right side "Suivan Protocol Fee: 0.5%" with green check.
+
+> Suivan takes a 0.5% protocol fee on each cycle deposit. Compare that to traditional ROSCA — where the treasurer takes 5 to 10 percent. We're 10 to 20 times cheaper. And unlike a treasurer, our smart contract cannot run away with your money.
+
+> *Suivan mengambil fee protokol 0,5% per setoran siklus. Bandingkan dengan ROSCA tradisional — di mana bendahara mengambil 5 sampai 10 persen. Kami 10 sampai 20 kali lebih murah. Dan beda dengan bendahara, smart contract kami tidak bisa kabur bawa uangmu.*
+
+> At 1,000 active pools, the protocol sustains itself. All gas fees are sponsored. All operations are on-chain and verifiable. The protocol profits only when you save.
+
+> *Di 1.000 pool aktif, protokol membiayai dirinya sendiri. Semua biaya gas disponsori. Semua operasi on-chain dan bisa diverifikasi. Protokol hanya untung saat kamu menabung.*
+
+### SCENE 5.2 — Architecture (0:15)
 
 **VISUAL:** Simplified architecture diagram:
 
@@ -264,20 +282,21 @@ Open `/leaderboard` → tier system, points, yield earned. Open `/simulator` →
 
 ### Timeline:
 ```
-NOW (Testnet) ─────────────────────────────────────
-  ✅ Live at suivan.vercel.app
-  ✅ zkLogin + ultra-low gas fees
-  ✅ AI yield signals via DeFiLlama
-  ✅ Seal verifiable randomness
-  ✅ 2 security audits — all findings fixed
+NOW (Testnet) — June 2026 ─────────────────────────
+  ✅ Live at suivan.fun & suivan.vercel.app
+  ✅ 9 Move modules, 120 tests, 2 audits
+  ✅ Sponsored transactions — zero gas
+  ✅ Yield Explorer — DeFiLlama + DeepBook V3
+  ✅ On-chain pool automation engine
+  ✅ 0.5% protocol fee model (mainnet-ready)
 
-Q3 2026 (Mainnet) ─────────────────────────────────
+Q3 2026 (Mainnet) — July-September ────────────────
   🚀 Real USDC pools with DeepBook V3 auto-yield
-  🚀 AI Pool Agent — autonomous 24/7 management
-  🚀 SuiNS human-readable pool names
+  🚀 zkLogin (Google OAuth) — no wallet, no seed phrase
+  🚀 Self-sustaining gas sponsorship
   🚀 Mobile app (iOS + Android)
 
-Q4 2026+ ──────────────────────────────────────────
+Q4 2026+ — October onward ─────────────────────────
   📡 Multi-pool yield aggregation
   📡 Cross-chain via Sui Bridge
   📡 DAO governance
@@ -288,9 +307,9 @@ Q4 2026+ ───────────────────────�
 
 > *Kami sudah live. Sekarang. Di testnet. Semua yang baru kami tunjukkan — kode nyata. Kontrak nyata. Sui nyata.*
 
-> Q3 2026: mainnet with real USDC, DeepBook V3 automation, and an AI Pool Agent that manages pools autonomously.
+> Q3 2026: mainnet with real USDC, protocol fee activation, zkLogin for one-click Google sign-in, and a mobile app that brings ROSCA to anyone with a phone.
 
-> *Q3 2026: mainnet dengan USDC real, otomatisasi DeepBook V3, dan AI Pool Agent yang mengelola pool secara otonom.*
+> *Q3 2026: mainnet dengan USDC real, aktivasi fee protokol, zkLogin untuk login Google sekali klik, dan mobile app yang membawa ROSCA ke siapa pun dengan ponsel.*
 
 > Q4 and beyond: mobile app, cross-chain, DAO governance. Because our users aren't crypto traders in San Francisco. They're communities in villages, in small towns — anywhere that needs safe, productive savings.
 
@@ -331,22 +350,24 @@ Q4 2026+ ───────────────────────�
 ## QUICK RECORDING GUIDE
 
 ### What to Record (in order)
-1. Open `suivan.vercel.app` in Chrome (1920×1080, incognito, clean)
-2. Connect with zkLogin (Google)
-3. Navigate to `/pools` → browse pools
-4. Click a pool → show detail page
-5. Join pool → confirm transaction
-6. Make deposit → confirm
-7. Navigate to `/ai` → show DeFiLlama data → generate strategy
-8. Navigate to `/leaderboard` → show tiers
-9. Navigate to `/simulator` → show cost comparison
-10. Open SuiScan → show transaction with gas = 0
+1. Open `suivan.fun` in Chrome (1920×1080, incognito, clean)
+2. Connect Sui Wallet (or any Sui-compatible wallet)
+3. Navigate to `/faucet` → claim 500 free USDC (sponsored tx)
+4. Navigate to `/pools` → browse pools
+5. Click a pool → show detail page
+6. Join pool → confirm (sponsored tx, gas = $0)
+7. Make deposit → confirm
+8. Navigate to `/ai` → show DeFiLlama + DeepBook data
+9. Navigate to `/leaderboard` → show tiers
+10. Navigate to `/simulator` → show cost comparison (Sui vs EVM)
+11. Open SuiScan → show transaction with gas = 0
 
 ### Before Recording — Checklist
-- [ ] `suivan.vercel.app` is live and all pages load cleanly
+- [ ] `suivan.fun` is live and all pages load cleanly
 - [ ] At least 1 testnet pool exists with participants
-- [ ] zkLogin works (Google OAuth configured)
-- [ ] Transaction endpoint is online (`/api/sponsor`)
+- [ ] Sui Wallet extension installed in recording browser
+- [ ] Faucet gives 500 USDC successfully
+- [ ] Sponsored transaction endpoint is online (`/api/sponsor`)
 - [ ] DeFiLlama API returns real protocol data
 - [ ] SuiScan explorer links are valid
 - [ ] No console errors, no stuck loading states
