@@ -18,7 +18,7 @@ const steps = [
   {
     icon: TrendingUp,
     title: "Contribute",
-    desc: "Pay your share each cycle. Funds are deployed to DeepBook V3 for flash loan arbitrage — earning yield while they wait.",
+    desc: "Pay your share each cycle. Funds are deployed to DeepBook V3 for flash loan arbitrage, earning yield while they wait.",
     color: "#f8672d",
   },
   {
