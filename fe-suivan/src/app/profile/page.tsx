@@ -109,7 +109,7 @@ export default function ProfilePage() {
             className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl"
             style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
           >
-            {t("profile.title")}
+            {isConnected && displayAddr ? t("profile.titleWithAddr", { addr: displayAddr }) : t("profile.title")}
           </h1>
           <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("profile.subtitle")}
