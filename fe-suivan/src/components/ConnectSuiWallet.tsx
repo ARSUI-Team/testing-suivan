@@ -99,9 +99,23 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
               </button>
             </div>
 
-            <p className="mb-4 text-sm font-bold text-[#0a0a0a]">
+            <p className="mb-3 text-sm font-bold text-[#0a0a0a]">
               Connect with Google (zkLogin) or a Sui wallet
             </p>
+
+            <a
+              href="https://docs.sui.io/concepts/cryptography/zklogin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-3 flex items-center gap-3 border-[3px] border-[#0a0a0a] bg-[#ede9fe] p-3 shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
+            >
+              <span className="grid size-10 shrink-0 place-items-center border-[3px] border-[#0a0a0a] bg-white text-lg">G</span>
+              <div className="flex-1 text-left">
+                <span className="text-sm font-black text-[#0a0a0a]">Sign in with Google</span>
+                <span className="ml-2 border-[2px] border-[#0a0a0a] bg-[#8b5cf6] px-1.5 py-0.5 text-[9px] font-black text-white">Q3 2026</span>
+                <p className="mt-0.5 text-xs font-semibold text-[#333333]">Powered by Sui zkLogin — learn more →</p>
+              </div>
+            </a>
 
             <div className="space-y-2">
               {wallets.length === 0 && (
