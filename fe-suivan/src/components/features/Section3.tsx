@@ -30,7 +30,7 @@ const steps = [
   {
     icon: Gift,
     title: "Claim Yield",
-    desc: "Pool ends: collateral returned. Two yield streams — proportional collateral yield + gacha jackpot from accumulated cycle yield. Weighted by your score.",
+    desc: "Pool ends: collateral returned. Two yield streams: proportional collateral yield + gacha jackpot from accumulated cycle yield. Weighted by your score.",
     color: "#14b8a6",
   },
 ];
