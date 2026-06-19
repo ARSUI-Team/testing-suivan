@@ -206,7 +206,7 @@ export function FaucetCooldownButton({
         <p className="mt-3 text-center text-[10px] font-semibold text-[var(--brutal-muted)]">
           Next claim available in{" "}
           <strong className="text-[var(--brutal-ink)]">{formattedTime}</strong>.
-          Need more USDC? Get SUI first, then claim again.
+          Come back after cooldown to claim more USDC.
         </p>
       )}
     </div>

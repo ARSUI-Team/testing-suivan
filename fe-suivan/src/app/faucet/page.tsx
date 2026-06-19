@@ -17,6 +17,7 @@ import {
   ArrowRight,
   ExternalLink,
   Shield,
+  Sparkles,
 } from "lucide-react";
 
 type ClaimStatus = "idle" | "loading" | "success" | "error";
@@ -278,12 +279,7 @@ export default function FaucetPage() {
                     </div>
                   </div>
 
-                  <a
-                    href="https://faucet.testnet.sui.io"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative group border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 shadow-[12px_12px_0_#0a0a0a] overflow-hidden transition hover:-translate-x-0.5 hover:-translate-y-0.5"
-                  >
+                  <div className="relative border-[3px] border-[#0a0a0a] bg-[#ede9fe] p-4 shadow-[12px_12px_0_#0a0a0a] overflow-hidden">
                     <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
                     <div className="relative z-20">
                     <div className="flex justify-between items-center mb-2">
@@ -292,17 +288,16 @@ export default function FaucetPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="grid size-12 shrink-0 place-items-center border-[3px] border-[#0a0a0a] bg-grid-brutal">
-                        <ExternalLink className="size-5 text-[#0a0a0a]" />
+                        <Sparkles className="size-5 text-[#0a0a0a]" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#444444]" style={{ fontFamily: "'Courier New', monospace" }}>Get free SUI for gas</p>
-                        <p className="text-lg font-black" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Open Sui Faucet</p>
-                        <p className="text-xs font-semibold text-[#444444]">Covers gas fees on testnet</p>
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#444444]" style={{ fontFamily: "'Courier New', monospace" }}>Gas sponsored</p>
+                        <p className="text-lg font-black" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Zero Gas Fees</p>
+                        <p className="text-xs font-semibold text-[#444444]">All transactions sponsored by Suivan</p>
                       </div>
-                      <ExternalLink className="size-5 shrink-0 text-[#444444] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                     </div>
                     </div>
-                  </a>
+                  </div>
                 </div>
               </div>
 
@@ -368,7 +363,7 @@ export default function FaucetPage() {
                 </div>
                 {cooldownActive && (
                   <p className="mt-3 text-center text-xs font-semibold text-[#444444]">
-                    Next claim available in <strong className="text-[#0a0a0a]">{String(Math.floor(cooldown / 3600)).padStart(2, "0")}:{String(Math.floor((cooldown % 3600) / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</strong>. Need more USDC? Get SUI first above, then claim again.
+                    Next claim available in <strong className="text-[#0a0a0a]">{String(Math.floor(cooldown / 3600)).padStart(2, "0")}:{String(Math.floor((cooldown % 3600) / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</strong>. Come back after cooldown to claim more USDC.
                   </p>
                 )}
                 </div>
