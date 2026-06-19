@@ -34,7 +34,7 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-  const { stats: profileStats, badges, activity, isLoading } = useProfileData(account?.address);
+  const { stats: profileStats, badges, activity, memberSince, isLoading } = useProfileData(account?.address);
 
   const displayAddr = useMemo(() => {
     if (!account?.address) return "";
@@ -68,9 +68,9 @@ export default function ProfilePage() {
       color: "#ccfbf1",
     },
     {
-      label: t("profile.statsBadges"),
-      value: String(profileStats.badges),
-      icon: Award,
+      label: t("profile.statsYield"),
+      value: `$${profileStats.yieldEarned.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: Zap,
       color: "#ede9fe",
     },
   ];
@@ -209,13 +209,13 @@ export default function ProfilePage() {
                       <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333]">
                         {t("profile.infoMemberSince")}
                       </span>
-                      <span className="text-xs font-bold">May 2026</span>
+                      <span className="text-xs font-bold">{memberSince || "Recently"}</span>
                     </div>
                     <div className="flex items-center justify-between pt-4">
                       <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333]">
                         {t("profile.infoPools")}
                       </span>
-                      <span className="text-xs font-bold">1 active · 2 total</span>
+                      <span className="text-xs font-bold">{profileStats.pools} active · {profileStats.pools} total</span>
                     </div>
                   </div>
                 </div>
@@ -245,11 +245,9 @@ export default function ProfilePage() {
                               ? Trophy
                               : Award;
                         const typeColor =
-                          item.type === "badge"
-                            ? "#e0f4ff"
-                            : item.type === "win"
-                              ? "#fef9c3"
-                              : "#ccfbf1";
+                          item.type === "win"
+                            ? "#fef9c3"
+                            : "#ccfbf1";
                         return (
                           <div
                             key={i}

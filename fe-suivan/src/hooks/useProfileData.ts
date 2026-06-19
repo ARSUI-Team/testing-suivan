@@ -15,17 +15,18 @@ export interface ProfileBadge {
 }
 
 export interface ProfileActivity {
-  type: "join" | "win" | "create" | "badge";
+  type: "join" | "win" | "create";
   label: string;
   poolName: string;
   time: string;
+  poolAddress?: string;
 }
 
 export interface ProfileStats {
   pools: number;
   won: number;
   saved: number;
-  badges: number;
+  yieldEarned: number;
 }
 
 export function useProfileData(userAddress: string | undefined) {
@@ -36,12 +37,17 @@ export function useProfileData(userAddress: string | undefined) {
     queryKey: ["suivan", "profile", userAddress, pools?.length],
     queryFn: async () => {
       if (!userAddress || !pools || pools.length === 0) {
-        return { stats: { pools: 0, won: 0, saved: 0, badges: 0 }, badges: [] as ProfileBadge[], activity: [] as ProfileActivity[] };
+        return { stats: { pools: 0, won: 0, saved: 0, yieldEarned: 0 }, badges: [] as ProfileBadge[], activity: [] as ProfileActivity[] };
       }
 
       let userPoolCount = 0;
+      let createdCount = 0;
       let winCount = 0;
       let totalSaved = 0;
+      let totalYieldEarned = 0;
+      let firstJoinMs: number | null = null;
+      const activity: ProfileActivity[] = [];
+
       for (const pool of pools) {
         try {
           const obj = await client.getObject({
@@ -51,35 +57,58 @@ export function useProfileData(userAddress: string | undefined) {
           const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
           if (!fields) continue;
 
-          // participant_list is a plain array of addresses
           const participantList = (fields?.participant_list as string[]) ?? [];
           if (!participantList.includes(userAddress)) continue;
 
           userPoolCount++;
 
-          // Read participants Table ID to fetch participant detail
+          // Check if user is the creator (first participant)
+          if (participantList[0] === userAddress) createdCount++;
+
+          // Track first join time
+          const poolStartMs = Number((fields?.pool_start_time_ms as string) || 0);
+          if (poolStartMs > 0 && (!firstJoinMs || poolStartMs < firstJoinMs)) {
+            firstJoinMs = poolStartMs;
+          }
+
+          // Read participants Table
           const participantsTableId = (fields?.participants as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
           if (participantsTableId) {
             try {
               const entry = await client.getDynamicFieldObject({
                 parentId: participantsTableId,
-                name: {
-                  type: "address",
-                  value: userAddress,
-                },
+                name: { type: "address", value: userAddress },
               });
               const pVal = (entry.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
               if (pVal) {
                 const hasReceivedPayout = Boolean(pVal.has_received_payout);
                 if (hasReceivedPayout) winCount++;
                 const collateralAmount = Number(pVal.collateral_amount || 0);
-                const poolFunds = Number((fields?.pool_funds_balance as string) || 0);
-                totalSaved += (collateralAmount + poolFunds) / 1_000_000;
+                const proportionalYield = Number(pVal.proportional_yield_earned || 0);
+                totalYieldEarned += proportionalYield / 1_000_000;
+                totalSaved += (collateralAmount / 1_000_000);
+
+                if (hasReceivedPayout) {
+                  activity.push({
+                    type: "win",
+                    label: "Won cycle",
+                    poolName: pool.name || `Pool ${pool.address.slice(0, 6)}...${pool.address.slice(-4)}`,
+                    time: new Date().toLocaleDateString(),
+                    poolAddress: pool.address,
+                  });
+                }
               }
-            } catch {
-              // dynamic field not found → participant detail unavailable
-            }
+            } catch { /* skip */ }
           }
+
+          // Add join/create activity
+          activity.push({
+            type: createdCount > 0 && participantList[0] === userAddress ? "create" : "join",
+            label: createdCount > 0 && participantList[0] === userAddress ? "Created pool" : "Joined pool",
+            poolName: pool.name || `Pool ${pool.address.slice(0, 6)}...${pool.address.slice(-4)}`,
+            time: poolStartMs > 0 ? new Date(poolStartMs).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently",
+            poolAddress: pool.address,
+          });
         } catch {
           continue;
         }
@@ -88,81 +117,43 @@ export function useProfileData(userAddress: string | undefined) {
       const badges: ProfileBadge[] = [
         {
           name: "Early Adopter",
-          description: "Joined Suivan during testnet",
+          description: "Joined Suivan during testnet phase",
           icon: "Sparkles",
           color: "var(--success-soft)",
           achieved: userPoolCount > 0,
         },
         {
-          name: "Pool Pioneer",
-          description: "Created 3+ pools",
+          name: "Pool Creator",
+          description: "Created your own pool",
           icon: "Users",
           color: "var(--accent-soft)",
-          achieved: userPoolCount >= 3,
-          progress: `${userPoolCount}/3 pools`,
+          achieved: createdCount >= 1,
+          progress: createdCount === 0 ? "Create a pool to earn" : undefined,
         },
         {
-          name: "Cycle Champion",
-          description: "Won 5 cycles",
+          name: "Cycle Winner",
+          description: "Won a ROSCA cycle",
           icon: "Trophy",
           color: "var(--warn-soft)",
-          achieved: winCount >= 5,
-          progress: `${winCount}/5 wins`,
-        },
-        {
-          name: "Whale Watcher",
-          description: "Deposited 50k+ USDC",
-          icon: "PiggyBank",
-          color: "var(--success-soft)",
-          achieved: totalSaved >= 50000,
-          progress: `$${Math.min(totalSaved, 50000).toLocaleString()}/50,000 USDC`,
-        },
-        {
-          name: "Sui Native",
-          description: "Completed 10 cycles",
-          icon: "Zap",
-          color: "var(--accent-soft)",
-          achieved: winCount >= 10,
-          progress: `${winCount}/10 cycles`,
-        },
-        {
-          name: "Community Pillar",
-          description: "Referred 5 members",
-          icon: "Award",
-          color: "var(--purple-soft)",
-          achieved: false,
+          achieved: winCount >= 1,
+          progress: winCount === 0 ? "Win a cycle to earn" : undefined,
         },
       ];
 
       const badgeCount = badges.filter((b) => b.achieved).length;
-
-      const activity: ProfileActivity[] = [];
-      if (userPoolCount > 0) {
-        activity.push({
-          type: "join",
-          label: "Joined pool",
-          poolName: "Suivan Pool",
-          time: "Recently",
-        });
-      }
-      if (winCount > 0) {
-        activity.push({
-          type: "win",
-          label: "Won cycle",
-          poolName: "Suivan Pool",
-          time: "Recently",
-        });
-      }
 
       return {
         stats: {
           pools: userPoolCount,
           won: winCount,
           saved: totalSaved,
-          badges: badgeCount,
+          yieldEarned: totalYieldEarned,
         },
         badges,
-        activity,
+        activity: activity.slice(0, 10),
+        memberSince: firstJoinMs
+          ? new Date(firstJoinMs).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+          : null,
       };
     },
     enabled: !!userAddress && !poolsLoading && !!pools,
@@ -170,9 +161,10 @@ export function useProfileData(userAddress: string | undefined) {
   });
 
   return useMemo(() => ({
-    stats: profileData?.stats ?? { pools: 0, won: 0, saved: 0, badges: 0 },
+    stats: profileData?.stats ?? { pools: 0, won: 0, saved: 0, yieldEarned: 0 },
     badges: profileData?.badges ?? [],
     activity: profileData?.activity ?? [],
+    memberSince: profileData?.memberSince ?? null,
     isLoading: poolsLoading || dataLoading,
   }), [profileData, poolsLoading, dataLoading]);
 }
