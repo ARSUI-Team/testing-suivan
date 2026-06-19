@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { Radio, TrendingUp, ArrowRight, Database } from "lucide-react";
@@ -19,11 +19,46 @@ interface ProtocolYield {
 
 interface YieldData {
   protocols: ProtocolYield[];
-  market: { volatilityIndex: number; trendDirection: string; suiRefGasPrice: number };
-  stats: { avgApy: number; maxApy: number; minApy: number; totalTvl: number; protocolCount: number };
+  market: {
+    volatilityIndex: number;
+    trendDirection: string;
+    suiRefGasPrice: number;
+  };
+  stats: {
+    avgApy: number;
+    maxApy: number;
+    minApy: number;
+    totalTvl: number;
+    protocolCount: number;
+  };
 }
 
-export default function YieldExplorerPage() {
+// ─── Error boundary for DeepBook section ───
+
+class DeepBookErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="mt-8 border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-5 shadow-[12px_12px_0_#0a0a0a]">
+          <p className="text-sm font-black text-[#0a0a0a]">DeepBook indexer temporarily unavailable</p>
+          <p className="mt-1 text-xs font-semibold text-[#333333]">Live orderbook data will appear here when the indexer is reachable. All other yield data is unaffected.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ─── Main Page ───
+
+export default function SUIYieldExplorer() {
   const [data, setData] = useState<YieldData | null>(null);
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +69,10 @@ export default function YieldExplorerPage() {
   useEffect(() => {
     fetch("/api/yields")
       .then((r) => r.json())
-      .then((res) => { if (res.success) { setData(res.data); setTimestamp(res.timestamp); } else setError(res.error); })
+      .then((res) => {
+        if (res.success) { setData(res.data); setTimestamp(res.timestamp); }
+        else setError(res.error || "Unknown error");
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -45,10 +83,12 @@ export default function YieldExplorerPage() {
     return "bg-[#fee2e2]";
   };
 
-  const getRiskDots = (score: number) => {
-    if (score <= 3) return "●●".slice(0, score);
-    if (score <= 5) return "●●●".slice(0, score > 3 ? score - 1 : score);
-    return "●●●";
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "bullish": return "↑";
+      case "bearish": return "↓";
+      default: return "→";
+    }
   };
 
   return (
@@ -87,12 +127,13 @@ export default function YieldExplorerPage() {
 
           {data && (
             <>
+              {/* Stat cards */}
               <div className="gsap-up mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {[
-                  { label: t("ai.avgApy"), value: `${data.stats.avgApy.toFixed(2)}%`, bg: "#e0f4ff" },
-                  { label: t("ai.maxApy"), value: `${data.stats.maxApy.toFixed(2)}%`, bg: "#ccfbf1" },
-                  { label: t("ai.protocols"), value: String(data.stats.protocolCount), bg: "#fef9c3" },
-                  { label: t("ai.totalTvl"), value: `$${(data.stats.totalTvl / 1e6).toFixed(1)}M`, bg: "#ccfbf1" },
+                   { label: t("ai.avgApy"), value: `${data.stats.avgApy.toFixed(2)}%`, bg: "#e0f4ff" },
+                   { label: t("ai.maxApy"), value: `${data.stats.maxApy.toFixed(2)}%`, bg: "#ccfbf1" },
+                   { label: t("ai.protocols"), value: String(data.stats.protocolCount), bg: "#fef9c3" },
+                   { label: t("ai.totalTvl"), value: `$${(data.stats.totalTvl / 1e6).toFixed(1)}M`, bg: "#ccfbf1" },
                 ].map(({ label, value, bg }, idx) => (
                   <div key={label} className="relative border-[3px] border-[#0a0a0a] p-4 shadow-[12px_12px_0_#0a0a0a] overflow-hidden" style={{ backgroundColor: bg }}>
                     <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
@@ -108,38 +149,43 @@ export default function YieldExplorerPage() {
                 ))}
               </div>
 
-              {/* Protocol List */}
+              {/* Protocol list */}
               <div className="gsap-up mt-8 border-[3px] border-[#0a0a0a] bg-[#ffffff] p-5 shadow-[12px_12px_0_#0a0a0a]">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("ai.protocolYields")}</h2>
                   <span className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">
-                    {t("ai.sortedBy")}: APY ↓
+                    {t("ai.trend")}: {getTrendIcon(data.market.trendDirection)} {data.market.trendDirection}
                   </span>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-2 sm:grid-cols-2">
                   {[...data.protocols].sort((a, b) => b.apy - a.apy).map((p) => (
-                    <div key={p.name} className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-4 transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                      <p className="protocol-font text-sm font-black text-[#0a0a0a]">{p.name}</p>
-                      <p className="mt-1 text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>{p.apy.toFixed(2)}%</p>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className={`protocol-font border-[2px] border-[#0a0a0a] px-2 py-0.5 text-[10px] font-black ${getRiskColor(p.riskScore)}`}>
-                          {getRiskDots(p.riskScore)}
+                    <div key={p.name} className="flex items-center justify-between border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-4 transition hover:-translate-x-0.5 hover:-translate-y-0.5">
+                      <div>
+                        <p className="protocol-font text-sm font-black text-[#0a0a0a]">{p.name}</p>
+                        <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">{p.chain}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="protocol-font text-lg font-black text-[#0a0a0a]">{p.apy.toFixed(2)}%</p>
+                          <p className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">${(p.tvl / 1e6).toFixed(1)}M</p>
+                        </div>
+                        <span className={`protocol-font border-[3px] border-[#0a0a0a] px-3 py-1 text-xs font-black ${getRiskColor(p.riskScore)}`}>
+                          L{p.riskScore}
                         </span>
-                        <span className="text-xs font-semibold text-[#333333]">${(p.tvl / 1e6).toFixed(1)}M</span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-[#333333]">
-                  <span className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] px-2 py-0.5">● Low Risk</span>
-                  <span className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] px-2 py-0.5">●● Medium</span>
-                  <span className="border-[3px] border-[#0a0a0a] bg-[#fee2e2] px-2 py-0.5">●●● High</span>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[#333333]">
+                  <span className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] px-2 py-0.5">L1–L3 Low Risk</span>
+                  <span className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] px-2 py-0.5">L4–L5 Medium</span>
+                  <span className="border-[3px] border-[#0a0a0a] bg-[#fee2e2] px-2 py-0.5">L6+ High Risk</span>
                 </div>
                 {timestamp && (
                   <div className="mt-4 pt-3 border-t-[2px] border-[#0a0a0a] flex justify-between items-end">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>source</span>
-                      <span className="text-xs font-semibold text-[#14b8a6]">Sui RPC testnet</span>
+                      <span className="text-xs font-semibold text-[#14b8a6]">DeFiLlama → Sui RPC</span>
                     </div>
                     <span className="text-xs font-semibold text-[#0a0a0a]" style={{ fontFamily: "'Courier New', monospace" }}>
                       {new Date(timestamp).toLocaleString("en-GB", { hour12: false })} GMT
@@ -148,7 +194,7 @@ export default function YieldExplorerPage() {
                 )}
               </div>
 
-              {/* Top Protocol + Market conditions */}
+              {/* Top Protocol + Market */}
               <div className="gsap-up mt-8 grid gap-4 md:grid-cols-2">
                 <div className="relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-5 shadow-[12px_12px_0_#0a0a0a] overflow-hidden">
                   <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.04 }} />
@@ -221,8 +267,10 @@ export default function YieldExplorerPage() {
                 <p className="mt-4 text-xs font-semibold text-[#a8a49a]">{t("ai.autoNote")}</p>
               </div>
 
-              {/* DeepBook Live Orderbook */}
-              <DeepBookOrderbookSection />
+              {/* DeepBook Live Orderbook — wrapped in error boundary */}
+              <DeepBookErrorBoundary>
+                <DeepBookOrderbookSection />
+              </DeepBookErrorBoundary>
             </>
           )}
 
@@ -247,6 +295,8 @@ export default function YieldExplorerPage() {
     </main>
   );
 }
+
+// ─── DeepBook Orderbook Section ───
 
 function DeepBookOrderbookSection() {
   const { data: dbPools } = useDeepBookPools();
@@ -328,6 +378,12 @@ function DeepBookOrderbookSection() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {!dbPoolInfo && !orderbook && (
+        <div className="p-5 text-center">
+          <p className="text-sm font-semibold text-[#333333]">Loading orderbook data…</p>
         </div>
       )}
     </div>
