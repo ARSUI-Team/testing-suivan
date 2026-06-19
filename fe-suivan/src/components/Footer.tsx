@@ -18,7 +18,7 @@ const links = [
 const protocolLinks = [
   { label: "Sui Network", href: "https://sui.io" },
   { label: "Walrus", href: "https://walrus.xyz" },
-  { label: "zkLogin", href: "https://docs.sui.io/concepts/cryptography/zklogin" },
+  { label: "DeepBook", href: "https://deepbook.tech" },
 ];
 
 const communityLinks = [

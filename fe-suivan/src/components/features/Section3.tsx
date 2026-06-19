@@ -87,7 +87,7 @@ const Section3 = () => {
         <div className="flex items-center gap-2 sm:gap-4">
           <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "2s" }}>Verifiable</span>
           <span className="w-1 h-4 bg-[#0a0a0a] hidden sm:block" />
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "3s" }}>Low Gas</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "3s" }}>Zero Gas</span>
         </div>
       </div>
     </section>
