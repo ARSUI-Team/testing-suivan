@@ -374,7 +374,7 @@ const en: Record<string, string> = {
 
   "profile.badge": "YOUR DASHBOARD",
   "profile.title": "Your Profile",
-  "profile.subtitle": "Your on-chain savings journey — pools joined, cycles won, and yield earned across the Sui network.",
+  "profile.subtitle": "Your on-chain savings journey: pools joined, cycles won, and yield earned across the Sui network.",
   "profile.titleWithAddr": "Your Profile — {addr}",
   "profile.connectPrompt": "Connect your wallet to view your Suivan profile.",
   "profile.statsPools": "Pools Joined",
@@ -755,7 +755,7 @@ const id: Record<string, string> = {
 
   "profile.badge": "DASHBOARD ANDA",
   "profile.title": "Profil Anda",
-  "profile.subtitle": "Perjalanan tabungan on-chain Anda — pool yang diikuti, siklus dimenangkan, dan yield yang dihasilkan di jaringan Sui.",
+  "profile.subtitle": "Perjalanan tabungan on-chain Anda: pool yang diikuti, siklus dimenangkan, dan yield yang dihasilkan di jaringan Sui.",
   "profile.titleWithAddr": "Profil Anda — {addr}",
   "profile.connectPrompt": "Hubungkan dompet Anda untuk melihat profil Suivan.",
   "profile.statsPools": "Pool Diikuti",
