@@ -106,7 +106,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
             <button
               onClick={() => {
                 setIsModalOpen(false);
-                window.open("https://zklogin.sui.io", "_blank");
+                window.open("https://sui.io/zklogin", "_blank");
               }}
               className="mb-3 flex w-full items-center gap-3 border-[3px] border-[#0a0a0a] bg-white p-4 text-left font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#e0f4ff]"
             >
