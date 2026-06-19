@@ -810,6 +810,7 @@ export default function PoolsPage() {
                : "Create Pool"}
             </button>
           </div>
+          </div>
         </div>
       )}
 
