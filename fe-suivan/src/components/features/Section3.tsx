@@ -74,9 +74,9 @@ const Section3 = () => {
 
       <div className="w-full max-w-5xl mx-auto border-4 border-[#0a0a0a] bg-white flex flex-wrap items-center justify-center gap-3 px-4 py-3 -mt-[3px] sm:flex-nowrap sm:justify-between sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#a8a49a]">5 Steps</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "0s" }}>5 Steps</span>
           <span className="w-1 h-4 bg-[#0a0a0a] hidden sm:block" />
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#a8a49a]">Fully On-Chain</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "1s" }}>Fully On-Chain</span>
         </div>
         <Link
           href="/simulator"
@@ -85,9 +85,9 @@ const Section3 = () => {
           Try Simulator
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#a8a49a]">Verifiable</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "2s" }}>Verifiable</span>
           <span className="w-1 h-4 bg-[#0a0a0a] hidden sm:block" />
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#a8a49a]">Low Gas</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#f8672d] animate-[text-glitter-orange_3s_ease-in-out_infinite]" style={{ animationDelay: "3s" }}>Low Gas</span>
         </div>
       </div>
     </section>
