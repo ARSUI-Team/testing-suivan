@@ -181,8 +181,11 @@ export default function PoolDetailPage() {
   else if (isStarted && !isActive) status = "completed";
   else if (isFull && !isStarted) status = "active";
 
-  let poolName = walrusMeta?.name || "Custom Pool";
-  if (!walrusMeta) { if (depositAmount === 10) poolName = "Small Pool"; else if (depositAmount === 50) poolName = "Medium Pool"; else if (depositAmount === 100) poolName = "Large Pool"; }
+  let poolName = walrusMeta?.name;
+  if (!poolName) {
+    if (poolInfo?.walrusMetadataBlobId) { poolName = "Loading name..."; }
+    else { poolName = `Pool ${poolAddress.slice(0, 8)}...${poolAddress.slice(-4)}`; }
+  }
 
   const isParticipant = participantInfo?.isActive || false;
 
