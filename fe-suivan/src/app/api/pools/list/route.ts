@@ -40,7 +40,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ poolIds, count: poolIds.length });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch pools", poolIds: [] }, { status: 500 });
   }
 }

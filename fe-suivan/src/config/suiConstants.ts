@@ -4,3 +4,6 @@ export const SUI_USDC_TYPE = `${SUI_PACKAGE_ID}::test_usdc::TEST_USDC`;
 export const SUI_SUI_TYPE = `${SUI_PACKAGE_ID}::test_sui::TEST_SUI`;
 export const SUI_CLOCK_ID = "0x6";
 export const SUI_AGENT_ADDRESS = "0x501f2840d1d6fb2a98299f52f671150d38e118c33e8342861dd4ad5d58b788f1";
+export const SUI_TREASURY_CAP_ID = "0x14582163e9d3859e6b7a9b6d7f5bd6335a624212f6ba625d4a9a1f1d79b1e102";
+export const SUI_YIELD_STRATEGY_ID = "0xacb53839fbb80e991e28c8dad4554f8ac374c3dbafa56fbb7547523c1fe2dbd4";
+export const SUI_FAUCET_ID = "0xb0d0ce15b6c58af48216877c9df20d0ed91409b093f214fe79b29e71c103e311";

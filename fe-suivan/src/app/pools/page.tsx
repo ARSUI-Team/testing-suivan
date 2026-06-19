@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
@@ -9,14 +9,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Layers } from "lucide-react";
 import {
   useAllPoolsWithInfo,
-  useJoinPool,
+  useJoinAndDeposit,
   useCreatePool,
+  useLinkPoolMetadata,
   useUserUSDCcoins,
   useUSDCBalance,
-  useLinkPoolMetadata,
   useClaimUSDC,
   FormattedPool,
-  type TransactionResult,
 } from "@/hooks/useSuiContracts";
 import { useFaucetId, IS_MAINNET } from "@/config/sui";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
@@ -27,15 +26,10 @@ import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import { FaucetCooldownButton } from "@/components/FaucetCooldownButton";
 import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
 type PoolStatus = "all" | PoolLifecycleStatus;
-
-function findObjectChange(response: TransactionResult, objectType: string) {
-  return response.objectChanges?.find((change) =>
-    "objectId" in change && !!change.objectId && change.objectType?.includes(objectType)
-  );
-}
 
 async function waitForDigest(client: ReturnType<typeof useSuiClient>, digest: string) {
   try {
@@ -76,11 +70,10 @@ export default function PoolsPage() {
   const { coins: usdcCoins } = useUserUSDCcoins(account?.address);
   const { balance: usdcBalance } = useUSDCBalance(account?.address);
 
-  const { joinPool, isPending: joining } = useJoinPool();
+  const { joinAndDeposit, isPending: joining } = useJoinAndDeposit();
   const { createPool, isPending: creating } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
-  const { claimUSDC, isPending: claimPending } = useClaimUSDC();
-  const faucetId = useFaucetId();
+  const creatingRef = useRef(false);
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -129,20 +122,40 @@ export default function PoolsPage() {
       selectedPool.maxParticipants,
       COLLATERAL_MULTIPLIER,
     );
-    joinPool(selectedPool.address, collateralAmt, coinId, (response) => {
+    joinAndDeposit(selectedPool.address, collateralAmt, selectedPool.depositAmount, coinId, (response) => {
       setSelectedPool(null);
       setJoinCoinId("");
       refetchPools();
       const txMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
-      successToast("Joined Pool", `You are now a participant. Your collateral is locked.${txMsg}`);
+      successToast("Joined & Deposited", `You joined and deposited cycle 1 atomically. Collateral is locked.${txMsg}`);
     });
   };
 
   const handleCreatePool = async () => {
-    if (!createForm.usdcCoinId) {
-      errorToast("Validation", "Please select a USDC coin first");
+    if (creatingRef.current) return;
+    // Auto-pick first USDC coin if none selected
+    const coinId = createForm.usdcCoinId || usdcCoins[0]?.coinObjectId || "";
+    if (!coinId) {
+      errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
+
+    // Balance check: creator needs collateral + cycle-1 deposit
+    const requiredCollateralAmt = getRequiredCollateralAmount(
+      createForm.depositAmount,
+      createForm.maxParticipants,
+      DEFAULT_COLLATERAL_MULTIPLIER,
+    );
+    const totalRequired = requiredCollateralAmt + createForm.depositAmount;
+    if (usdcBalance < totalRequired) {
+      errorToast(
+        "Insufficient USDC",
+        `You need ${totalRequired.toFixed(2)} USDC (collateral ${requiredCollateralAmt.toFixed(2)} + cycle-1 deposit ${createForm.depositAmount.toFixed(2)}). Your balance is ${usdcBalance.toFixed(2)} USDC.`,
+      );
+      return;
+    }
+
+    creatingRef.current = true;
 
     let blobId: string | null = null;
     if (createForm.poolName.trim()) {
@@ -157,6 +170,7 @@ export default function PoolsPage() {
 
       if (!blobId) {
         errorToast("Metadata Publish Failed", "Pool was not created because the custom name could not be uploaded.");
+        creatingRef.current = false;
         return;
       }
     }
@@ -164,51 +178,22 @@ export default function PoolsPage() {
       createForm.depositAmount,
       createForm.maxParticipants,
       createForm.cycleUnit === "minutes" ? createForm.cycleDuration * 60 * 1000 : createForm.cycleDuration * 24 * 60 * 60 * 1000,
-      createForm.usdcCoinId,
+      coinId,
+      blobId || "",
       async (response) => {
+        creatingRef.current = false;
         const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
 
-        if (!blobId) {
-          await waitForDigest(suiClient, response.digest);
-          setShowCreateModal(false);
-          resetCreateForm();
-          refetchPools();
-          successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
-          return;
-        }
+        await waitForDigest(suiClient, response.digest);
+        setShowCreateModal(false);
+        resetCreateForm();
+        refetchPools();
 
-        const poolChange = findObjectChange(response, "::ArisanPool");
-        const capChange = findObjectChange(response, "::PoolAdminCap");
-        if (!poolChange?.objectId || !capChange?.objectId) {
-          await waitForDigest(suiClient, response.digest);
-          setShowCreateModal(false);
-          resetCreateForm();
-          refetchPools();
-          errorToast("Pool Created Without Name", `The pool was created, but its metadata could not be linked.${createTxMsg}`);
-          return;
+        if (blobId) {
+          successToast("Pool Created", `Your ROSCA pool is live with cycle-1 deposit paid and custom name applied.${createTxMsg}`);
+        } else {
+          successToast("Pool Created", `Your ROSCA pool is live — cycle-1 deposit paid automatically.${createTxMsg}`);
         }
-
-        linkMetadata(
-          poolChange.objectId,
-          blobId,
-          capChange.objectId,
-          async (linkResponse) => {
-            await waitForDigest(suiClient, linkResponse.digest);
-            setShowCreateModal(false);
-            resetCreateForm();
-            refetchPools();
-            successToast("Pool Created", `Your ROSCA pool is now live and the custom name has been applied.${createTxMsg}`);
-          },
-          (linkError) => {
-            setShowCreateModal(false);
-            resetCreateForm();
-            refetchPools();
-            errorToast(
-              "Pool Created Without Name",
-              linkError?.message || `The pool was created, but the custom name could not be linked.${createTxMsg}`,
-            );
-          }
-        );
       },
       (createError) => {
         errorToast("Create Pool Failed", createError?.message || "Transaction failed");
@@ -300,9 +285,7 @@ export default function PoolsPage() {
           {/* Faucet */}
           {isConnected && (
             <div className="gsap-up mb-4">
-              <Link href="/faucet" className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                Get Test USDC →
-              </Link>
+<FaucetCooldownButton variant="compact" onClaimed={() => refetchPools()} />
             </div>
           )}
 
@@ -634,7 +617,7 @@ export default function PoolsPage() {
 
       {/* Join Pool Modal */}
       {selectedPool && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedPool(null)} />
           <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[8px_8px_0_#0a0a0a]">
             <div className="mb-6 flex items-center justify-between">
@@ -833,18 +816,20 @@ export default function PoolsPage() {
 }
 
 function FaucetButton({ refetchPools }: { userAddress?: string; refetchPools: () => void }) {
+  const account = useCurrentAccount();
   const { claimUSDC, isPending } = useClaimUSDC();
   const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const [success, setSuccess] = useState(false);
   const [cooldownSec, setCooldownSec] = useState(0);
+  const addr = account?.address;
 
   const COOLDOWN_MS = 86_400_000;
 
   const checkCooldown = (): boolean => {
-    if (typeof window === "undefined") return false;
-    const raw = localStorage.getItem("suivan_faucet_claim");
+    if (typeof window === "undefined" || !addr) return false;
+    const raw = localStorage.getItem("suivan_faucet_claim_" + addr);
     if (!raw) return false;
     const last = Number(raw);
     const elapsed = Date.now() - last;

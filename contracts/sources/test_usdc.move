@@ -25,7 +25,7 @@ module suivan::test_usdc {
             b"USDC".to_string(),                        // symbol
             b"USD Coin".to_string(),                    // name
             b"Mock USDC for Suivan testing".to_string(), // description
-            b"https://suivan.fun/logo.png".to_string(),  // icon_url
+            b"https://suivan.app/logo.png".to_string(),  // icon_url
             ctx,
         );
 

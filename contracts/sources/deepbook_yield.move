@@ -186,15 +186,15 @@ module suivan::deepbook_yield {
     /// PTB-composable: chain after flash_arbitrage in same transaction
     public fun deposit_yield_profit_usdc<CoinType>(
         cap: &PoolAdminCap,
-        suivan_pool: &mut ArisanPool<CoinType>,
+        pool: &mut ArisanPool<CoinType>,
         profit_coin: Coin<CoinType>,
     ) {
         let profit_amount = coin::value(&profit_coin);
         if (profit_amount > 0) {
-            arisan_pool::deposit_yield_balance(cap, suivan_pool, coin::into_balance(profit_coin));
+            arisan_pool::deposit_yield_balance(cap, pool, coin::into_balance(profit_coin));
 
             event::emit(YieldProfitDeposited {
-                pool_id: object::id(suivan_pool),
+                pool_id: object::id(pool),
                 amount: profit_amount,
             });
         } else {
@@ -209,16 +209,16 @@ module suivan::deepbook_yield {
     /// in the same PTB (hot potato pattern enforces return)
     public fun deposit_funds_to_deepbook<CoinType>(
         cap: &PoolAdminCap,
-        suivan_pool: &mut ArisanPool<CoinType>,
+        pool: &mut ArisanPool<CoinType>,
         balance_manager: &mut BalanceManager,
         amount: u64,
         ctx: &mut TxContext,
     ): YieldWithdrawalReceipt {
-        let (coin, receipt) = arisan_pool::withdraw_pool_funds_for_yield(cap, suivan_pool, amount, ctx);
+        let (coin, receipt) = arisan_pool::withdraw_pool_funds_for_yield(cap, pool, amount, ctx);
         balance_manager::deposit(balance_manager, coin, ctx);
 
         event::emit(FundsDepositedToDeepBook {
-            pool_id: object::id(suivan_pool),
+            pool_id: object::id(pool),
             amount,
         });
 
@@ -229,17 +229,17 @@ module suivan::deepbook_yield {
     /// Consumes YieldWithdrawalReceipt (hot potato)
     public fun withdraw_funds_from_deepbook<CoinType>(
         cap: &PoolAdminCap,
-        suivan_pool: &mut ArisanPool<CoinType>,
+        pool: &mut ArisanPool<CoinType>,
         balance_manager: &mut BalanceManager,
         amount: u64,
         receipt: YieldWithdrawalReceipt,
         ctx: &mut TxContext,
     ) {
         let coin = balance_manager::withdraw<CoinType>(balance_manager, amount, ctx);
-        arisan_pool::return_pool_funds_from_yield(cap, suivan_pool, coin, receipt, ctx);
+        arisan_pool::return_pool_funds_from_yield(cap, pool, coin, receipt, ctx);
 
         event::emit(FundsWithdrawnFromDeepBook {
-            pool_id: object::id(suivan_pool),
+            pool_id: object::id(pool),
             amount,
         });
     }

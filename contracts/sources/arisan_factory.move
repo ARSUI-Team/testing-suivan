@@ -176,7 +176,9 @@ module suivan::arisan_factory {
     public fun create_pool_from_template<CoinType>(
         factory: &mut ArisanFactory,
         collateral: Coin<CoinType>,
+        deposit_coin: Coin<CoinType>,
         template_id: u64,
+        delegate_to: Option<address>,
         ctx: &mut TxContext,
     ) {
         assert!(!factory.paused, E_FACTORY_PAUSED);
@@ -191,11 +193,13 @@ module suivan::arisan_factory {
         // Delegate to arisan_pool::create_pool
         let pool_id = arisan_pool::create_pool(
             collateral,
+            deposit_coin,
             template.deposit_amount,
             template.max_participants,
             template.cycle_duration_ms,
             template.collateral_multiplier,
             string::utf8(b""),
+            delegate_to,
             ctx,
         );
 
@@ -226,10 +230,13 @@ module suivan::arisan_factory {
     public fun create_custom_pool<CoinType>(
         factory: &mut ArisanFactory,
         collateral: Coin<CoinType>,
+        deposit_coin: Coin<CoinType>,
         deposit_amount: u64,
         max_participants: u64,
         cycle_duration_ms: u64,
         collateral_multiplier: u64,
+        metadata_blob_id: String,
+        delegate_to: Option<address>,
         ctx: &mut TxContext,
     ) {
         assert!(!factory.paused, E_FACTORY_PAUSED);
@@ -239,11 +246,13 @@ module suivan::arisan_factory {
 
         let pool_id = arisan_pool::create_pool(
             collateral,
+            deposit_coin,
             deposit_amount,
             max_participants,
             cycle_duration_ms,
             collateral_multiplier,
-            string::utf8(b""),
+            metadata_blob_id,
+            delegate_to,
             ctx,
         );
 
