@@ -70,6 +70,11 @@ function DeepBookOrderbookSection() {
   const [selectedDbPool, setSelectedDbPool] = useState<string | null>("DEEP_SUI");
   const { data: rawOrderbook } = usePoolOrderbook(selectedDbPool);
   const dbPoolInfo = selectedDbPool ? getPoolInfo(selectedDbPool) : null;
+  const [dbTimestamp, setDbTimestamp] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (rawOrderbook) setDbTimestamp(new Date().toISOString());
+  }, [rawOrderbook]);
 
   const orderbook = rawOrderbook ? {
     bids: ((rawOrderbook.bids || []) as unknown as Array<[string, string]>).map(([price, qty]) => ({ price: Number(price), quantity: Number(qty) })),
@@ -129,6 +134,18 @@ function DeepBookOrderbookSection() {
       {!dbPoolInfo && !orderbook && (
         <div className="p-5 text-center">
           <p className="text-sm font-semibold text-[#333333]">Loading orderbook data…</p>
+        </div>
+      )}
+
+      {dbPoolInfo && dbTimestamp && (
+        <div className="border-t-[2px] border-[#0a0a0a] px-5 py-3 flex justify-between items-end">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>source</span>
+            <span className="text-xs font-semibold text-[#14b8a6]">DeepBook Indexer testnet</span>
+          </div>
+          <span className="text-xs font-semibold text-[#0a0a0a]" style={{ fontFamily: "'Courier New', monospace" }}>
+            {new Date(dbTimestamp).toLocaleString("en-GB", { hour12: false })} GMT
+          </span>
         </div>
       )}
     </div>
