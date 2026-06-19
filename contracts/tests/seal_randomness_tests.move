@@ -1,8 +1,8 @@
 #[test_only]
-module archa::seal_randomness_tests {
+module suivan::seal_randomness_tests {
     use sui::test_scenario;
     use sui::clock::{Self, Clock};
-    use archa::seal_randomness::{Self, SealCommit};
+    use suivan::seal_randomness::{Self, SealCommit};
 
     const PACKAGE_ID: address = @0x0;
     const OBJECT_ID: vector<u8> = x"01020304";
@@ -43,7 +43,7 @@ module archa::seal_randomness_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::seal_randomness::E_NOT_REVEALED)]
+    #[expected_failure(abort_code = suivan::seal_randomness::E_NOT_REVEALED)]
     fun test_consume_before_reveal_fails() {
         let mut scenario = test_scenario::begin(@0xA);
         let mut commit = create_commit(&mut scenario);
@@ -53,7 +53,7 @@ module archa::seal_randomness_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::seal_randomness::E_ALREADY_REVEALED)]
+    #[expected_failure(abort_code = suivan::seal_randomness::E_ALREADY_REVEALED)]
     fun test_reveal_twice_fails() {
         let mut scenario = test_scenario::begin(@0xA);
         let mut commit = create_commit(&mut scenario);
@@ -72,7 +72,7 @@ module archa::seal_randomness_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::seal_randomness::E_ALREADY_CONSUMED)]
+    #[expected_failure(abort_code = suivan::seal_randomness::E_ALREADY_CONSUMED)]
     fun test_consume_twice_fails() {
         let mut scenario = test_scenario::begin(@0xA);
         let mut commit = create_commit(&mut scenario);
@@ -86,7 +86,7 @@ module archa::seal_randomness_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::seal_randomness::E_NOT_CONSUMED)]
+    #[expected_failure(abort_code = suivan::seal_randomness::E_NOT_CONSUMED)]
     fun test_destroy_before_consume_fails() {
         let mut scenario = test_scenario::begin(@0xA);
         let commit = create_commit(&mut scenario);

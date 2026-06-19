@@ -1,12 +1,12 @@
 /// Tests for deepbook_yield module + arisan_pool yield integration hooks
 /// Updated for S1-2/H-03 fix: hot potato YieldWithdrawalReceipt + public(package)
 #[test_only]
-module archa::deepbook_yield_tests {
+module suivan::deepbook_yield_tests {
     use sui::test_scenario;
     use sui::coin::{Self, Coin};
     use sui::balance;
-    use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap, YieldWithdrawalReceipt};
-    use archa::test_usdc::TEST_USDC;
+    use suivan::arisan_pool::{Self, ArisanPool, PoolAdminCap, YieldWithdrawalReceipt};
+    use suivan::test_usdc::TEST_USDC;
 
     const DEPOSIT_AMOUNT: u64 = 10_000_000;
     const MAX_PARTICIPANTS: u64 = 5;
@@ -125,7 +125,7 @@ module archa::deepbook_yield_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_INSUFFICIENT_FUNDS)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_INSUFFICIENT_FUNDS)]
     fun test_withdraw_pool_funds_insufficient() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -144,7 +144,7 @@ module archa::deepbook_yield_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_DEPOSIT_AMOUNT)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_DEPOSIT_AMOUNT)]
     fun test_withdraw_pool_funds_zero_amount() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -163,7 +163,7 @@ module archa::deepbook_yield_tests {
     // =========================================================================
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_RECEIPT)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_RECEIPT)]
     fun test_return_funds_wrong_pool_receipt() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool1, cap1) = create_test_pool(&mut scenario);
@@ -226,7 +226,7 @@ module archa::deepbook_yield_tests {
     // =========================================================================
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_POOL_CAP)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_POOL_CAP)]
     fun test_deposit_yield_balance_wrong_cap() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, _cap) = create_test_pool(&mut scenario);
@@ -243,7 +243,7 @@ module archa::deepbook_yield_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_POOL_CAP)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_POOL_CAP)]
     fun test_withdraw_pool_funds_for_yield_wrong_cap() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, _cap) = create_test_pool(&mut scenario);
@@ -265,7 +265,7 @@ module archa::deepbook_yield_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_WRONG_POOL_CAP)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_WRONG_POOL_CAP)]
     fun test_return_pool_funds_from_yield_wrong_cap() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, _cap) = create_test_pool(&mut scenario);
@@ -294,7 +294,7 @@ module archa::deepbook_yield_tests {
     // =========================================================================
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_ENDED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_ENDED)]
     fun test_deposit_yield_balance_pool_ended() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -309,7 +309,7 @@ module archa::deepbook_yield_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_ENDED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_ENDED)]
     fun test_withdraw_pool_funds_for_yield_pool_ended() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -329,7 +329,7 @@ module archa::deepbook_yield_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_POOL_ENDED)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_POOL_ENDED)]
     fun test_deposit_pool_funds_pool_ended() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -348,7 +348,7 @@ module archa::deepbook_yield_tests {
     // =========================================================================
 
     #[test]
-    #[expected_failure(abort_code = archa::arisan_pool::E_INSUFFICIENT_FUNDS)]
+    #[expected_failure(abort_code = suivan::arisan_pool::E_INSUFFICIENT_FUNDS)]
     fun test_return_pool_funds_insufficient_amount() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);

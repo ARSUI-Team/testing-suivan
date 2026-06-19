@@ -34,7 +34,7 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-  const { stats: profileStats, badges, activity, isLoading } = useProfileData(account?.address);
+  const { stats: profileStats, badges, activity, memberSince, isLoading } = useProfileData(account?.address);
 
   const displayAddr = useMemo(() => {
     if (!account?.address) return "";
@@ -68,9 +68,9 @@ export default function ProfilePage() {
       color: "#ccfbf1",
     },
     {
-      label: t("profile.statsBadges"),
-      value: String(profileStats.badges),
-      icon: Award,
+      label: t("profile.statsYield"),
+      value: `$${profileStats.yieldEarned.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: Zap,
       color: "#ede9fe",
     },
   ];
@@ -109,7 +109,7 @@ export default function ProfilePage() {
             className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl"
             style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
           >
-            {t("profile.title")}
+            {isConnected && displayAddr ? t("profile.titleWithAddr", { addr: displayAddr }) : t("profile.title")}
           </h1>
           <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("profile.subtitle")}
@@ -209,13 +209,13 @@ export default function ProfilePage() {
                       <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333]">
                         {t("profile.infoMemberSince")}
                       </span>
-                      <span className="text-xs font-bold">May 2026</span>
+                      <span className="text-xs font-bold">{memberSince || "Recently"}</span>
                     </div>
                     <div className="flex items-center justify-between pt-4">
                       <span className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333]">
                         {t("profile.infoPools")}
                       </span>
-                      <span className="text-xs font-bold">1 active · 2 total</span>
+                      <span className="text-xs font-bold">{profileStats.pools} active · {profileStats.pools} total</span>
                     </div>
                   </div>
                 </div>
@@ -245,11 +245,9 @@ export default function ProfilePage() {
                               ? Trophy
                               : Award;
                         const typeColor =
-                          item.type === "badge"
-                            ? "#e0f4ff"
-                            : item.type === "win"
-                              ? "#fef9c3"
-                              : "#ccfbf1";
+                          item.type === "win"
+                            ? "#fef9c3"
+                            : "#ccfbf1";
                         return (
                           <div
                             key={i}
@@ -266,7 +264,7 @@ export default function ProfilePage() {
                                 {item.label}{" "}
                                 <span className="text-[#333333]">{item.poolName}</span>
                               </p>
-                              <p className="text-[11px] font-semibold text-[#333333]">{item.time}</p>
+                              <p className="text-xs font-semibold text-[#333333]">{item.time}</p>
                             </div>
                           </div>
                         );
@@ -303,7 +301,7 @@ export default function ProfilePage() {
                       <p className="text-sm font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1.1 }}>
                         {badge.name}
                       </p>
-                      <p className="mt-1 text-[11px] font-semibold text-[#333333]">{badge.description}</p>
+                      <p className="mt-1 text-xs font-semibold text-[#333333]">{badge.description}</p>
                       {!badge.achieved && badge.progress && (
                         <p className="mt-1 text-xs font-bold text-[#0a0a0a]">{badge.progress}</p>
                       )}

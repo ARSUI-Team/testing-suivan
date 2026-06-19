@@ -31,12 +31,12 @@ export default function Header() {
 
   const navItems = [
     { label: t("nav.pools"), href: "/pools" },
-    { label: t("nav.faucet"), href: "/faucet" },
     { label: t("nav.simulator"), href: "/simulator" },
     { label: t("nav.yield"), href: "/ai" },
     { label: t("nav.leaderboard"), href: "/leaderboard" },
     { label: t("nav.profile"), href: "/profile" },
     { label: t("nav.faq"), href: "/faq" },
+    { label: t("nav.faucet"), href: "/faucet" },
   ];
 
   return (
@@ -79,7 +79,7 @@ export default function Header() {
       <div className="flex items-center gap-1.5">
         <button
           aria-label="Switch language"
-          className="grid size-9 place-items-center border-[3px] border-[#0a0a0a] bg-white text-[10px] font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8]"
+          className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-white text-[11px] font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] touch-manipulation"
           onClick={() => setLanguage(language === "en" ? "id" : "en")}
           type="button"
           style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}
@@ -93,11 +93,11 @@ export default function Header() {
         )}
         <button
           aria-label="Toggle navigation menu"
-          className="grid size-9 place-items-center border-[3px] border-[#0a0a0a] bg-white text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] lg:hidden"
+          className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-white text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] lg:hidden touch-manipulation"
           onClick={() => setMenuOpen((value) => !value)}
           type="button"
         >
-          {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </div>
 

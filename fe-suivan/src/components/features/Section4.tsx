@@ -4,10 +4,10 @@ import { motion } from "motion/react";
 
 const advantages = [
   { name: "ANTI-RUN", role: "ANTI RUNAWAY", desc: "125% collateral guarantees commitment. Running away means losing your deposit + yield.", stat: "125%", statLabel: "COLLATERAL" },
-  { name: "LOW FEES", role: "ULTRA LOW FEES", desc: "Built on Sui with sub-second finality. Transaction fees under $0.001 per operation.", stat: "$0.001", statLabel: "PER TX" },
+  { name: "LOW GAS", role: "ULTRA LOW GAS FEE", desc: "Built on Sui with sub-second finality. Transaction fees under $0.001 per operation.", stat: "$0.001", statLabel: "PER TX" },
   { name: "ON-CHAIN", role: "100% TRANSPARENT", desc: "All transactions and yield recorded on Sui blockchain. Verifiable by anyone anytime.", stat: "100%", statLabel: "AUDITABLE" },
-  { name: "2X YIELD", role: "DOUBLE YIELD", desc: "Yield from pool funds + yield from collateral. Two sources of passive income simultaneously.", stat: "2X", statLabel: "STREAMS" },
-  { name: "AI YIELD", role: "AI OPTIMIZER", desc: "AI analyzes real-time data. Auto-selects the best DeFi protocols for maximum yield.", stat: "24/7", statLabel: "RUNNING" },
+  { name: "2X YIELD", role: "DUAL STREAMS", desc: "Collateral yield (proportional) + cumulative yield (gacha jackpot). Two independent reward systems from one pool.", stat: "2", statLabel: "SOURCES" },
+  { name: "YIELD", role: "AUTO YIELD", desc: "DeepBook V3 flash loan arbitrage auto-deploys pool funds. Real DeFi yield, fully automated.", stat: "24/7", statLabel: "RUNNING" },
 ];
 
 const Section4 = () => {
@@ -28,7 +28,7 @@ const Section4 = () => {
         {[...Array(2)].map((_, groupIndex) => (
           <div key={groupIndex} className="flex items-stretch gap-8 md:gap-12 lg:gap-16 pr-8 md:pr-12 lg:pr-16">
             {advantages.map((adv, i) => (
-              <div key={i} className="shrink-0 relative group" style={{ width: 250, height: 180 }}>
+              <div key={i} className="shrink-0 relative group" style={{ width: 260, height: 180 }}>
                 {/* Main Card */}
                 <div className="absolute inset-0 bg-[#fbf7ed] border-4 border-[#0a0a0a] shadow-[6px_6px_0_#0a0a0a] z-20 flex items-center justify-center transition-all duration-300 group-hover:bg-[#38bdf8] group-hover:shadow-[10px_10px_0_#0a0a0a]">
                   <div className="text-center px-4">
@@ -40,7 +40,7 @@ const Section4 = () => {
                 </div>
 
                 {/* Expanded Card Below */}
-                <div className="absolute left-0 right-0 top-[160px] bg-[#38bdf8] border-4 border-[#0a0a0a] border-t-0 z-10 flex flex-col items-center justify-center px-4 py-4 transition-all duration-300 group-hover:h-[120px] group-hover:shadow-[10px_10px_0_#0a0a0a] h-0 overflow-hidden">
+                <div className="absolute left-0 right-0 top-[160px] bg-[#38bdf8] border-4 border-[#0a0a0a] border-t-0 z-10 flex flex-col items-center justify-center px-4 py-4 transition-all duration-300 group-hover:h-[140px] group-hover:shadow-[10px_10px_0_#0a0a0a] h-0 overflow-hidden">
                   <p className="text-[11px] font-semibold text-[#0a0a0a] leading-tight text-center mb-3">{adv.desc}</p>
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>{adv.stat}</span>

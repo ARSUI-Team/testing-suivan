@@ -1,7 +1,7 @@
 /// Module: deepbook_yield
-/// DeepBook V3 flash loan integration for Archa yield optimization
+/// DeepBook V3 flash loan integration for Suivan yield optimization
 ///
-/// This module enables Archa pools to generate yield via:
+/// This module enables Suivan pools to generate yield via:
 /// 1. Flash loan arbitrage — borrow from DeepBook, execute swaps, keep profit
 /// 2. Idle fund deployment — deposit pool funds to DeepBook BalanceManager
 /// 3. Maker rebates — place limit orders on DeepBook to earn maker fees
@@ -72,7 +72,7 @@ module suivan::deepbook_yield {
     /// min_profit: minimum profit expected — tx aborts if profit < min_profit (slippage protection)
     /// Caller composes PTB: flash_arbitrage_borrow_base → deposit_yield_profit_usdc
     public fun flash_arbitrage_borrow_base<BaseAsset, QuoteAsset>(
-        archa_pool_id: ID,
+        suivan_pool_id: ID,
         deepbook_pool: &mut DeepBookPool<BaseAsset, QuoteAsset>,
         borrow_amount: u64,
         min_profit: u64,
@@ -111,7 +111,7 @@ module suivan::deepbook_yield {
         deepbook_pool::return_flashloan_base(deepbook_pool, return_coin, flash_loan);
 
         event::emit(FlashArbitrageExecuted {
-            pool_id: archa_pool_id,
+            pool_id: suivan_pool_id,
             deepbook_pool_id: object::id(deepbook_pool),
             borrowed_amount: borrow_amount,
             returned_amount: borrow_amount,
@@ -129,7 +129,7 @@ module suivan::deepbook_yield {
     /// min_profit: minimum profit expected — tx aborts if profit < min_profit (slippage protection)
     /// Returns: (base_remaining, quote_profit, deep_remaining)
     public fun flash_arbitrage_borrow_quote<BaseAsset, QuoteAsset>(
-        archa_pool_id: ID,
+        suivan_pool_id: ID,
         deepbook_pool: &mut DeepBookPool<BaseAsset, QuoteAsset>,
         borrow_amount: u64,
         min_profit: u64,
@@ -168,7 +168,7 @@ module suivan::deepbook_yield {
         deepbook_pool::return_flashloan_quote(deepbook_pool, return_coin, flash_loan);
 
         event::emit(FlashArbitrageExecuted {
-            pool_id: archa_pool_id,
+            pool_id: suivan_pool_id,
             deepbook_pool_id: object::id(deepbook_pool),
             borrowed_amount: borrow_amount,
             returned_amount: borrow_amount,
@@ -181,20 +181,20 @@ module suivan::deepbook_yield {
 
     // ====== Yield Deposit ======
 
-    /// Deposit flash arbitrage profit (USDC) to Archa pool yield_balance
-    /// Call this after flash_arbitrage when the profit coin is USDC
+    /// Deposit flash arbitrage profit (USDC) to Suivan pool yield_balance
+    /// Call this after flash_arbitrage when the profit coin is TEST_USDC
     /// PTB-composable: chain after flash_arbitrage in same transaction
     public fun deposit_yield_profit_usdc<CoinType>(
         cap: &PoolAdminCap,
-        archa_pool: &mut ArisanPool<CoinType>,
+        pool: &mut ArisanPool<CoinType>,
         profit_coin: Coin<CoinType>,
     ) {
         let profit_amount = coin::value(&profit_coin);
         if (profit_amount > 0) {
-            arisan_pool::deposit_yield_balance(cap, archa_pool, coin::into_balance(profit_coin));
+            arisan_pool::deposit_yield_balance(cap, pool, coin::into_balance(profit_coin));
 
             event::emit(YieldProfitDeposited {
-                pool_id: object::id(archa_pool),
+                pool_id: object::id(pool),
                 amount: profit_amount,
             });
         } else {
@@ -209,37 +209,37 @@ module suivan::deepbook_yield {
     /// in the same PTB (hot potato pattern enforces return)
     public fun deposit_funds_to_deepbook<CoinType>(
         cap: &PoolAdminCap,
-        archa_pool: &mut ArisanPool<CoinType>,
+        pool: &mut ArisanPool<CoinType>,
         balance_manager: &mut BalanceManager,
         amount: u64,
         ctx: &mut TxContext,
     ): YieldWithdrawalReceipt {
-        let (coin, receipt) = arisan_pool::withdraw_pool_funds_for_yield(cap, archa_pool, amount, ctx);
+        let (coin, receipt) = arisan_pool::withdraw_pool_funds_for_yield(cap, pool, amount, ctx);
         balance_manager::deposit(balance_manager, coin, ctx);
 
         event::emit(FundsDepositedToDeepBook {
-            pool_id: object::id(archa_pool),
+            pool_id: object::id(pool),
             amount,
         });
 
         receipt
     }
 
-    /// Withdraw funds from DeepBook BalanceManager back to Archa pool
+    /// Withdraw funds from DeepBook BalanceManager back to Suivan pool
     /// Consumes YieldWithdrawalReceipt (hot potato)
     public fun withdraw_funds_from_deepbook<CoinType>(
         cap: &PoolAdminCap,
-        archa_pool: &mut ArisanPool<CoinType>,
+        pool: &mut ArisanPool<CoinType>,
         balance_manager: &mut BalanceManager,
         amount: u64,
         receipt: YieldWithdrawalReceipt,
         ctx: &mut TxContext,
     ) {
         let coin = balance_manager::withdraw<CoinType>(balance_manager, amount, ctx);
-        arisan_pool::return_pool_funds_from_yield(cap, archa_pool, coin, receipt, ctx);
+        arisan_pool::return_pool_funds_from_yield(cap, pool, coin, receipt, ctx);
 
         event::emit(FundsWithdrawnFromDeepBook {
-            pool_id: object::id(archa_pool),
+            pool_id: object::id(pool),
             amount,
         });
     }

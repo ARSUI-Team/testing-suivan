@@ -1,11 +1,11 @@
 /// Tests for walrus_store module
 /// Verifies Walrus blob storage integration without touching core financial logic
 #[test_only]
-module archa::walrus_store_tests {
+module suivan::walrus_store_tests {
     use sui::test_scenario;
-    use archa::arisan_pool::{Self, ArisanPool, PoolAdminCap};
-    use archa::walrus_store;
-    use archa::test_usdc::TEST_USDC;
+    use suivan::arisan_pool::{Self, ArisanPool, PoolAdminCap};
+    use suivan::walrus_store;
+    use suivan::test_usdc::TEST_USDC;
     use std::string;
 
     const DEPOSIT_AMOUNT: u64 = 10_000_000;
@@ -111,7 +111,7 @@ module archa::walrus_store_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::walrus_store::E_EMPTY_BLOB_ID)]
+    #[expected_failure(abort_code = suivan::walrus_store::E_EMPTY_BLOB_ID)]
     fun test_link_metadata_empty_blob_rejected() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);
@@ -127,7 +127,7 @@ module archa::walrus_store_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::walrus_store::E_NOT_POOL_ADMIN)]
+    #[expected_failure(abort_code = suivan::walrus_store::E_NOT_POOL_ADMIN)]
     fun test_link_metadata_wrong_cap() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, _cap) = create_test_pool(&mut scenario);
@@ -148,7 +148,7 @@ module archa::walrus_store_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = archa::walrus_store::E_POOL_ENDED)]
+    #[expected_failure(abort_code = suivan::walrus_store::E_POOL_ENDED)]
     fun test_link_metadata_pool_ended() {
         let mut scenario = test_scenario::begin(@0xA);
         let (mut pool, cap) = create_test_pool(&mut scenario);

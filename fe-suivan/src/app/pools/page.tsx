@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
@@ -9,14 +9,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Layers } from "lucide-react";
 import {
   useAllPoolsWithInfo,
-  useJoinPool,
+  useJoinAndDeposit,
   useCreatePool,
+  useLinkPoolMetadata,
   useUserUSDCcoins,
   useUSDCBalance,
-  useLinkPoolMetadata,
   useClaimUSDC,
   FormattedPool,
-  type TransactionResult,
 } from "@/hooks/useSuiContracts";
 import { useFaucetId, IS_MAINNET } from "@/config/sui";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
@@ -27,15 +26,10 @@ import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import { FaucetCooldownButton } from "@/components/FaucetCooldownButton";
 import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
 type PoolStatus = "all" | PoolLifecycleStatus;
-
-function findObjectChange(response: TransactionResult, objectType: string) {
-  return response.objectChanges?.find((change) =>
-    "objectId" in change && !!change.objectId && change.objectType?.includes(objectType)
-  );
-}
 
 async function waitForDigest(client: ReturnType<typeof useSuiClient>, digest: string) {
   try {
@@ -76,11 +70,10 @@ export default function PoolsPage() {
   const { coins: usdcCoins } = useUserUSDCcoins(account?.address);
   const { balance: usdcBalance } = useUSDCBalance(account?.address);
 
-  const { joinPool, isPending: joining } = useJoinPool();
+  const { joinAndDeposit, isPending: joining } = useJoinAndDeposit();
   const { createPool, isPending: creating } = useCreatePool();
   const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
-  const { claimUSDC, isPending: claimPending } = useClaimUSDC();
-  const faucetId = useFaucetId();
+  const creatingRef = useRef(false);
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
 
@@ -129,20 +122,40 @@ export default function PoolsPage() {
       selectedPool.maxParticipants,
       COLLATERAL_MULTIPLIER,
     );
-    joinPool(selectedPool.address, collateralAmt, coinId, (response) => {
+    joinAndDeposit(selectedPool.address, collateralAmt, selectedPool.depositAmount, coinId, (response) => {
       setSelectedPool(null);
       setJoinCoinId("");
       refetchPools();
       const txMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
-      successToast("Joined Pool", `You are now a participant. Your collateral is locked.${txMsg}`);
+      successToast("Joined & Deposited", `You joined and deposited cycle 1 atomically. Collateral is locked.${txMsg}`);
     });
   };
 
   const handleCreatePool = async () => {
-    if (!createForm.usdcCoinId) {
-      errorToast("Validation", "Please select a USDC coin first");
+    if (creatingRef.current) return;
+    // Auto-pick first USDC coin if none selected
+    const coinId = createForm.usdcCoinId || usdcCoins[0]?.coinObjectId || "";
+    if (!coinId) {
+      errorToast("Validation", "No USDC coin available. Get USDC from Faucet first.");
       return;
     }
+
+    // Balance check: creator needs collateral + cycle-1 deposit
+    const requiredCollateralAmt = getRequiredCollateralAmount(
+      createForm.depositAmount,
+      createForm.maxParticipants,
+      DEFAULT_COLLATERAL_MULTIPLIER,
+    );
+    const totalRequired = requiredCollateralAmt + createForm.depositAmount;
+    if (usdcBalance < totalRequired) {
+      errorToast(
+        "Insufficient USDC",
+        `You need ${totalRequired.toFixed(2)} USDC (collateral ${requiredCollateralAmt.toFixed(2)} + cycle-1 deposit ${createForm.depositAmount.toFixed(2)}). Your balance is ${usdcBalance.toFixed(2)} USDC.`,
+      );
+      return;
+    }
+
+    creatingRef.current = true;
 
     let blobId: string | null = null;
     if (createForm.poolName.trim()) {
@@ -157,6 +170,7 @@ export default function PoolsPage() {
 
       if (!blobId) {
         errorToast("Metadata Publish Failed", "Pool was not created because the custom name could not be uploaded.");
+        creatingRef.current = false;
         return;
       }
     }
@@ -164,51 +178,22 @@ export default function PoolsPage() {
       createForm.depositAmount,
       createForm.maxParticipants,
       createForm.cycleUnit === "minutes" ? createForm.cycleDuration * 60 * 1000 : createForm.cycleDuration * 24 * 60 * 60 * 1000,
-      createForm.usdcCoinId,
+      coinId,
+      blobId || "",
       async (response) => {
+        creatingRef.current = false;
         const createTxMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}...${response.digest.slice(-4)}` : "";
 
-        if (!blobId) {
-          await waitForDigest(suiClient, response.digest);
-          setShowCreateModal(false);
-          resetCreateForm();
-          refetchPools();
-          successToast("Pool Created", `Your ROSCA pool is now live.${createTxMsg}`);
-          return;
-        }
+        await waitForDigest(suiClient, response.digest);
+        setShowCreateModal(false);
+        resetCreateForm();
+        refetchPools();
 
-        const poolChange = findObjectChange(response, "::ArisanPool");
-        const capChange = findObjectChange(response, "::PoolAdminCap");
-        if (!poolChange?.objectId || !capChange?.objectId) {
-          await waitForDigest(suiClient, response.digest);
-          setShowCreateModal(false);
-          resetCreateForm();
-          refetchPools();
-          errorToast("Pool Created Without Name", `The pool was created, but its metadata could not be linked.${createTxMsg}`);
-          return;
+        if (blobId) {
+          successToast("Pool Created", `Your ROSCA pool is live with cycle-1 deposit paid and custom name applied.${createTxMsg}`);
+        } else {
+          successToast("Pool Created", `Your ROSCA pool is live — cycle-1 deposit paid automatically.${createTxMsg}`);
         }
-
-        linkMetadata(
-          poolChange.objectId,
-          blobId,
-          capChange.objectId,
-          async (linkResponse) => {
-            await waitForDigest(suiClient, linkResponse.digest);
-            setShowCreateModal(false);
-            resetCreateForm();
-            refetchPools();
-            successToast("Pool Created", `Your ROSCA pool is now live and the custom name has been applied.${createTxMsg}`);
-          },
-          (linkError) => {
-            setShowCreateModal(false);
-            resetCreateForm();
-            refetchPools();
-            errorToast(
-              "Pool Created Without Name",
-              linkError?.message || `The pool was created, but the custom name could not be linked.${createTxMsg}`,
-            );
-          }
-        );
       },
       (createError) => {
         errorToast("Create Pool Failed", createError?.message || "Transaction failed");
@@ -236,7 +221,7 @@ export default function PoolsPage() {
           >
             {t("pools.title")}
           </h1>
-          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#555555]">
+          <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("pools.subtitle")}
           </p>
         </div>
@@ -250,11 +235,11 @@ export default function PoolsPage() {
               <div className="relative border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[10px_10px_0_#0a0a0a] overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.totalPools")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.totalPools")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>live</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>live</span>
                   </div>
                 </div>
               </div>
@@ -262,11 +247,11 @@ export default function PoolsPage() {
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-10%", width: "40%", height: "40%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.open")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.open")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => p.status === "open").length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>ready</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>ready</span>
                   </div>
                 </div>
               </div>
@@ -274,11 +259,11 @@ export default function PoolsPage() {
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="absolute pointer-events-none" style={{ bottom: "-10%", left: "-10%", width: "35%", height: "35%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.active")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.active")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => ["ready", "active", "action_required"].includes(p.status)).length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>running</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>running</span>
                   </div>
                 </div>
               </div>
@@ -286,11 +271,11 @@ export default function PoolsPage() {
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.06 }} />
                 <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-15%", width: "50%", height: "50%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.06 }} />
                 <div className="relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.usdc")}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.usdc")}</p>
                   <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{isConnected ? `${usdcBalance.toLocaleString()} USDC` : "---"}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>balance</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>balance</span>
                   </div>
                 </div>
               </div>
@@ -300,9 +285,7 @@ export default function PoolsPage() {
           {/* Faucet */}
           {isConnected && (
             <div className="gsap-up mb-4">
-              <Link href="/faucet" className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                Get Test USDC →
-              </Link>
+<FaucetCooldownButton variant="compact" onClaimed={() => refetchPools()} />
             </div>
           )}
 
@@ -316,7 +299,7 @@ export default function PoolsPage() {
                   className={`protocol-font whitespace-nowrap px-4 py-2 text-sm font-black tracking-[0.05em] transition-all ${
                     filter === status
                       ? status === "all" ? "bg-[#0a0a0a] text-[#38bdf8]" : "bg-[#f8672d] text-[#0a0a0a]"
-                      : "text-[#555555] hover:bg-[#e8e1d9] hover:text-[#0a0a0a]"
+                      : "text-[#333333] hover:bg-[#e8e1d9] hover:text-[#0a0a0a]"
                   }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -338,7 +321,7 @@ export default function PoolsPage() {
               </button>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold" style={{ color: "#555555" }}>{t("pools.connectWallet")}</span>
+                <span className="text-sm font-semibold" style={{ color: "#333333" }}>{t("pools.connectWallet")}</span>
                 <ConnectSuiWallet variant="header" scrolled={true} />
               </div>
             )}
@@ -476,7 +459,7 @@ export default function PoolsPage() {
                           fontSize: "0.5rem",
                           fontWeight: 700,
                           letterSpacing: "0.2em",
-                          color: "#555555",
+                          color: "#333333",
                           textTransform: "uppercase",
                           marginBottom: 1,
                           fontFamily: "var(--font-mono)",
@@ -558,7 +541,7 @@ export default function PoolsPage() {
                               fontSize: "0.45rem",
                               fontWeight: 700,
                               letterSpacing: "0.15em",
-                              color: "#555555",
+                              color: "#333333",
                               textTransform: "uppercase",
                               display: "block",
                               marginTop: 1,
@@ -570,7 +553,7 @@ export default function PoolsPage() {
                             style={{
                               fontSize: "0.4rem",
                               fontWeight: 600,
-                              color: "#555555",
+                              color: "#333333",
                               textTransform: "uppercase",
                               letterSpacing: "0.1em",
                             }}
@@ -622,7 +605,7 @@ export default function PoolsPage() {
                 </svg>
               </div>
               <h3 className="mb-2 text-2xl font-black tracking-[-0.02em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("pools.emptyTitle")}</h3>
-              <p className="font-semibold" style={{ color: "#555555" }}>
+              <p className="font-semibold" style={{ color: "#333333" }}>
                 {pools && pools.length === 0
                   ? t("pools.emptyDesc")
                   : t("pools.emptyFilter", { filter })}
@@ -634,7 +617,7 @@ export default function PoolsPage() {
 
       {/* Join Pool Modal */}
       {selectedPool && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedPool(null)} />
           <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[8px_8px_0_#0a0a0a]">
             <div className="mb-6 flex items-center justify-between">
@@ -651,34 +634,34 @@ export default function PoolsPage() {
 
             <div className="mb-6 space-y-4">
               <div className="border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.deposit")}</p>
+                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.deposit")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{selectedPool.depositAmount} USDC</p>
               </div>
 
               <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.collateral")}</p>
+                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.collateral")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                   {Math.ceil(selectedPool.depositAmount * 125 / 100)} USDC
                 </p>
-                <p className="mt-1 text-xs font-semibold" style={{ color: "#555555" }}>{t("pools.collateralDesc")}</p>
+                <p className="mt-1 text-xs font-semibold" style={{ color: "#333333" }}>{t("pools.collateralDesc")}</p>
               </div>
 
               <div className="border-[3px] border-[#0a0a0a] bg-[var(--accent-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.estimatedApy")}</p>
+                <p className="protocol-font mb-1 text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#333333" }}>{t("pools.estimatedApy")}</p>
                 <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{selectedPool.apy}%</p>
               </div>
 
               {usdcBalance > 0 ? (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>USDC Balance</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>USDC Balance</p>
                   <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
                     {usdcBalance.toFixed(2)} USDC
                   </p>
                 </div>
               ) : (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>Insufficient USDC</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "#555555" }}>Get free test USDC from the Faucet page before joining.</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#333333" }}>Insufficient USDC</p>
+                  <p className="mt-1 text-sm font-semibold" style={{ color: "#333333" }}>Get free test USDC from the Faucet page before joining.</p>
                   <Link
                     href="/faucet"
                     className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
@@ -706,7 +689,7 @@ export default function PoolsPage() {
               disabled={joining}
               className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] mt-3 ${
                 joining
-                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#555555] opacity-50"
+                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#333333] opacity-50"
                   : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"
               }`}
             >
@@ -718,7 +701,7 @@ export default function PoolsPage() {
               ) : t("pools.join")}
             </button>
 
-            <p className="mt-4 text-center text-xs font-semibold" style={{ color: "#555555" }}>
+            <p className="mt-4 text-center text-xs font-semibold" style={{ color: "#333333" }}>
               {t("pools.agree", { count: selectedPool.maxParticipants })}
             </p>
           </div>
@@ -736,82 +719,49 @@ export default function PoolsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowCreateModal(false)} />
-          <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[8px_8px_0_#0a0a0a]">
+          <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[8px_8px_0_#0a0a0a]">
+            <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.04 }} />
+            <div className="relative z-20 p-6">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="protocol-font text-xs font-black uppercase tracking-[0.18em]" style={{ color: "#e8180a" }}>create_pool</p>
+                <p className="protocol-font text-xs font-black uppercase tracking-[0.18em] text-[#f8672d]">create_pool</p>
                 <h3 className="mt-1 text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("pools.createTitle")}</h3>
               </div>
-              <button onClick={() => setShowCreateModal(false)} className="grid size-10 place-items-center border-[3px] border-[#0a0a0a] bg-[#f8672d] shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={() => setShowCreateModal(false)} className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-[#f8672d] shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 touch-manipulation">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
             <div className="mb-6 space-y-4">
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Pool Name</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[#333333]">
+                  Pool Name <span className="text-[#e8180a]">*</span>
+                </label>
                 <input
-                  type="text"
-                  maxLength={64}
+                  type="text" maxLength={64}
                   value={createForm.poolName}
                   onChange={(e) => setCreateForm({ ...createForm, poolName: e.target.value })}
-                  placeholder="My Awesome Pool"
+                  placeholder="e.g. Family Arisan 2026"
                   className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
                 />
               </div>
-
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Description (optional)</label>
-                <textarea
-                  maxLength={500}
-                  value={createForm.poolDescription}
-                  onChange={(e) => setCreateForm({ ...createForm, poolDescription: e.target.value })}
-                  placeholder="Brief description of your pool..."
-                  rows={3}
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[#333333]">Description <span className="text-[#a8a49a]">(optional)</span></label>
+                <textarea maxLength={500} value={createForm.poolDescription} onChange={(e) => setCreateForm({ ...createForm, poolDescription: e.target.value })} placeholder="Brief description of your pool..." rows={2} className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none resize-none" />
               </div>
-
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>{t("pools.deposit")} (USDC)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={createForm.depositAmount}
-                  onChange={(e) => setCreateForm({ ...createForm, depositAmount: Number(e.target.value) })}
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[#333333]">{t("pools.deposit")} (USDC)</label>
+                <input type="number" min="1" value={createForm.depositAmount} onChange={(e) => setCreateForm({ ...createForm, depositAmount: Number(e.target.value) })} className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none" />
               </div>
-
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Max Participants (2-50)</label>
-                <input
-                  type="number"
-                  min="2"
-                  max="50"
-                  value={createForm.maxParticipants}
-                  onChange={(e) => setCreateForm({ ...createForm, maxParticipants: Number(e.target.value) })}
-                  className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                />
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[#333333]">Max Participants (2-50)</label>
+                <input type="number" min="2" max="50" value={createForm.maxParticipants} onChange={(e) => setCreateForm({ ...createForm, maxParticipants: Number(e.target.value) })} className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none" />
               </div>
-
               <div>
-                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em]" style={{ color: "#555555" }}>Cycle Duration</label>
+                <label className="protocol-font mb-2 block text-xs font-black uppercase tracking-[0.14em] text-[#333333]">Cycle Duration</label>
                 <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={IS_MAINNET ? 30 : 1}
-                    value={createForm.cycleDuration}
-                    onChange={(e) => setCreateForm({ ...createForm, cycleDuration: Number(e.target.value) })}
-                    className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                  />
-                  <select
-                    value={createForm.cycleUnit}
-                    onChange={(e) => setCreateForm({ ...createForm, cycleUnit: e.target.value as "days" | "minutes" })}
-                    className="min-h-[44px] border-[3px] border-[#0a0a0a] bg-[#ffffff] px-3 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none"
-                  >
+                  <input type="number" min={IS_MAINNET ? 30 : 1} value={createForm.cycleDuration} onChange={(e) => setCreateForm({ ...createForm, cycleDuration: Number(e.target.value) })} className="min-h-[44px] w-full border-[3px] border-[#0a0a0a] bg-[#ffffff] px-4 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none" />
+                  <select value={createForm.cycleUnit} onChange={(e) => setCreateForm({ ...createForm, cycleUnit: e.target.value as "days" | "minutes" })} className="min-h-[44px] border-[3px] border-[#0a0a0a] bg-[#ffffff] px-3 py-3 text-sm font-semibold shadow-[3px_3px_0_#0a0a0a] outline-none">
                     {!IS_MAINNET && <option value="minutes">Minutes</option>}
                     <option value="days">Days</option>
                   </select>
@@ -820,80 +770,46 @@ export default function PoolsPage() {
 
               {usdcBalance > 0 ? (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--success-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>USDC Balance</p>
-                  <p className="text-2xl font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {usdcBalance.toFixed(2)} USDC
-                  </p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333]">USDC Balance</p>
+                  <p className="text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>{usdcBalance.toFixed(2)} USDC</p>
                 </div>
               ) : (
                 <div className="border-[3px] border-[#0a0a0a] bg-[var(--warn-soft)] p-4 shadow-[3px_3px_0_#0a0a0a]">
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em]" style={{ color: "#555555" }}>No USDC Balance</p>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: "#555555" }}>Get free test USDC first to create a pool.</p>
-                  <Link
-                    href="/faucet"
-                    className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
-                  >
-                    Get 500 USDC from Faucet →
-                  </Link>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333]">No USDC Balance</p>
+                  <p className="mt-1 text-sm font-semibold text-[#333333]">Get free test USDC first to create a pool.</p>
+                  <Link href="/faucet" className="protocol-font mt-3 inline-flex w-full items-center justify-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[6px_6px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5">Get 500 USDC from Faucet →</Link>
                 </div>
               )}
 
               <div className="space-y-2 border-[3px] border-[#0a0a0a] bg-grid-brutal p-4 shadow-[3px_3px_0_#0a0a0a]">
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#555555" }}>Total Pool per Cycle</span>
-                  <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {createForm.depositAmount * createForm.maxParticipants} USDC
+                  <span className="font-semibold text-[#333333]">Total Pool per Cycle</span>
+                  <span className="font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>{createForm.depositAmount * createForm.maxParticipants} USDC</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold text-[#333333]">Total Duration</span>
+                  <span className="font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>
+                    {createForm.cycleUnit === "minutes" ? (createForm.cycleDuration * createForm.maxParticipants < 60 ? `${createForm.cycleDuration * createForm.maxParticipants}m` : `${Math.round(createForm.cycleDuration * createForm.maxParticipants / 60)}h`) : `${createForm.cycleDuration * createForm.maxParticipants} days`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#555555" }}>Total Duration</span>
-                  <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {createForm.cycleUnit === "minutes"
-                      ? (createForm.cycleDuration * createForm.maxParticipants < 60
-                          ? `${createForm.cycleDuration * createForm.maxParticipants}m`
-                          : `${Math.round(createForm.cycleDuration * createForm.maxParticipants / 60)}h`)
-                      : `${createForm.cycleDuration * createForm.maxParticipants} days`}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold" style={{ color: "#555555" }}>{t("pools.requiredCollateral")}</span>
-                  <span className="font-black" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-                    {getRequiredCollateralAmount(
-                      createForm.depositAmount,
-                      createForm.maxParticipants,
-                      COLLATERAL_MULTIPLIER,
-                    )} USDC
-                  </span>
+                  <span className="font-semibold text-[#333333]">{t("pools.requiredCollateral")}</span>
+                  <span className="font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>{getRequiredCollateralAmount(createForm.depositAmount, createForm.maxParticipants, COLLATERAL_MULTIPLIER)} USDC</span>
                 </div>
               </div>
             </div>
 
             <button
               onClick={handleCreatePool}
-              disabled={creating || linkingMeta || publishingMetadata}
-              className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] ${
-                creating || linkingMeta || publishingMetadata
-                  ? "cursor-not-allowed bg-[#e8e1d9] text-[#555555] opacity-50"
-                  : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"
-              }`}
+              disabled={creating || linkingMeta || publishingMetadata || createForm.poolName.trim().length === 0}
+              className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] ${creating || linkingMeta || publishingMetadata || createForm.poolName.trim().length === 0 ? "cursor-not-allowed bg-[#e8e1d9] text-[#333333] opacity-50" : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"}`}
             >
-              {publishingMetadata ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Publishing metadata...
-                </span>
-              ) : creating ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Creating pool...
-                </span>
-              ) : linkingMeta ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Linking metadata...
-                </span>
-              ) : "Create Pool"}
+              {publishingMetadata ? (<span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />Publishing metadata...</span>)
+               : creating ? (<span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />Creating pool...</span>)
+               : linkingMeta ? (<span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />Linking metadata...</span>)
+               : "Create Pool"}
             </button>
+          </div>
           </div>
         </div>
       )}
@@ -903,18 +819,20 @@ export default function PoolsPage() {
 }
 
 function FaucetButton({ refetchPools }: { userAddress?: string; refetchPools: () => void }) {
+  const account = useCurrentAccount();
   const { claimUSDC, isPending } = useClaimUSDC();
   const faucetId = useFaucetId();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const [success, setSuccess] = useState(false);
   const [cooldownSec, setCooldownSec] = useState(0);
+  const addr = account?.address;
 
   const COOLDOWN_MS = 86_400_000;
 
   const checkCooldown = (): boolean => {
-    if (typeof window === "undefined") return false;
-    const raw = localStorage.getItem("suivan_faucet_claim");
+    if (typeof window === "undefined" || !addr) return false;
+    const raw = localStorage.getItem("suivan_faucet_claim_" + addr);
     if (!raw) return false;
     const last = Number(raw);
     const elapsed = Date.now() - last;

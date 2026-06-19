@@ -7,11 +7,12 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const links = [
   { label: "Pools", href: "/pools" },
-  { label: "Faucet", href: "/faucet" },
   { label: "Simulator", href: "/simulator" },
   { label: "Yield", href: "/ai" },
+  { label: "Leaderboard", href: "/leaderboard" },
   { label: "Profile", href: "/profile" },
   { label: "FAQ", href: "/faq" },
+  { label: "Faucet", href: "/faucet" },
 ];
 
 const protocolLinks = [
@@ -21,9 +22,9 @@ const protocolLinks = [
 ];
 
 const communityLinks = [
-  { label: "Telegram", href: "https://t.me/suivan", Icon: MessageCircle },
-  { label: "X / Twitter", href: "https://x.com/suivan", Icon: X },
-  { label: "GitHub", href: "https://github.com/suivan", Icon: GitBranch },
+  { label: "Telegram", href: "https://t.me/sui_van", Icon: MessageCircle },
+  { label: "X / Twitter", href: "https://x.com/suivan_id", Icon: X },
+  { label: "GitHub", href: "https://github.com/ARSUI-Team/testing-suivan", Icon: GitBranch },
 ];
 
 export default function Footer() {
@@ -48,14 +49,14 @@ export default function Footer() {
             <div className="mt-5 flex gap-2">
               {communityLinks.map((link) => (
                 <a
-                  className="grid size-9 place-items-center border-[3px] border-[var(--brutal-muted)] text-[var(--brutal-muted)] transition hover:border-[var(--brutal-accent)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-ink)]"
+                  className="grid size-11 place-items-center border-[3px] border-[var(--brutal-muted)] text-[var(--brutal-muted)] transition hover:border-[var(--brutal-accent)] hover:bg-[var(--brutal-accent)] hover:text-[var(--brutal-ink)] touch-manipulation"
                   href={link.href}
                   key={link.label}
                   rel="noopener noreferrer"
                   target="_blank"
                   aria-label={link.label}
                 >
-                  <link.Icon className="size-4" />
+                  <link.Icon className="size-5" />
                 </a>
               ))}
             </div>

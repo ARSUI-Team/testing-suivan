@@ -40,7 +40,7 @@ export default function SimulatorPage() {
           <h1 className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
             {t("simulator.title")}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#555555]">
+          <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
             {t("simulator.subtitle")}
           </p>
         </div>
@@ -76,13 +76,13 @@ export default function SimulatorPage() {
                         Pool Setup
                       </h2>
                     </div>
-                    <span className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>v1.0</span>
+                    <span className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>v1.0</span>
                   </div>
 
                   {/* Deposit per Cycle */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-[11px] font-black uppercase tracking-[0.08em] text-[#555555]">
+                      <label className="text-xs font-black uppercase tracking-[0.08em] text-[#333333]">
                         Contribution / Cycle
                       </label>
                       <span className="text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Arial Black', sans-serif" }}>
@@ -106,7 +106,7 @@ export default function SimulatorPage() {
                           className={`text-xs font-black uppercase tracking-[0.12em] border-[2px] border-[#0a0a0a] px-2.5 py-1 transition ${
                             deposit === p
                               ? "bg-[#f8672d] text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a]"
-                              : "bg-white text-[#555555] hover:bg-[#e8e1d9]"
+                              : "bg-white text-[#333333] hover:bg-[#e8e1d9]"
                           }`}
                           style={{ fontFamily: "'Courier New', monospace" }}
                         >
@@ -119,7 +119,7 @@ export default function SimulatorPage() {
                   {/* Number of Members */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-[11px] font-black uppercase tracking-[0.08em] text-[#555555]">
+                      <label className="text-xs font-black uppercase tracking-[0.08em] text-[#333333]">
                         Group Size
                       </label>
                       <span className="text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Arial Black', sans-serif" }}>
@@ -135,7 +135,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setParticipants(Number(e.target.value))}
                       className="w-full h-2 appearance-none cursor-pointer bg-[#e8e1d9] accent-[#0a0a0a] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:bg-[#f8672d] [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-[#0a0a0a] [&::-webkit-slider-thumb]:shadow-[2px_2px_0_#0a0a0a]"
                     />
-                    <div className="mt-1 flex justify-between text-[11px] font-semibold text-[#555555]">
+                    <div className="mt-1 flex justify-between text-xs font-semibold text-[#333333]">
                       <span>2 people</span>
                       <span>50 people</span>
                     </div>
@@ -144,7 +144,7 @@ export default function SimulatorPage() {
                   {/* Cycle Duration */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-[11px] font-black uppercase tracking-[0.08em] text-[#555555]">
+                      <label className="text-xs font-black uppercase tracking-[0.08em] text-[#333333]">
                         Cycle Length
                       </label>
                       <span className="text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Arial Black', sans-serif" }}>
@@ -160,7 +160,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setCycleDays(Number(e.target.value))}
                       className="w-full h-2 appearance-none cursor-pointer bg-[#e8e1d9] accent-[#0a0a0a] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:bg-[#f8672d] [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-[#0a0a0a] [&::-webkit-slider-thumb]:shadow-[2px_2px_0_#0a0a0a]"
                     />
-                    <div className="mt-1 flex justify-between text-[11px] font-semibold text-[#555555]">
+                    <div className="mt-1 flex justify-between text-xs font-semibold text-[#333333]">
                       <span>1 week</span>
                       <span>3 months</span>
                     </div>
@@ -171,7 +171,7 @@ export default function SimulatorPage() {
                     <div className="w-10 h-4" style={{
                       background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px, #0a0a0a 10px, #0a0a0a 11px, transparent 11px, transparent 15px, #0a0a0a 15px, #0a0a0a 19px, transparent 19px, transparent 22px)",
                     }} />
-                    <span className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>drag to adjust</span>
+                    <span className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>drag to adjust</span>
                   </div>
                 </div>
               </div>
@@ -190,29 +190,29 @@ export default function SimulatorPage() {
                   {/* Header barcode */}
                   <div className="flex justify-between items-center mb-2">
                     <div className="w-12 h-4" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px, #0a0a0a 10px, #0a0a0a 11px, transparent 11px, transparent 15px)" }} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>vol.01</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>vol.01</span>
                   </div>
-                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#555555] mb-1">{t("simulator.breakdown")}</p>
-                  <p className="text-sm font-semibold text-[#555555]">{t("simulator.needToPrepare")}</p>
+                  <p className="protocol-font text-xs font-black uppercase tracking-[0.15em] text-[#333333] mb-1">{t("simulator.breakdown")}</p>
+                  <p className="text-sm font-semibold text-[#333333]">{t("simulator.needToPrepare")}</p>
                   <p className="mt-2 text-6xl font-black tracking-[-0.05em] md:text-7xl" style={{ fontFamily: "'Bebas Neue', 'Arial Black', sans-serif", lineHeight: 0.9 }}>
-                    {totalUpfront.toLocaleString()} <span className="text-2xl text-[#555555]">USDC</span>
+                    {totalUpfront.toLocaleString()} <span className="text-2xl text-[#333333]">USDC</span>
                   </p>
 
                   <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
                     <div className="border-[3px] border-[#0a0a0a] bg-white p-4 shadow-[3px_3px_0_#0a0a0a] relative overflow-hidden transition hover:-translate-y-0.5">
                       <div className="absolute pointer-events-none" style={{ bottom: "-25%", right: "-15%", width: "40%", height: "60%", background: "repeating-linear-gradient(45deg, #38bdf8 0 1px, transparent 1px 6px)", opacity: 0.1 }} />
-                      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#555555]">{t("simulator.deposit")}</span>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]">{t("simulator.deposit")}</span>
                       <p className="protocol-font mt-1 text-2xl font-black">{deposit} USDC</p>
                     </div>
                     <div className="border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 shadow-[3px_3px_0_#0a0a0a] relative overflow-hidden transition hover:-translate-y-0.5">
-                      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#555555]">{t("simulator.collateral")} <span className="text-[#f8672d]">125%</span></span>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]">{t("simulator.collateral")} <span className="text-[#f8672d]">125%</span></span>
                       <p className="protocol-font mt-1 text-2xl font-black">{collateral} USDC</p>
-                      <p className="mt-1 text-xs font-semibold leading-tight text-[#555555]">{t("simulator.collateralNote")}</p>
+                      <p className="mt-1 text-xs font-semibold leading-tight text-[#333333]">{t("simulator.collateralNote")}</p>
                     </div>
                                   <div className="border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 shadow-[3px_3px_0_#0a0a0a] relative overflow-hidden transition hover:-translate-y-0.5">
-                      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#555555]">{t("simulator.gas")}</span>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]">{t("simulator.gas")}</span>
                       <p className="protocol-font mt-1 text-2xl font-black">~{suiTotalGas.toFixed(4)} SUI</p>
-                      <p className="mt-0.5 text-[11px] font-semibold text-[#14b8a6]">~$0.00</p>
+                      <p className="mt-0.5 text-xs font-semibold text-[#14b8a6]">~$0.00</p>
                     </div>
                   </div>
 
@@ -226,7 +226,7 @@ export default function SimulatorPage() {
                         {Math.round((collateral / totalUpfront) * 100)}%
                       </div>
                     </div>
-                    <div className="mt-1.5 flex justify-between text-[11px] font-black uppercase tracking-[0.15em]">
+                    <div className="mt-1.5 flex justify-between text-xs font-black uppercase tracking-[0.15em]">
                       <span className="text-[#f8672d]">{t("simulator.deposit")}</span>
                       <span className="text-[#0a0a0a]">{t("simulator.collateral")}</span>
                     </div>
@@ -236,7 +236,7 @@ export default function SimulatorPage() {
                   <div className="mt-5 pt-4 border-t-[2px] border-[#0a0a0a]">
                     <div className="flex gap-3">
                       <ShieldCheck className="size-4 text-[#f8672d] shrink-0 mt-0.5" />
-                      <p className="text-[11px] font-semibold leading-relaxed text-[#555555]">
+                      <p className="text-xs font-semibold leading-relaxed text-[#333333]">
                         {t("simulator.collateralDetail")}
                       </p>
                     </div>
@@ -245,7 +245,7 @@ export default function SimulatorPage() {
                   {/* Footer */}
                   <div className="mt-4 pt-3 border-t-[2px] border-[#0a0a0a] flex justify-between items-end">
                     <div className="w-14 h-5" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 7px, transparent 7px, transparent 12px, #0a0a0a 12px, #0a0a0a 13px, transparent 13px, transparent 18px, #0a0a0a 18px, #0a0a0a 22px, transparent 22px, transparent 24px)" }} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>real-time calc</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>real-time calc</span>
                   </div>
                 </div>
               </div>
@@ -258,23 +258,23 @@ export default function SimulatorPage() {
                   <div className="relative z-20 p-5">
                     <div className="flex justify-between items-center mb-3">
                       <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>stats</span>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>stats</span>
                     </div>
                     <div className="mb-4 flex items-center gap-2">
                       <Users className="size-4 text-[#f8672d]" />
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.poolSummary")}</h3>
+                      <h3 className="text-xs font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.poolSummary")}</h3>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between border-b-[2px] border-[#0a0a0a] pb-2">
-                        <span className="text-sm font-semibold text-[#555555]">{t("simulator.totalPool")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("simulator.totalPool")}</span>
                         <span className="protocol-font text-lg font-black">{totalPool.toLocaleString()} USDC</span>
                       </div>
                       <div className="flex justify-between border-b-[2px] border-[#0a0a0a] pb-2">
-                        <span className="text-sm font-semibold text-[#555555]">{t("simulator.totalCycles")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("simulator.totalCycles")}</span>
                         <span className="protocol-font text-lg font-black">{totalCycles}x</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-[#555555]">{t("simulator.poolDuration")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("simulator.poolDuration")}</span>
                         <span className="protocol-font text-lg font-black">{poolDurationMonths} mo ({poolDurationDays}d)</span>
                       </div>
                     </div>
@@ -287,23 +287,23 @@ export default function SimulatorPage() {
                   <div className="relative z-20 p-5">
                     <div className="flex justify-between items-center mb-3">
                       <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>you</span>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>you</span>
                     </div>
                     <div className="mb-4 flex items-center gap-2">
                       <ShieldCheck className="size-4 text-[#f8672d]" />
-                      <h3 className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.yourPosition")}</h3>
+                      <h3 className="text-xs font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.yourPosition")}</h3>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between border-b-[2px] border-[#0a0a0a] pb-2">
-                        <span className="text-sm font-semibold text-[#555555]">{t("simulator.youPay")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("simulator.youPay")}</span>
                         <span className="protocol-font text-lg font-black">{deposit} USDC</span>
                       </div>
                       <div className="flex justify-between border-b-[2px] border-[#0a0a0a] pb-2">
-                        <span className="text-sm font-semibold text-[#555555]">{t("simulator.youEarn")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("simulator.youEarn")}</span>
                         <span className="protocol-font text-lg font-black">{totalPool.toLocaleString()} USDC</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-[#555555]">{t("simulator.gas")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("simulator.gas")}</span>
                         <span className="protocol-font text-lg font-black">~{suiGasPerTx.toFixed(4)} SUI</span>
                       </div>
                     </div>
@@ -318,18 +318,18 @@ export default function SimulatorPage() {
                 <div className="relative z-20 p-5">
                   <div className="flex justify-between items-center mb-3">
                     <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>compare</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>compare</span>
                   </div>
                   <div className="flex items-center gap-2 mb-4">
                     <Clock className="size-4 text-[#f8672d]" />
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.compareTitle")}</h3>
+                    <h3 className="text-xs font-black uppercase tracking-[0.15em]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.compareTitle")}</h3>
                   </div>
-                  <p className="mb-5 text-sm font-semibold leading-6 text-[#555555]">{t("simulator.compareDesc")}</p>
+                  <p className="mb-5 text-sm font-semibold leading-6 text-[#333333]">{t("simulator.compareDesc")}</p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <div className="relative border-[3px] border-[#0a0a0a] bg-[#ccfbf1] p-4 text-center shadow-[8px_8px_0_#0a0a0a] overflow-hidden">
                       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
                       <div className="relative z-10">
-                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.suiFee")}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.suiFee")}</p>
                         <p className="mt-1 text-2xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>~{suiTotalGas.toFixed(4)} SUI</p>
                         <p className="protocol-font text-xs font-semibold text-[#14b8a6] mt-1">&lt; $0.01</p>
                         <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex justify-center">
@@ -340,9 +340,9 @@ export default function SimulatorPage() {
                     <div className="relative border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-4 text-center shadow-[8px_8px_0_#0a0a0a] overflow-hidden">
                       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
                       <div className="relative z-10">
-                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.ethFee")}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.ethFee")}</p>
                         <p className="mt-1 text-2xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>${ethTotalGas.toFixed(2)}</p>
-                        <p className="text-xs font-semibold text-[#555555] mt-1">{participants + 1} tx</p>
+                        <p className="text-xs font-semibold text-[#333333] mt-1">{participants + 1} tx</p>
                         <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex justify-center">
                           <div className="w-8 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
                         </div>
@@ -351,9 +351,9 @@ export default function SimulatorPage() {
                     <div className="relative border-[3px] border-[#0a0a0a] bg-[#e0f4ff] p-4 text-center shadow-[8px_8px_0_#0a0a0a] overflow-hidden">
                       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
                       <div className="relative z-10">
-                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#555555]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.savings")}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("simulator.savings")}</p>
                         <p className="mt-1 text-2xl font-black" style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>~99.9%</p>
-                        <p className="text-xs font-semibold text-[#555555] mt-1">lower cost</p>
+                        <p className="text-xs font-semibold text-[#333333] mt-1">lower cost</p>
                         <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex justify-center">
                           <div className="w-8 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
                         </div>

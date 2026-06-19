@@ -1,5 +1,5 @@
 /// Module: seal_randomness
-/// Isolated Seal-based commit-reveal randomness layer for Archa.
+/// Isolated Seal-based commit-reveal randomness layer for Suivan.
 ///
 /// Provides verifiable randomness through Seal's threshold encryption.
 /// Completely independent from arisan_pool — no pool state, no payout,

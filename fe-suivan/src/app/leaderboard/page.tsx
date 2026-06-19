@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronDown,
   Info,
+  Gift,
 } from "lucide-react";
 
 type Tier = "diamond" | "platinum" | "gold" | "silver" | "bronze";
@@ -72,16 +73,6 @@ const POINTS_BREAKDOWN = [
   { range: "After 20th (Late)", points: 10, color: "#fee2e2" },
 ];
 
-const CURRENT_CYCLE = {
-  number: 3,
-  deadline: 20,
-  drawing: 25,
-  participants: 0,
-  monthlyContribution: 100,
-  totalPot: 1500,
-  collateralPool: 45000,
-};
-
 export default function LeaderboardPage() {
   const { t } = useLanguage();
   const account = useCurrentAccount();
@@ -111,11 +102,24 @@ export default function LeaderboardPage() {
 
   const stats = useMemo(() => {
     const totalPools = pools?.length || 0;
-    const totalMembers = participants.length || (pools && pools.length > 0 ? 15 : 0);
+    const totalMembers = pools?.reduce((s, p) => s + (p.currentParticipants || 0), 0) || participants.length || 0;
     const totalYieldDistributed = participants.reduce((s, p) => s + p.totalYield, 0);
-    const avgApy = 12.4;
+    const avgApy = pools && pools.length > 0
+      ? Math.round(pools.reduce((s, p) => s + (p.apy || 0), 0) / pools.length * 10) / 10
+      : 0;
     return { totalPools, totalMembers, totalYieldDistributed, avgApy };
   }, [participants, pools]);
+
+  const cycleData = useMemo(() => {
+    if (!pools || pools.length === 0) return null;
+    const activePools = pools.filter(p => p.status === "ready" || p.status === "active" || p.status === "action_required");
+    const participants = activePools.reduce((s, p) => s + (p.currentParticipants || 0), 0);
+    const totalPoolSize = activePools.reduce((s, p) => s + (p.depositAmount || 0) * (p.maxParticipants || 0), 0);
+    const avgDeposit = activePools.length > 0
+      ? Math.round(activePools.reduce((s, p) => s + (p.depositAmount || 0), 0) / activePools.length)
+      : 0;
+    return { participants, totalPot: totalPoolSize, monthlyContribution: avgDeposit };
+  }, [pools]);
 
   if (isLoading) {
     return (
@@ -194,12 +198,12 @@ export default function LeaderboardPage() {
                     className="text-lg font-black"
                     style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
                   >
-                    ${CURRENT_CYCLE.totalPot.toLocaleString()}
+                    ${cycleData ? cycleData.totalPot.toLocaleString() : "—"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs font-semibold text-[#333333]">
-                    {CURRENT_CYCLE.participants} participants &times; ${CURRENT_CYCLE.monthlyContribution}
+                    {cycleData ? `${cycleData.participants} participants × $${cycleData.monthlyContribution}` : "No active pools"}
                   </span>
                 </div>
               </div>
@@ -516,8 +520,15 @@ export default function LeaderboardPage() {
               {t("leaderboard.cta")}
               <ArrowRight className="size-5" />
             </Link>
-          </div>
-        </div>
+                </div>
+                <div className="border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-5 shadow-[12px_12px_0_#0a0a0a]">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Gift className="size-4 text-[#0a0a0a]" />
+                    <h3 className="protocol-font text-xs font-black uppercase tracking-[0.18em]">{t("leaderboard.rulesGacha")}</h3>
+                  </div>
+                  <p className="text-sm font-semibold leading-6 text-[#333333]">{t("leaderboard.rulesGachaDesc")}</p>
+                </div>
+              </div>
       </section>
 
     </main>

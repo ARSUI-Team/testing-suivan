@@ -45,3 +45,6 @@ contracts/.env
 contracts/cache/
 contracts/out/
 contracts/broadcast/
+
+.env.local
+.env
