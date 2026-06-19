@@ -272,6 +272,32 @@ export default function PoolDetailPage() {
         </div>
       </section>
 
+      {/* Nameless Pool Banner */}
+      {poolInfo && !poolInfo.walrusMetadataBlobId && (
+        <section className="px-5 pt-2 md:px-10 lg:px-12">
+          <div className="mx-auto max-w-6xl">
+            <div className="relative overflow-hidden border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-5 shadow-[8px_8px_0_#0a0a0a]">
+              <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
+              <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">📛</span>
+                  <div>
+                    <p className="text-sm font-black text-[#0a0a0a]" style={HEADING_FONT}>This pool has no name yet</p>
+                    <p className="text-xs font-semibold text-[#333333]">Add a name via Walrus to make it easy to share and identify. Names are stored permanently on-chain.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMetaEditor(true)}
+                  className="border-[3px] border-[#0a0a0a] bg-[#f8672d] px-5 py-3 text-xs font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5 touch-manipulation"
+                >
+                  Add Pool Name →
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Main Content */}
       <section className="px-5 pb-20 md:px-10 lg:px-12">
         <div className="mx-auto max-w-6xl">

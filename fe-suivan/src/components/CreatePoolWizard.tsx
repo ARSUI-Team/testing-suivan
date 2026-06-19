@@ -79,7 +79,7 @@ export default function CreatePoolWizard({
 
   const canNext =
     (step === 1) ||
-    (step === 2 && depositAmount > 0 && maxParticipants >= 2) ||
+    (step === 2 && poolName.trim().length > 0 && depositAmount > 0 && maxParticipants >= 2) ||
     (step === 3) ||
     (step === 4);
 
