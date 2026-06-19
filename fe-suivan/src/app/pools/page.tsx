@@ -26,6 +26,7 @@ import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import { FaucetCooldownButton } from "@/components/FaucetCooldownButton";
 import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
 
 type PoolStatus = "all" | PoolLifecycleStatus;
@@ -71,7 +72,7 @@ export default function PoolsPage() {
 
   const { joinAndDeposit, isPending: joining } = useJoinAndDeposit();
   const { createPool, isPending: creating } = useCreatePool();
-  const { linkMetadata } = useLinkPoolMetadata();
+  const { linkMetadata, isPending: linkingMeta } = useLinkPoolMetadata();
   const creatingRef = useRef(false);
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
