@@ -68,7 +68,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsModalOpen(!isModalOpen)}
-        className={`inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] ${buttonPadding} text-xs font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-[#f8672d]`}
+        className={`inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] ${buttonPadding} text-xs font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-[#38bdf8]`}
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -86,7 +86,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
               <h2 className="text-xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>Connect Wallet</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-[#38bdf8] text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] hover:bg-[#0a0a0a] hover:text-[#38bdf8] touch-manipulation"
+                className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-[white] text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] hover:bg-[#38bdf8] touch-manipulation"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <path d="M18 6L6 18M6 6l12 12" />
