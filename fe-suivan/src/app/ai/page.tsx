@@ -352,19 +352,12 @@ export default function YieldExplorerPage() {
             </>
           )}
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <div className="mt-10">
             <Link
               className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-6 py-3 text-sm font-black text-[#0a0a0a] shadow-[12px_12px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
               href="/pools"
             >
               {t("ai.explorePools")}
-              <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-6 py-3 text-sm font-black text-[#0a0a0a] shadow-[12px_12px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
-              href="/yield-demo"
-            >
-              {t("ai.seeDeepBookFlow")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
