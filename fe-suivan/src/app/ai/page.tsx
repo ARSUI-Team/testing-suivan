@@ -68,8 +68,13 @@ function SafeDeepBook() {
 function DeepBookOrderbookSection() {
   const { data: dbPools } = useDeepBookPools();
   const [selectedDbPool, setSelectedDbPool] = useState<string | null>("DEEP_SUI");
-  const { data: orderbook } = usePoolOrderbook(selectedDbPool);
+  const { data: rawOrderbook } = usePoolOrderbook(selectedDbPool);
   const dbPoolInfo = selectedDbPool ? getPoolInfo(selectedDbPool) : null;
+
+  const orderbook = rawOrderbook ? {
+    bids: ((rawOrderbook.bids || []) as unknown as Array<[string, string]>).map(([price, qty]) => ({ price: Number(price), quantity: Number(qty) })),
+    asks: ((rawOrderbook.asks || []) as unknown as Array<[string, string]>).map(([price, qty]) => ({ price: Number(price), quantity: Number(qty) })),
+  } : null;
 
   const bestBid = orderbook?.bids?.[0]?.price ?? 0;
   const bestAsk = orderbook?.asks?.[0]?.price ?? 0;
