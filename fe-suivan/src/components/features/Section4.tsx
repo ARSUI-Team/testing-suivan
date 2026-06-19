@@ -6,7 +6,7 @@ const advantages = [
   { name: "ANTI-RUN", role: "ANTI RUNAWAY", desc: "125% collateral guarantees commitment. Running away means losing your deposit + yield.", stat: "125%", statLabel: "COLLATERAL" },
   { name: "ZERO GAS", role: "SPONSORED TX", desc: "All transaction fees sponsored by the protocol. Start saving without ever paying gas. Zero cost, always.", stat: "$0", statLabel: "PER TX" },
   { name: "ON-CHAIN", role: "100% TRANSPARENT", desc: "All transactions and yield recorded on Sui blockchain. Verifiable by anyone anytime.", stat: "100%", statLabel: "AUDITABLE" },
-  { name: "2X YIELD", role: "DUAL STREAMS", desc: "Collateral yield (proportional) + cumulative yield (gacha jackpot). Two independent reward systems from one pool.", stat: "2", statLabel: "SOURCES" },
+  { name: "2X YIELD", role: "DUAL STREAMS", desc: "Collateral yield for all members + cumulative jackpot for one lucky winner. Honest savers earn more tickets. Defaulters get zero — yield belongs to the committed.", stat: "2", statLabel: "SOURCES" },
   { name: "YIELD", role: "AUTO YIELD", desc: "DeepBook V3 flash loan arbitrage auto-deploys pool funds. Real DeFi yield, fully automated.", stat: "24/7", statLabel: "RUNNING" },
 ];
 
