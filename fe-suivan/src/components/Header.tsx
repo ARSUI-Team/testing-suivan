@@ -31,12 +31,12 @@ export default function Header() {
 
   const navItems = [
     { label: t("nav.pools"), href: "/pools" },
-    { label: t("nav.faucet"), href: "/faucet" },
     { label: t("nav.simulator"), href: "/simulator" },
     { label: t("nav.yield"), href: "/ai" },
     { label: t("nav.leaderboard"), href: "/leaderboard" },
     { label: t("nav.profile"), href: "/profile" },
     { label: t("nav.faq"), href: "/faq" },
+    { label: t("nav.faucet"), href: "/faucet" },
   ];
 
   return (
