@@ -136,16 +136,15 @@ Internal audit completed. **7 HIGH/MEDIUM issues documented** with inline fix an
 
 | Route | Purpose |
 |---|---|
-| `/` | Landing page — Animation-driven Hero + ROSCA Map + How To Play |
+| `/` | Landing page — Animation-driven Hero + ROSCA Map + How To Play + Advantages |
 | `/pools` | Pool Explorer — Create, join, deposit, view details |
-| `/pools/[address]` | Pool detail — Lifecycle management, metadata, AI agent |
+| `/pools/[address]` | Pool detail — Lifecycle management, metadata, AI agent, brutalist design |
 | `/simulator` | Interactive simulator — No wallet needed |
-| `/ai` | Yield Signals — Live protocol data + AI strategy generation |
-| `/faucet` | Testnet faucet — 500 USDC per claim |
-| `/leaderboard` | Gamified ranking — Diamond/Platinum/Gold tiers |
-| `/profile` | Dashboard — Stats, badges, activity feed, wallet info |
-| `/faq` | 14 comprehensive Q&As |
-| `/yield-demo` | DeepBook V3 flash loan arbitrage visualization |
+| `/ai` | SUI Yield Explorer — Live protocol APY + DeepBook V3 orderbook |
+| `/faucet` | Testnet faucet — 500 USDC per claim, 24h cooldown |
+| `/leaderboard` | Gamified ranking — Diamond/Platinum/Gold tiers, real on-chain data |
+| `/profile` | Dashboard — Stats, Achievements, activity feed, wallet info |
+| `/faq` | 16 comprehensive Q&As |
 
 ### Design Language
 
@@ -177,10 +176,11 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 | | Testnet | Mainnet |
 |---|---|---|
 | **Live At** | [suivan.vercel.app](https://suivan.vercel.app) | [suivan.fun](https://suivan.fun) |
-| **Package** | `0xb79c6171ac...9bfb6` | Deploying (branch `mainnet`) |
-| **Factory** | `0x70a934372b9...47414d` | — |
-| **Faucet** | `0xca8159a231...e1862` | N/A (mainnet uses real tokens) |
-| **Modules** | 9 (full stack) | 6 (no faucet/test tokens) |
+| **Package** | `0x63ad9b5fb0fa7f286ac05892182e4eb5896cc9165f9bd2b7d0ba1de87b81b515` | Deploying (branch `mainnet`) |
+| **Factory** | `0x4484b70fdea8a4aefcfef9c6a33e13d975b2cde0ce6a2085cb8eb18cf5e6af32` | — |
+| **Faucet** | `0xb0d0ce15b6c58af48216877c9df20d0ed91409b093f214fe79b29e71c103e311` | N/A (mainnet uses real tokens) |
+| **Agent** | `0x501f2840d1d6fb2a98299f52f671150d38e118c33e8342861dd4ad5d58b788f1` | TBD |
+| **Modules** | 8 production | 6 (no faucet/test tokens) |
 | **Token** | `TEST_USDC` | Wormhole-bridged USDC |
 | **Network** | Sui Testnet | Sui Mainnet |
 
