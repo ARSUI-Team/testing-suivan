@@ -3,6 +3,9 @@
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 
+const BEBAS = { fontFamily: "'Bebas Neue', system-ui, sans-serif" };
+const COURIER = { fontFamily: "'Courier New', monospace" };
+
 export interface AnalyticsDataPoint {
   date: string;
   value: number;
@@ -78,157 +81,94 @@ export default function PoolAnalyticsChart({
   const areaPath = `${linePath} L ${xScale(history.length - 1).toFixed(1)} ${padding.top + chartH} L ${xScale(0).toFixed(1)} ${padding.top + chartH} Z`;
 
   return (
-    <div className="relative overflow-hidden rounded-[1.75rem] border-2 border-[var(--border)] bg-[var(--surface)] p-5 shadow-[6px_6px_0_var(--border)] sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <div>
-          <p className="protocol-font text-xs font-black uppercase tracking-[0.2em] text-[var(--accent)]">projected</p>
-          <h3 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--foreground)] sm:text-3xl">
-            {title}
-          </h3>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-full border-2 border-[var(--border)] overflow-hidden">
-            {(["apy", "tvl"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMetric(m)}
-                className={`protocol-font min-h-[42px] min-w-[72px] px-4 text-xs font-black uppercase tracking-[0.14em] transition ${
-                  metric === m
-                    ? "bg-[var(--foreground)] text-[var(--background)]"
-                    : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--accent-soft)]"
-                }`}
-              >
-                {m}
-              </button>
-            ))}
+    <div className="relative overflow-hidden border-[3px] border-[#0a0a0a] bg-[#fdfdfa] p-6 shadow-[12px_12px_0_#0a0a0a]">
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.04 }} />
+      <div className="relative z-10">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px, #0a0a0a 4px, #0a0a0a 6px, transparent 6px, transparent 10px)" }} />
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={COURIER}>projected</span>
           </div>
-          <div className="flex rounded-full border-2 border-[var(--border)] overflow-hidden">
-            {([7, 14, 30] as const).map((days) => (
-              <button
-                key={days}
-                onClick={() => setTimeRange(days)}
-                className={`protocol-font min-h-[42px] min-w-[72px] px-4 text-xs font-black uppercase tracking-[0.14em] transition ${
-                  timeRange === days
-                    ? "bg-[var(--accent)] text-[var(--foreground)]"
-                    : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--warn-soft)]"
-                }`}
-              >
-                {days}D
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--accent-soft)] p-4">
-          <p className="protocol-font text-xs font-black text-[var(--muted)]">Current</p>
-          <p className="protocol-font mt-2 text-3xl font-black text-[var(--foreground)]">
-            {metric === "apy" ? `${currentValue.toFixed(1)}%` : `$${(currentValue / 1000).toFixed(1)}K`}
-          </p>
-        </div>
-        <div className="rounded-2xl border-2 border-[var(--border)] bg-[var(--background)] p-4">
-          <p className="protocol-font text-xs font-black text-[var(--muted)]">Average</p>
-          <p className="protocol-font mt-2 text-3xl font-black text-[var(--foreground)]">
-            {metric === "apy" ? `${avgValue.toFixed(1)}%` : `$${(avgValue / 1000).toFixed(1)}K`}
-          </p>
-        </div>
-        <div className={`rounded-2xl border-2 border-[var(--border)] p-4 ${isPositive ? "bg-[var(--success-soft)]" : "bg-[var(--danger-soft)]"}`}>
-          <p className="protocol-font text-xs font-black text-[var(--muted)]">Change</p>
-          <p className={`protocol-font mt-2 text-3xl font-black ${isPositive ? "text-[var(--success-deep)]" : "text-[var(--danger-deep)]"}`}>
-            {isPositive ? "+" : ""}{metric === "apy" ? `${change.toFixed(1)}%` : `$${change.toFixed(0)}`}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-[1.25rem] border-2 border-[var(--border)] bg-[var(--background)] p-3 sm:p-5">
-        <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.01" />
-            </linearGradient>
-          </defs>
-
-          {[0.25, 0.5, 0.75].map((f) => (
-            <line
-              key={f}
-              x1={padding.left}
-              y1={yScale(minVal + range * f)}
-              x2={svgW - padding.right}
-              y2={yScale(minVal + range * f)}
-              stroke="var(--border)"
-              strokeOpacity="0.15"
-              strokeWidth="1"
-              strokeDasharray="4 4"
-            />
-          ))}
-
-          <path d={areaPath} fill="url(#chartGrad)" />
-
-          <path d={linePath} fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-
-          {history.map(
-            (d, i) =>
-              (i === 0 || i === history.length - 1 || i === Math.floor(history.length / 2)) && (
-                <circle key={i} cx={xScale(i)} cy={yScale(d.value)} r="4" fill="#38bdf8" stroke="var(--background)" strokeWidth="2" />
-              )
-          )}
-
-          {history.map(
-            (d, i) =>
-              (i === 0 || i === Math.floor(history.length / 2) || i === history.length - 1) && (
-                <text
-                  key={i}
-                  x={xScale(i)}
-                  y={svgH - 5}
-                  textAnchor="middle"
-                  className="protocol-font"
-                  fill="var(--muted)"
-                  fontSize="10"
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex border-[3px] border-[#0a0a0a] overflow-hidden">
+              {(["apy", "tvl"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMetric(m)}
+                  className={`min-h-[42px] min-w-[72px] px-4 text-xs font-black uppercase tracking-[0.14em] transition ${metric === m ? "bg-[#0a0a0a] text-[#fbf7ed]" : "bg-[#fbf7ed] text-[#333333] hover:bg-[#e0f4ff]"}`}
+                  style={COURIER}
                 >
-                  {d.date}
-                </text>
-              )
-          )}
-
-          {metric === "apy" && (
-            <text x={padding.left - 5} y={padding.top + 10} textAnchor="end" className="protocol-font" fill="var(--muted)" fontSize="10">
-              {maxVal.toFixed(1)}%
-            </text>
-          )}
-          {metric === "apy" && (
-            <text x={padding.left - 5} y={svgH - padding.bottom + 5} textAnchor="end" className="protocol-font" fill="var(--muted)" fontSize="10">
-              {minVal.toFixed(1)}%
-            </text>
-          )}
-
-          {history.length > 1 && (
-            <g>
-              <text
-                x={xScale(history.length - 1) + 8}
-                y={yScale(currentValue) + 4}
-                className="protocol-font"
-                fill="#38bdf8"
-                fontSize="11"
-                fontWeight="700"
-              >
-                {metric === "apy" ? `${currentValue.toFixed(1)}%` : `$${currentValue.toFixed(0)}`}
-              </text>
-            </g>
-          )}
-        </svg>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-[var(--border)] bg-[var(--warn-soft)] rounded-2xl p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">📊</span>
-          <span className="protocol-font text-xs font-black text-[var(--muted)]">{metric === "apy" ? "APY" : "TVL"}</span>
+                  {m}
+                </button>
+              ))}
+            </div>
+            <div className="flex border-[3px] border-[#0a0a0a] overflow-hidden">
+              {([7, 14, 30] as const).map((days) => (
+                <button
+                  key={days}
+                  onClick={() => setTimeRange(days)}
+                  className={`min-h-[42px] min-w-[72px] px-4 text-xs font-black uppercase tracking-[0.14em] transition ${timeRange === days ? "bg-[#f8672d] text-[#0a0a0a]" : "bg-[#fbf7ed] text-[#333333] hover:bg-[#fef9c3]"}`}
+                  style={COURIER}
+                >
+                  {days}D
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        <p className="text-xs font-bold text-[var(--foreground)]">
-          {t("detail.chartDisclaimer")}
-        </p>
+
+        <h3 className="mb-5 text-2xl font-black tracking-[-0.04em]" style={BEBAS}>{title}</h3>
+
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            { label: "Current", value: metric === "apy" ? `${currentValue.toFixed(1)}%` : `$${(currentValue / 1000).toFixed(1)}K`, bg: "#e0f4ff" },
+            { label: "Average", value: metric === "apy" ? `${avgValue.toFixed(1)}%` : `$${(avgValue / 1000).toFixed(1)}K`, bg: "#fbf7ed" },
+            { label: "Change", value: `${isPositive ? "+" : ""}${metric === "apy" ? `${change.toFixed(1)}%` : `$${change.toFixed(0)}`}`, bg: isPositive ? "#ccfbf1" : "#fee2e2", valueColor: isPositive ? "text-[#0d9488]" : "text-[#dc2626]" },
+          ].map((stat) => (
+            <div key={stat.label} className="border-[3px] border-[#0a0a0a] p-3 shadow-[3px_3px_0_#0a0a0a]" style={{ backgroundColor: stat.bg }}>
+              <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={COURIER}>{stat.label}</p>
+              <p className={`mt-1 text-xl font-black ${("valueColor" in stat) ? stat.valueColor : ""}`} style={BEBAS}>{stat.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-[3px] border-[#0a0a0a] bg-[#fbf7ed] p-4">
+          <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.01" />
+              </linearGradient>
+            </defs>
+            {[0.25, 0.5, 0.75].map((f) => (
+              <line key={f} x1={padding.left} y1={yScale(minVal + range * f)} x2={svgW - padding.right} y2={yScale(minVal + range * f)} stroke="#0a0a0a" strokeOpacity="0.1" strokeWidth="1" strokeDasharray="4 4" />
+            ))}
+            <path d={areaPath} fill="url(#chartGrad)" />
+            <path d={linePath} fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            {history.map((d, i) => (i === 0 || i === history.length - 1 || i === Math.floor(history.length / 2)) && (
+              <circle key={i} cx={xScale(i)} cy={yScale(d.value)} r="4" fill="#38bdf8" stroke="#fdfdfa" strokeWidth="2" />
+            ))}
+            {history.map((d, i) => (i === 0 || i === Math.floor(history.length / 2) || i === history.length - 1) && (
+              <text key={i} x={xScale(i)} y={svgH - 5} textAnchor="middle" fill="#a8a49a" fontSize="10" fontFamily="'JetBrains Mono', monospace">{d.date}</text>
+            ))}
+            {metric === "apy" && <text x={padding.left - 5} y={padding.top + 10} textAnchor="end" fill="#a8a49a" fontSize="10" fontFamily="'JetBrains Mono', monospace">{maxVal.toFixed(1)}%</text>}
+            {metric === "apy" && <text x={padding.left - 5} y={svgH - padding.bottom + 5} textAnchor="end" fill="#a8a49a" fontSize="10" fontFamily="'JetBrains Mono', monospace">{minVal.toFixed(1)}%</text>}
+            {history.length > 1 && (
+              <g>
+                <text x={xScale(history.length - 1) + 8} y={yScale(currentValue) + 4} fill="#38bdf8" fontSize="11" fontWeight="700" fontFamily="'JetBrains Mono', monospace">{metric === "apy" ? `${currentValue.toFixed(1)}%` : `$${currentValue.toFixed(0)}`}</text>
+              </g>
+            )}
+          </svg>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-[3px] border-[#0a0a0a] pt-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 7px)" }} />
+            <span className="text-xs font-bold text-[#333333]" style={COURIER}>{metric === "apy" ? "APY" : "TVL"}</span>
+          </div>
+          <p className="text-xs font-semibold text-[#333333]">{t("detail.chartDisclaimer")}</p>
+        </div>
       </div>
     </div>
   );

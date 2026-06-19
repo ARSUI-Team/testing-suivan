@@ -365,7 +365,9 @@ export default function PoolDetailPage() {
               </div>
 
               {/* Pool Analytics Chart */}
-              <PoolAnalyticsChart title={`${poolName} Performance`} poolAddress={poolAddress} currentValue={liveApy} />
+              {poolName !== "Loading name..." && (
+                <PoolAnalyticsChart title={`${poolName} Performance`} poolAddress={poolAddress} currentValue={liveApy} />
+              )}
 
               {/* Participants List */}
               <div className={CARD_CLASS}>
