@@ -65,9 +65,9 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
   }
 
   return (
-    <>
+    <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => setIsModalOpen(!isModalOpen)}
         className={`inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] ${buttonPadding} text-xs font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-[#38bdf8]`}
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -79,14 +79,9 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
 
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(10,10,10,0.7)" }}
-          onClick={() => setIsModalOpen(false)}
+          className="absolute right-0 top-full z-50 mt-2 w-72 border-[4px] border-[#0a0a0a] bg-[white] p-6 shadow-[6px_6px_0_#0a0a0a]"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="w-full max-w-sm border-[4px] border-[#0a0a0a] bg-[white] p-6 shadow-[10px_10px_0_#0a0a0a]"
-            onClick={(e) => e.stopPropagation()}
-          >
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>Connect Wallet</h2>
               <button
@@ -157,8 +152,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
               By connecting, you agree to the terms of service.
             </p>
           </div>
-        </div>
-      )}
-    </>
-  );
-}
+        )}
+      </div>
+    );
+  }
