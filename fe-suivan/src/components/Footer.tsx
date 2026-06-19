@@ -7,11 +7,12 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const links = [
   { label: "Pools", href: "/pools" },
-  { label: "Faucet", href: "/faucet" },
   { label: "Simulator", href: "/simulator" },
   { label: "Yield", href: "/ai" },
+  { label: "Leaderboard", href: "/leaderboard" },
   { label: "Profile", href: "/profile" },
   { label: "FAQ", href: "/faq" },
+  { label: "Faucet", href: "/faucet" },
 ];
 
 const protocolLinks = [
