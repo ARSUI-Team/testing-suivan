@@ -79,7 +79,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
 
       {isModalOpen && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 w-72 border-[4px] border-[#0a0a0a] bg-[white] p-6 shadow-[6px_6px_0_#0a0a0a]"
+          className="absolute right-0 top-full z-50 mt-2 w-96 border-[4px] border-[#0a0a0a] bg-[white] p-6 shadow-[6px_6px_0_#0a0a0a]"
           onClick={(e) => e.stopPropagation()}
         >
             <div className="mb-6 flex items-center justify-between">
@@ -117,10 +117,10 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
               </div>
             </a>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
               {wallets.length === 0 && (
-                <p className="border-[3px] border-[#0a0a0a] bg-[#38bdf8] p-3 text-center text-xs font-bold text-[#0a0a0a]">
-                  No Sui wallet extension detected. Sign in with Google via zkLogin above, or install{" "}
+                <p className="col-span-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] p-3 text-center text-xs font-bold text-[#0a0a0a]">
+                  No Sui wallet extension detected. Install{" "}
                   <a href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil" target="_blank" rel="noopener noreferrer" className="underline">
                     Sui Wallet
                   </a>
@@ -134,16 +134,16 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
                     connect({ wallet });
                     setIsModalOpen(false);
                   }}
-                  className="flex w-full items-center gap-3 border-[3px] border-[#0a0a0a] bg-[white] p-3 text-left text-sm font-bold text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8]"
+                  className="flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[white] p-2.5 text-left text-xs font-bold text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] transition hover:bg-[#38bdf8]"
                 >
                   {wallet.icon && (
                     <span
                       aria-hidden="true"
-                      className="h-6 w-6 shrink-0 border-[2px] border-[#0a0a0a] bg-contain bg-center bg-no-repeat"
+                      className="h-5 w-5 shrink-0 border-[2px] border-[#0a0a0a] bg-contain bg-center bg-no-repeat"
                       style={{ backgroundImage: `url(${wallet.icon})` }}
                     />
                   )}
-                  <span>{wallet.name}</span>
+                  <span className="truncate">{wallet.name}</span>
                 </button>
               ))}
             </div>
