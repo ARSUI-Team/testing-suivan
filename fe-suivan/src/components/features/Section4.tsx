@@ -28,7 +28,7 @@ const Section4 = () => {
         {[...Array(2)].map((_, groupIndex) => (
           <div key={groupIndex} className="flex items-stretch gap-8 md:gap-12 lg:gap-16 pr-8 md:pr-12 lg:pr-16">
             {advantages.map((adv, i) => (
-              <div key={i} className="shrink-0 relative group" style={{ width: 250, height: 180 }}>
+              <div key={i} className="shrink-0 relative group" style={{ width: 260, height: 180 }}>
                 {/* Main Card */}
                 <div className="absolute inset-0 bg-[#fbf7ed] border-4 border-[#0a0a0a] shadow-[6px_6px_0_#0a0a0a] z-20 flex items-center justify-center transition-all duration-300 group-hover:bg-[#38bdf8] group-hover:shadow-[10px_10px_0_#0a0a0a]">
                   <div className="text-center px-4">
@@ -40,7 +40,7 @@ const Section4 = () => {
                 </div>
 
                 {/* Expanded Card Below */}
-                <div className="absolute left-0 right-0 top-[160px] bg-[#38bdf8] border-4 border-[#0a0a0a] border-t-0 z-10 flex flex-col items-center justify-center px-4 py-4 transition-all duration-300 group-hover:h-[120px] group-hover:shadow-[10px_10px_0_#0a0a0a] h-0 overflow-hidden">
+                <div className="absolute left-0 right-0 top-[160px] bg-[#38bdf8] border-4 border-[#0a0a0a] border-t-0 z-10 flex flex-col items-center justify-center px-4 py-4 transition-all duration-300 group-hover:h-[140px] group-hover:shadow-[10px_10px_0_#0a0a0a] h-0 overflow-hidden">
                   <p className="text-[11px] font-semibold text-[#0a0a0a] leading-tight text-center mb-3">{adv.desc}</p>
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>{adv.stat}</span>
