@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Suivan - Community Wealth Protocol on Sui",
-    description: "Global ROSCA pools with Sui-native settlement, sponsored transactions, and composable DeFi yield.",
+    description: "Global ROSCA pools with Sui-native settlement, sponsored transactions, and DeFi yield.",
     url: "https://suivan.vercel.app",
     siteName: "Suivan",
     type: "website",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Suivan - Community Wealth Protocol on Sui",
-    description: "Global ROSCA pools with Sui-native settlement, sponsored transactions, and composable DeFi yield.",
+    description: "Global ROSCA pools with Sui-native settlement, sponsored transactions, and DeFi yield.",
     images: ["/suivan-logo.jpeg"],
   },
 };

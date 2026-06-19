@@ -52,7 +52,7 @@ const Footer = () => {
               </div>
             </div>
             <p className="text-sm font-semibold leading-7 text-[#a8a49a]">
-              The first programmable ROSCA protocol on Sui Move powered by sponsored transactions, composable DeFi yield &amp; Seal RNG. Trustless, non-custodial, bringing DeFi to community savings at global scale.
+              The first programmable ROSCA protocol on Sui Move. Sponsored transactions, DeFi yield, and Seal RNG. Trustless, non-custodial, bringing DeFi to community savings worldwide.
             </p>
           </div>
 

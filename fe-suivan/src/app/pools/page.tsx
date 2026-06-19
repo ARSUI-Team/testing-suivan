@@ -127,7 +127,7 @@ export default function PoolsPage() {
       setJoinCoinId("");
       refetchPools();
       const txMsg = response.digest ? `\nTx: ${response.digest.slice(0, 10)}…${response.digest.slice(-4)}` : "";
-      successToast("Joined & Deposited", `You joined and deposited cycle 1 atomically. Collateral is locked.${txMsg}`);
+      successToast("Joined & Deposited", `You joined and deposited cycle 1. Collateral is locked.${txMsg}`);
     });
   };
 

@@ -136,7 +136,7 @@ export default function PoolDetailPage() {
     tx.transferObjects([tx.object(adminCapId)], tx.pure.address(agentInfo.agentAddress));
     signAndExecute({ transaction: tx }, {
       onSuccess: () => {
-        successToast("Delegated to Automation", "PoolAdminCap transferred. The automation engine will now manage this pool autonomously.");
+        successToast("Delegated to Automation", "PoolAdminCap transferred. Automation will manage this pool.");
         setAdminCapId(""); setDelegating(false);
         fetch("/api/agent/tick", { method: "POST" }).catch(() => {});
       },

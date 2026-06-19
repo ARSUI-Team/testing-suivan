@@ -277,7 +277,7 @@ export default function CreatePoolWizard({
                 Pool Automation
               </h3>
               <p className="mb-6 text-sm font-semibold leading-6 text-[#333333]">
-                Our on-chain automation engine can manage your pool autonomously — starting cycles, selecting winners via Seal RNG, and ending pools. Fully deterministic, fully transparent.
+                Let the automation engine manage your pool. Starts cycles, selects winners via Seal RNG, and ends pools. You keep full control and visibility.
               </p>
 
               {/* Agent card */}
@@ -297,7 +297,7 @@ export default function CreatePoolWizard({
                 <div className="space-y-2 mb-6">
                   {[
                     "Auto-starts pool when full",
-                    "Selects winners via verifiable Seal RNG",
+                    "Selects winners via Seal RNG",
                     "Advances cycles and ends pools",
                     "Monitors deadlines — no manual intervention",
                   ].map((feature, i) => (
