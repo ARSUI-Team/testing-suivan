@@ -719,7 +719,9 @@ export default function PoolsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowCreateModal(false)} />
-          <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-grid-brutal p-6 shadow-[8px_8px_0_#0a0a0a]">
+          <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto border-[4px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[8px_8px_0_#0a0a0a]">
+            <div className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.04 }} />
+            <div className="relative z-20 p-6">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="protocol-font text-xs font-black uppercase tracking-[0.18em] text-[#f8672d]">create_pool</p>
