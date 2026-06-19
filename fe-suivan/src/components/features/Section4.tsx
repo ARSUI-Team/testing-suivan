@@ -7,7 +7,7 @@ const advantages = [
   { name: "LOW GAS", role: "ULTRA LOW GAS FEE", desc: "Built on Sui with sub-second finality. Transaction fees under $0.001 per operation.", stat: "$0.001", statLabel: "PER TX" },
   { name: "ON-CHAIN", role: "100% TRANSPARENT", desc: "All transactions and yield recorded on Sui blockchain. Verifiable by anyone anytime.", stat: "100%", statLabel: "AUDITABLE" },
   { name: "2X YIELD", role: "DOUBLE YIELD", desc: "Yield from pool funds + yield from collateral. Two sources of passive income simultaneously.", stat: "2X", statLabel: "STREAMS" },
-  { name: "AI YIELD", role: "AI OPTIMIZER", desc: "AI analyzes real-time data. Auto-selects the best DeFi protocols for maximum yield.", stat: "24/7", statLabel: "RUNNING" },
+  { name: "YIELD", role: "AUTO YIELD", desc: "DeepBook V3 flash loan arbitrage auto-deploys pool funds. Real DeFi yield, fully automated.", stat: "24/7", statLabel: "RUNNING" },
 ];
 
 const Section4 = () => {
