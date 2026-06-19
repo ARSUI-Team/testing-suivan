@@ -62,25 +62,25 @@ export default function YieldExplorerPage() {
         <div className="mx-auto max-w-6xl">
           <p className="gsap-up protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] shadow-[12px_12px_0_#0a0a0a]">
             <Radio className="size-4" />
-            {t("yield.badge")}
+            {t("ai.badge")}
           </p>
           <h1 className="gsap-up mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>
-            {t("yield.title")}
+            {t("ai.title")}
           </h1>
           <p className="gsap-up mt-6 max-w-2xl text-lg font-semibold leading-8 text-[#333333]">
-            {t("yield.subtitle")}
+            {t("ai.subtitle")}
           </p>
 
           {loading && (
             <div className="mt-10 flex items-center justify-center py-16">
               <div className="h-12 w-12 animate-spin border-2 border-[#0a0a0a] border-b-[#555555]" />
-              <span className="protocol-font ml-4 text-sm font-black text-[#333333]">{t("yield.loading")}</span>
+              <span className="protocol-font ml-4 text-sm font-black text-[#333333]">{t("ai.loading")}</span>
             </div>
           )}
 
           {error && (
             <div className="mt-10 border-[3px] border-[#0a0a0a] bg-[#fee2e2] p-5 shadow-[12px_12px_0_#0a0a0a]">
-              <p className="protocol-font text-xs font-black text-[#0a0a0a]">{t("yield.errorTitle")}</p>
+              <p className="protocol-font text-xs font-black text-[#0a0a0a]">{t("ai.errorTitle")}</p>
               <p className="mt-2 font-semibold text-[#0a0a0a]">{error}</p>
             </div>
           )}
@@ -89,10 +89,10 @@ export default function YieldExplorerPage() {
             <>
               <div className="gsap-up mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {[
-                  { label: t("yield.avgApy"), value: `${data.stats.avgApy.toFixed(2)}%`, bg: "#e0f4ff" },
-                  { label: t("yield.maxApy"), value: `${data.stats.maxApy.toFixed(2)}%`, bg: "#ccfbf1" },
-                  { label: t("yield.protocols"), value: String(data.stats.protocolCount), bg: "#fef9c3" },
-                  { label: t("yield.totalTvl"), value: `$${(data.stats.totalTvl / 1e6).toFixed(1)}M`, bg: "#ccfbf1" },
+                  { label: t("ai.avgApy"), value: `${data.stats.avgApy.toFixed(2)}%`, bg: "#e0f4ff" },
+                  { label: t("ai.maxApy"), value: `${data.stats.maxApy.toFixed(2)}%`, bg: "#ccfbf1" },
+                  { label: t("ai.protocols"), value: String(data.stats.protocolCount), bg: "#fef9c3" },
+                  { label: t("ai.totalTvl"), value: `$${(data.stats.totalTvl / 1e6).toFixed(1)}M`, bg: "#ccfbf1" },
                 ].map(({ label, value, bg }, idx) => (
                   <div key={label} className="relative border-[3px] border-[#0a0a0a] p-4 shadow-[12px_12px_0_#0a0a0a] overflow-hidden" style={{ backgroundColor: bg }}>
                     <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
@@ -111,9 +111,9 @@ export default function YieldExplorerPage() {
               {/* Protocol List */}
               <div className="gsap-up mt-8 border-[3px] border-[#0a0a0a] bg-[#ffffff] p-5 shadow-[12px_12px_0_#0a0a0a]">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("yield.protocolYields")}</h2>
+                  <h2 className="text-2xl font-black tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{t("ai.protocolYields")}</h2>
                   <span className="protocol-font text-xs font-black tracking-[0.1em] text-[#333333]">
-                    {t("yield.sortedBy")}: APY ↓
+                    {t("ai.sortedBy")}: APY ↓
                   </span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -157,7 +157,7 @@ export default function YieldExplorerPage() {
                       <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px)" }} />
                       <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>top</span>
                     </div>
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("yield.topProtocol")}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("ai.topProtocol")}</p>
                     <p className="mt-4 text-2xl font-black text-[#0a0a0a]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                       {[...data.protocols].sort((a, b) => b.apy - a.apy)[0]?.name || "N/A"}
                     </p>
@@ -173,10 +173,10 @@ export default function YieldExplorerPage() {
                       <div className="w-10 h-3" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 2px, transparent 2px, transparent 4px)" }} />
                       <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>market</span>
                     </div>
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("yield.marketConditions")}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("ai.marketConditions")}</p>
                     <div className="mt-4 space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-[#333333]">{t("yield.volatilityIndex")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("ai.volatilityIndex")}</span>
                         <span className="inline-flex items-center gap-1.5 font-bold text-[#0a0a0a]">
                           <span className={`inline-block size-2 rounded-full ${data.market.volatilityIndex <= 30 ? 'bg-[#ccfbf1]' : data.market.volatilityIndex <= 60 ? 'bg-[#fef9c3]' : 'bg-[#fee2e2]'}`} />
                           {data.market.volatilityIndex}/100
@@ -186,11 +186,11 @@ export default function YieldExplorerPage() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-[#333333]">{t("yield.gasPrice")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("ai.gasPrice")}</span>
                         <span className="font-bold text-[#0a0a0a]">{data.market.suiRefGasPrice} MIST</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-[#333333]">{t("yield.direction")}</span>
+                        <span className="text-sm font-semibold text-[#333333]">{t("ai.direction")}</span>
                         <span className="font-bold text-[#0a0a0a]">{data.market.trendDirection}</span>
                       </div>
                     </div>
@@ -202,14 +202,14 @@ export default function YieldExplorerPage() {
               <div className="gsap-up mt-8 border-[3px] border-[#0a0a0a] bg-[#0a0a0a] p-6 shadow-[12px_12px_0_#38bdf8]">
                 <div className="mb-4 flex items-center gap-2">
                   <TrendingUp className="size-5 text-[#38bdf8]" />
-                  <h2 className="text-2xl font-black text-[#fbf7ed] tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>{t("yield.howItWorks")}</h2>
+                  <h2 className="text-2xl font-black text-[#fbf7ed] tracking-[-0.04em]" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}>{t("ai.howItWorks")}</h2>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    { num: "01", title: t("yield.step1Title"), desc: t("yield.step1Desc") },
-                    { num: "02", title: t("yield.step2Title"), desc: t("yield.step2Desc") },
-                    { num: "03", title: t("yield.step3Title"), desc: t("yield.step3Desc") },
-                    { num: "04", title: t("yield.step4Title"), desc: t("yield.step4Desc") },
+                    { num: "01", title: t("ai.step1Title"), desc: t("ai.step1Desc") },
+                    { num: "02", title: t("ai.step2Title"), desc: t("ai.step2Desc") },
+                    { num: "03", title: t("ai.step3Title"), desc: t("ai.step3Desc") },
+                    { num: "04", title: t("ai.step4Title"), desc: t("ai.step4Desc") },
                   ].map((step) => (
                     <div key={step.num} className="border-[3px] border-[#38bdf8] p-4">
                       <p className="text-3xl font-black text-[#38bdf8]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>{step.num}</p>
@@ -218,7 +218,7 @@ export default function YieldExplorerPage() {
                     </div>
                   ))}
                 </div>
-                <p className="mt-4 text-xs font-semibold text-[#a8a49a]">{t("yield.autoNote")}</p>
+                <p className="mt-4 text-xs font-semibold text-[#a8a49a]">{t("ai.autoNote")}</p>
               </div>
 
               {/* DeepBook Live Orderbook */}
@@ -231,14 +231,14 @@ export default function YieldExplorerPage() {
               className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] px-6 py-3 text-sm font-black text-[#0a0a0a] shadow-[12px_12px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
               href="/pools"
             >
-              {t("yield.explorePools")}
+              {t("ai.explorePools")}
               <ArrowRight className="size-4" />
             </Link>
             <Link
               className="protocol-font inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#f8672d] px-6 py-3 text-sm font-black text-[#0a0a0a] shadow-[12px_12px_0_#0a0a0a] transition hover:-translate-x-0.5 hover:-translate-y-0.5"
               href="/yield-demo"
             >
-              {t("yield.seeDeepBookFlow")}
+              {t("ai.seeDeepBookFlow")}
               <ArrowRight className="size-4" />
             </Link>
           </div>

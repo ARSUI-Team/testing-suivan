@@ -10,9 +10,9 @@ export default function Error({
 }) {
   return (
     <RouteErrorState
-      eyebrow="error_ai"
-      title="AI yield signals failed to load"
-      description="The AI signal service or Sui RPC may be congested. Try again in a moment."
+      eyebrow="error_yield_explorer"
+      title="Yield Explorer failed to load"
+      description="The Sui RPC or DeFiLlama data source may be temporarily unavailable. Please try again in a moment."
       reset={reset}
     />
   );
