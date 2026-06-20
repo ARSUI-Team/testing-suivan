@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
-import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
+import { SUI_FACTORY_ID } from "@/config/sui";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -33,97 +33,138 @@ function computeTier(points: number): LeaderboardEntry["tier"] {
   return "bronze";
 }
 
+function resolveAddress(val: unknown): string {
+  if (typeof val === "string") return val;
+  if (typeof val === "object" && val !== null) {
+    const v = val as Record<string, unknown>;
+    return String(v.value || v.id || v.address || "");
+  }
+  return "";
+}
+
+interface ParticipantRaw {
+  address: string;
+  missedPayments: number;
+  leaderboardScore: number;
+  hasReceivedPayout: boolean;
+  isActive: boolean;
+  pendingWinnerPayout: number;
+  collateralAmount: number;
+  proportionalYield: number;
+}
+
 export function useLeaderboardData() {
   const client = useSuiClient();
-  const { pools, isLoading: poolsLoading } = useAllPoolsWithInfo();
 
-  const { data: participantsData, isLoading: participantsLoading } = useQuery({
-    queryKey: ["suivan", "leaderboard", "participants", pools?.length],
+  const { data: participantsData, isLoading } = useQuery({
+    queryKey: ["suivan", "leaderboard", "v2"],
     queryFn: async () => {
-      if (!pools || pools.length === 0) return [];
+      const factoryObj = await client.getObject({
+        id: SUI_FACTORY_ID,
+        options: { showContent: true },
+      });
+      const ff = (factoryObj.data?.content as { fields?: Record<string, unknown> })?.fields;
+      const poolCount = Number((ff?.pool_count as string) || "0");
+      if (poolCount === 0) return [];
 
-      const addressMap = new Map<string, {
-        missedTotal: number;
-        depositTotal: number;
-        maxCycleCount: number;
-        poolCount: number;
-        poolsWithYield: number;
-      }>();
+      const tableId = (ff?.all_pools as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+      if (!tableId) return [];
 
-      for (const pool of pools) {
+      const poolIds: string[] = [];
+      for (let i = 0; i < poolCount; i++) {
+        try {
+          const e = await client.getDynamicFieldObject({
+            parentId: tableId,
+            name: { type: "u64", value: String(i) },
+          });
+          const v = (e.data?.content as { fields?: { value?: string } })?.fields?.value;
+          if (v) poolIds.push(v);
+        } catch { /* skip */ }
+      }
+
+      const allParticipants: ParticipantRaw[] = [];
+
+      for (const poolId of poolIds) {
         try {
           const obj = await client.getObject({
-            id: pool.address,
+            id: poolId,
             options: { showContent: true },
           });
           const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
           if (!fields) continue;
 
-          const currentCycle = Number(fields?.current_cycle || 0);
-          const rawParticipants = fields?.participants as { fields?: { value: { fields?: Record<string, unknown> }[] } } | undefined;
-          const participantEntries = rawParticipants?.fields?.value ?? [];
+          const rawList = fields?.participant_list;
+          const addresses: string[] = Array.isArray(rawList)
+            ? rawList.map(String)
+            : ((rawList as { fields?: { value?: string[] } })?.fields?.value ?? []);
 
-          for (const entry of participantEntries) {
-            const pFields = entry.fields;
-            if (!pFields) continue;
-            const addr = String(pFields.key || "");
-            const value = pFields.value as Record<string, unknown> | undefined;
-            if (!addr || !value) continue;
+          const participantsTableId = (fields?.participants as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+          if (!participantsTableId) continue;
 
-            const missed = Number(value.missed_payments || 0);
-            const deposited = Number(value.deposits_this_cycle ? 1 : 0);
+          for (const addr of addresses) {
+            try {
+              const entry = await client.getDynamicFieldObject({
+                parentId: participantsTableId,
+                name: { type: "address", value: addr },
+              });
+              const pv = (entry.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
+              if (!pv) continue;
 
-            const existing = addressMap.get(addr) || {
-              missedTotal: 0,
-              depositTotal: 0,
-              maxCycleCount: 0,
-              poolCount: 0,
-              poolsWithYield: 0,
-            };
-
-            existing.missedTotal += missed;
-            existing.depositTotal += deposited;
-            existing.maxCycleCount = Math.max(existing.maxCycleCount, currentCycle);
-            existing.poolCount += 1;
-            if (Number(fields?.yield_balance || 0) > 0) {
-              existing.poolsWithYield += 1;
-            }
-
-            addressMap.set(addr, existing);
+              allParticipants.push({
+                address: addr,
+                missedPayments: Number(pv.missed_payments || 0),
+                leaderboardScore: Number(pv.leaderboard_score || 0),
+                hasReceivedPayout: Boolean(pv.has_received_payout),
+                isActive: Boolean(pv.is_active),
+                pendingWinnerPayout: Number(pv.pending_winner_payout || 0),
+                collateralAmount: Number(pv.collateral_amount || 0),
+                proportionalYield: Number(pv.proportional_yield_earned || 0),
+              });
+            } catch { /* skip */ }
           }
-        } catch {
-          continue;
-        }
+        } catch { /* skip */ }
+      }
+
+      const addressMap = new Map<string, {
+        missedTotal: number;
+        poolCount: number;
+        totalScore: number;
+        totalYield: number;
+        hasWon: boolean;
+      }>();
+
+      for (const p of allParticipants) {
+        const existing = addressMap.get(p.address) || {
+          missedTotal: 0,
+          poolCount: 0,
+          totalScore: 0,
+          totalYield: 0,
+          hasWon: false,
+        };
+        existing.missedTotal += p.missedPayments;
+        existing.poolCount += 1;
+        existing.totalScore += p.leaderboardScore;
+        existing.totalYield += (p.proportionalYield + p.pendingWinnerPayout) / 1_000_000;
+        if (p.hasReceivedPayout) existing.hasWon = true;
+        addressMap.set(p.address, existing);
       }
 
       const entries: LeaderboardEntry[] = [];
       for (const [addr, data] of addressMap) {
-        const totalCycles = Math.max(data.maxCycleCount, 1);
-        const expectedDeposits = data.poolCount * totalCycles;
-        const onTimeRate = expectedDeposits > 0
-          ? Math.round(((expectedDeposits - data.missedTotal) / expectedDeposits) * 100)
-          : 100;
-
-        const totalYield = data.poolsWithYield * 150 + Math.floor(Math.random() * 200);
-        const monthlyYield = Math.round(totalYield / Math.max(totalCycles, 1));
-        const collateralYield = totalYield - monthlyYield;
-
-        const points = Math.min(500, Math.round(
-          (onTimeRate * 2) +
-          (totalYield / 10) +
-          (data.poolCount * 20)
-        ));
+        const points = Math.min(500, data.totalScore);
+        const t = computeTier(points);
+        const onTimeRate = data.missedTotal === 0 ? 100 : Math.max(0, Math.round((1 - data.missedTotal / Math.max(data.poolCount * 2, 1)) * 100));
 
         entries.push({
           rank: 0,
           address: `${addr.slice(0, 6)}…${addr.slice(-4)}`,
-          tier: computeTier(points),
+          tier: t,
           points,
           onTimeRate: Math.min(100, onTimeRate),
-          totalYield,
-          monthlyYield,
-          collateralYield,
-          lastPaymentDay: Math.min(28, Math.max(1, 20 - Math.floor(data.missedTotal / Math.max(data.poolCount, 1)))),
+          totalYield: Math.round(data.totalYield * 100) / 100,
+          monthlyYield: Math.round(data.totalYield / Math.max(data.poolCount, 1) * 100) / 100,
+          collateralYield: Math.round(data.totalYield * 0.6 * 100) / 100,
+          lastPaymentDay: Math.min(28, Math.max(1, 20 - data.missedTotal)),
           activePools: data.poolCount,
         });
       }
@@ -133,12 +174,12 @@ export function useLeaderboardData() {
 
       return entries;
     },
-    enabled: !poolsLoading && !!pools,
     staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 
   return useMemo(() => ({
     participants: participantsData ?? [],
-    isLoading: poolsLoading || participantsLoading,
-  }), [participantsData, poolsLoading, participantsLoading]);
+    isLoading,
+  }), [participantsData, isLoading]);
 }

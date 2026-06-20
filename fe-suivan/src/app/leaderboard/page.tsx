@@ -6,7 +6,6 @@ import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useLeaderboardData } from "@/hooks/useLeaderboardData";
-import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
 import {
   Trophy,
   Medal,
@@ -82,7 +81,6 @@ export default function LeaderboardPage() {
 
   useEffect(() => { setMounted(true); }, []);
   const { participants, isLoading } = useLeaderboardData();
-  const { pools, isLoading: poolsLoading } = useAllPoolsWithInfo();
 
   const tierInfo = useMemo(() => {
     const tiers = (Object.keys(TIER_CONFIG) as Tier[]).map((key) => ({
@@ -101,25 +99,14 @@ export default function LeaderboardPage() {
   }, [account, participants]);
 
   const stats = useMemo(() => {
-    const totalPools = pools?.length || 0;
-    const totalMembers = pools?.reduce((s, p) => s + (p.currentParticipants || 0), 0) || participants.length || 0;
+    const uniquePools = new Set<string>();
+    participants.forEach((p) => { uniquePools.add(p.address); });
     const totalYieldDistributed = participants.reduce((s, p) => s + p.totalYield, 0);
-    const avgApy = pools && pools.length > 0
-      ? Math.round(pools.reduce((s, p) => s + (p.apy || 0), 0) / pools.length * 10) / 10
-      : 0;
-    return { totalPools, totalMembers, totalYieldDistributed, avgApy };
-  }, [participants, pools]);
-
-  const cycleData = useMemo(() => {
-    if (!pools || pools.length === 0) return null;
-    const activePools = pools.filter(p => p.status === "ready" || p.status === "active" || p.status === "action_required");
-    const participants = activePools.reduce((s, p) => s + (p.currentParticipants || 0), 0);
-    const totalPoolSize = activePools.reduce((s, p) => s + (p.depositAmount || 0) * (p.maxParticipants || 0), 0);
-    const avgDeposit = activePools.length > 0
-      ? Math.round(activePools.reduce((s, p) => s + (p.depositAmount || 0), 0) / activePools.length)
-      : 0;
-    return { participants, totalPot: totalPoolSize, monthlyContribution: avgDeposit };
-  }, [pools]);
+    return {
+      totalMembers: uniquePools.size,
+      totalYieldDistributed,
+    };
+  }, [participants]);
 
   if (isLoading) {
     return (
@@ -198,12 +185,12 @@ export default function LeaderboardPage() {
                     className="text-lg font-black"
                     style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}
                   >
-                    ${cycleData ? cycleData.totalPot.toLocaleString() : "—"}
+                    $—
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs font-semibold text-[#333333]">
-                    {cycleData ? `${cycleData.participants} participants × $${cycleData.monthlyContribution}` : "No active pools"}
+                    Participants contribute monthly. Winner receives the total pot.
                   </span>
                 </div>
               </div>
@@ -251,12 +238,11 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3">
             {[
-              { label: t("leaderboard.statPools"), value: String(stats.totalPools), bg: "#fbf7ed" },
               { label: t("leaderboard.statUsers"), value: String(stats.totalMembers), bg: "#ccfbf1" },
               { label: t("leaderboard.statEarned"), value: `$${stats.totalYieldDistributed.toLocaleString()}`, bg: "#e0f4ff" },
-              { label: t("leaderboard.statAvgApy"), value: `${stats.avgApy}%`, bg: "#fef9c3" },
+              { label: "TIER SPREAD", value: participants.length > 0 ? `${Math.round(participants.filter(p => p.points >= 100).length / participants.length * 100)}%` : "0%", bg: "#fef9c3" },
             ].map(({ label, value, bg }, idx) => (
               <div className="relative border-[3px] border-[#0a0a0a] p-4 shadow-[12px_12px_0_#0a0a0a] overflow-hidden" style={{ backgroundColor: bg }} key={label}>
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(#0a0a0a 1px, transparent 1px)", backgroundSize: "4px 4px", opacity: 0.05 }} />
@@ -280,7 +266,7 @@ export default function LeaderboardPage() {
           {stats.totalYieldDistributed === 0 && participants.length === 0 && (
             <p className="mt-6 text-sm font-semibold text-[#333333] text-center">
               Testnet metrics &mdash; pools must complete cycles for yield to accrue.
-              {!poolsLoading && pools?.length === 0 && " Connect wallet and create a pool to get started."}
+              {participants.length === 0 && " Connect wallet and create a pool to get started."}
             </p>
           )}
 

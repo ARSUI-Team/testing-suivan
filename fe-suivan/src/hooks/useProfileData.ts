@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { useQuery } from "@tanstack/react-query";
-import { useAllPoolsWithInfo } from "@/hooks/useSuiContracts";
+import { SUI_FACTORY_ID } from "@/config/sui";
 
 export interface ProfileBadge {
   name: string;
@@ -31,13 +31,40 @@ export interface ProfileStats {
 
 export function useProfileData(userAddress: string | undefined) {
   const client = useSuiClient();
-  const { pools, isLoading: poolsLoading } = useAllPoolsWithInfo();
 
-  const { data: profileData, isLoading: dataLoading } = useQuery({
-    queryKey: ["suivan", "profile", userAddress, pools?.length],
+  const { data: profileData, isLoading } = useQuery({
+    queryKey: ["suivan", "profile", userAddress, "v2"],
     queryFn: async () => {
-      if (!userAddress || !pools || pools.length === 0) {
-        return { stats: { pools: 0, won: 0, saved: 0, yieldEarned: 0 }, badges: [] as ProfileBadge[], activity: [] as ProfileActivity[] };
+      const empty = {
+        stats: { pools: 0, won: 0, saved: 0, yieldEarned: 0 } as ProfileStats,
+        badges: [] as ProfileBadge[],
+        activity: [] as ProfileActivity[],
+        memberSince: null as string | null,
+      };
+
+      if (!userAddress) return empty;
+
+      const factoryObj = await client.getObject({
+        id: SUI_FACTORY_ID,
+        options: { showContent: true },
+      });
+      const ff = (factoryObj.data?.content as { fields?: Record<string, unknown> })?.fields;
+      const poolCount = Number((ff?.pool_count as string) || "0");
+      if (poolCount === 0) return empty;
+
+      const tableId = (ff?.all_pools as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+      if (!tableId) return empty;
+
+      const poolIds: string[] = [];
+      for (let i = 0; i < poolCount; i++) {
+        try {
+          const e = await client.getDynamicFieldObject({
+            parentId: tableId,
+            name: { type: "u64", value: String(i) },
+          });
+          const v = (e.data?.content as { fields?: { value?: string } })?.fields?.value;
+          if (v) poolIds.push(v);
+        } catch { /* skip */ }
       }
 
       let userPoolCount = 0;
@@ -48,30 +75,35 @@ export function useProfileData(userAddress: string | undefined) {
       let firstJoinMs: number | null = null;
       const activity: ProfileActivity[] = [];
 
-      for (const pool of pools) {
+      for (const poolId of poolIds) {
         try {
           const obj = await client.getObject({
-            id: pool.address,
+            id: poolId,
             options: { showContent: true },
           });
           const fields = (obj.data?.content as { fields?: Record<string, unknown> })?.fields;
           if (!fields) continue;
 
-          const participantList = (fields?.participant_list as string[]) ?? [];
+          const rawList = fields?.participant_list;
+          const participantList: string[] = Array.isArray(rawList)
+            ? rawList.map(String)
+            : ((rawList as { fields?: { value?: string[] } })?.fields?.value ?? []);
+
           if (!participantList.includes(userAddress)) continue;
 
           userPoolCount++;
 
-          // Check if user is the creator (first participant)
           if (participantList[0] === userAddress) createdCount++;
 
-          // Track first join time
           const poolStartMs = Number((fields?.pool_start_time_ms as string) || 0);
           if (poolStartMs > 0 && (!firstJoinMs || poolStartMs < firstJoinMs)) {
             firstJoinMs = poolStartMs;
           }
 
-          // Read participants Table
+          const config = (fields?.config as { fields?: Record<string, unknown> })?.fields;
+          const depositAmount = Number((config?.deposit_amount as string) || 0) / 1_000_000;
+          const poolName = `Pool ${depositAmount} USDC`;
+
           const participantsTableId = (fields?.participants as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
           if (participantsTableId) {
             try {
@@ -79,39 +111,36 @@ export function useProfileData(userAddress: string | undefined) {
                 parentId: participantsTableId,
                 name: { type: "address", value: userAddress },
               });
-              const pVal = (entry.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
-              if (pVal) {
-                const hasReceivedPayout = Boolean(pVal.has_received_payout);
-                if (hasReceivedPayout) winCount++;
-                const collateralAmount = Number(pVal.collateral_amount || 0);
-                const proportionalYield = Number(pVal.proportional_yield_earned || 0);
-                totalYieldEarned += proportionalYield / 1_000_000;
-                totalSaved += (collateralAmount / 1_000_000);
-
+              const pv = (entry.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
+              if (pv) {
+                const hasReceivedPayout = Boolean(pv.has_received_payout);
                 if (hasReceivedPayout) {
+                  winCount++;
                   activity.push({
                     type: "win",
-                    label: "Won cycle",
-                    poolName: pool.name || `Pool ${pool.address.slice(0, 6)}...${pool.address.slice(-4)}`,
-                    time: new Date().toLocaleDateString(),
-                    poolAddress: pool.address,
+                    label: "Won a cycle",
+                    poolName,
+                    time: poolStartMs > 0 ? new Date(poolStartMs).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Recently",
+                    poolAddress: poolId,
                   });
                 }
+
+                const collateralAmount = Number(pv.collateral_amount || 0);
+                const proportionalYield = Number(pv.proportional_yield_earned || 0);
+                totalYieldEarned += proportionalYield / 1_000_000;
+                totalSaved += collateralAmount / 1_000_000;
               }
             } catch { /* skip */ }
           }
 
-          // Add join/create activity
           activity.push({
             type: createdCount > 0 && participantList[0] === userAddress ? "create" : "join",
-            label: createdCount > 0 && participantList[0] === userAddress ? "Created pool" : "Joined pool",
-            poolName: pool.name || `Pool ${pool.address.slice(0, 6)}...${pool.address.slice(-4)}`,
+            label: participantList[0] === userAddress ? "Created pool" : "Joined pool",
+            poolName,
             time: poolStartMs > 0 ? new Date(poolStartMs).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently",
-            poolAddress: pool.address,
+            poolAddress: poolId,
           });
-        } catch {
-          continue;
-        }
+        } catch { /* skip */ }
       }
 
       const badges: ProfileBadge[] = [
@@ -140,8 +169,6 @@ export function useProfileData(userAddress: string | undefined) {
         },
       ];
 
-      const badgeCount = badges.filter((b) => b.achieved).length;
-
       return {
         stats: {
           pools: userPoolCount,
@@ -156,7 +183,7 @@ export function useProfileData(userAddress: string | undefined) {
           : null,
       };
     },
-    enabled: !!userAddress && !poolsLoading && !!pools,
+    enabled: !!userAddress,
     staleTime: 30_000,
   });
 
@@ -165,6 +192,6 @@ export function useProfileData(userAddress: string | undefined) {
     badges: profileData?.badges ?? [],
     activity: profileData?.activity ?? [],
     memberSince: profileData?.memberSince ?? null,
-    isLoading: poolsLoading || dataLoading,
-  }), [profileData, poolsLoading, dataLoading]);
+    isLoading,
+  }), [profileData, isLoading]);
 }
