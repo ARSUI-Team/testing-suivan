@@ -1,0 +1,12 @@
+[package]
+name = "suivan"
+edition = "2024.beta"
+
+[dependencies]
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "framework/mainnet", override = true }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet", override = true }
+deepbook = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/deepbook", rev = "6c2f77c0c72b8124f3f90f9e216c0e5ef7956fc3" }
+seal = { local = "./seal-local" }
+
+[addresses]
+suivan = "0x0"
