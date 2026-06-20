@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SUI_PACKAGE_ID, SUI_FACTORY_ID, SUI_USDC_TYPE, SUI_SUI_TYPE, SUI_CLOCK_ID, SUI_AGENT_ADDRESS } from "@/config/sui";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
-import { derivePoolLifecycle, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
+import { derivePoolLifecycle, toDisplayStatus, type PoolDisplayStatus } from "@/lib/poolLifecycle";
 
 export type TransactionResult = {
   digest: string;
@@ -55,7 +55,7 @@ export interface FormattedPool {
   cycleDurationMs: number;
   totalFunds: number;
   collateralBalance: number;
-  status: PoolLifecycleStatus;
+  status: PoolDisplayStatus;
   apy: number;
   currentCycle: number;
   walrusMetadataBlobId: string;
@@ -247,7 +247,7 @@ export function useAllPoolsWithInfo() {
 function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
   const totalLocked = pool.totalFunds + pool.collateralBalance + pool.pendingWinnerPayouts;
   const apy = pool.totalFunds > 0 ? (pool.yield / pool.totalFunds) * 100 * 12 : 8.5;
-  const { status } = derivePoolLifecycle({
+  const { status: internalStatus } = derivePoolLifecycle({
     started: pool.started,
     active: pool.active,
     ended: pool.isEnded,
@@ -256,6 +256,7 @@ function formatPool(pool: SuiPoolInfo, index: number): FormattedPool {
     poolStartTimeMs: pool.poolStartTimeMs,
     cycleDurationMs: pool.cycleDurationMs,
   });
+  const status = toDisplayStatus(internalStatus);
 
   let name = "Custom Pool";
   if (pool.depositAmount === 10) name = "Small Pool";

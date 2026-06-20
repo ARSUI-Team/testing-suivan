@@ -27,9 +27,9 @@ import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 import { FaucetCooldownButton } from "@/components/FaucetCooldownButton";
-import { getPoolStatusLabel, type PoolLifecycleStatus } from "@/lib/poolLifecycle";
+import { type PoolDisplayStatus } from "@/lib/poolLifecycle";
 
-type PoolStatus = "all" | PoolLifecycleStatus;
+type PoolStatus = "all" | PoolDisplayStatus;
 
 async function waitForDigest(client: ReturnType<typeof useSuiClient>, digest: string) {
   try {
@@ -91,7 +91,7 @@ export default function PoolsPage() {
     : [];
 
   const getStatusText = (status: string) => {
-    return status === "all" ? "All" : getPoolStatusLabel(status as PoolLifecycleStatus);
+    return status === "all" ? "All" : status === "open" ? "Open" : status === "active" ? "Running" : "Completed";
   };
 
   const gsapRef = useGsapEntrance([pools]);
@@ -260,7 +260,7 @@ export default function PoolsPage() {
                 <div className="absolute pointer-events-none" style={{ bottom: "-10%", left: "-10%", width: "35%", height: "35%", background: "repeating-linear-gradient(45deg, #0a0a0a 0 1px, transparent 1px 6px)", opacity: 0.08 }} />
                 <div className="relative z-10">
                   <p className="text-xs font-black uppercase tracking-[0.15em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>{t("pools.active")}</p>
-                  <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => ["ready", "active", "action_required"].includes(p.status)).length}</p>
+                  <p className="mt-2 text-3xl font-black leading-none" style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", color: "#0a0a0a" }}>{pools.filter((p) => p.status === "active").length}</p>
                   <div className="mt-3 pt-2 border-t-[2px] border-[#0a0a0a] flex items-center justify-between">
                     <div className="w-6 h-2" style={{ background: "repeating-linear-gradient(to right, #0a0a0a 0, #0a0a0a 1px, transparent 1px, transparent 3px, #0a0a0a 3px, #0a0a0a 4px, transparent 4px, transparent 6px)" }} />
                     <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={{ fontFamily: "'Courier New', monospace" }}>running</span>
@@ -292,7 +292,7 @@ export default function PoolsPage() {
           {/* Filters & Create */}
           <div className="gsap-up mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-grid-brutal p-1.5 shadow-[4px_4px_0_#0a0a0a]">
-              {(["all", "open", "ready", "active", "action_required", "completed"] as PoolStatus[]).map((status) => (
+              {(["all", "open", "active", "completed"] as PoolStatus[]).map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
@@ -346,11 +346,7 @@ export default function PoolsPage() {
                     ? "#00e060"
                     : pool.status === "open"
                       ? "#f6c85f"
-                      : pool.status === "ready"
-                        ? "#5ec8ff"
-                        : pool.status === "action_required"
-                          ? "#ff7a7a"
-                          : "#a8a49a";
+                      : "#a8a49a";
                 const memberRatio = pool.currentParticipants / pool.maxParticipants;
                 return (
                   <div

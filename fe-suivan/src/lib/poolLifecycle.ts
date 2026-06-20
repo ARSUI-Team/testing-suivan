@@ -5,6 +5,14 @@ export type PoolLifecycleStatus =
   | "action_required"
   | "completed";
 
+export type PoolDisplayStatus = "open" | "active" | "completed";
+
+export function toDisplayStatus(internal: PoolLifecycleStatus): PoolDisplayStatus {
+  if (internal === "completed") return "completed";
+  if (internal === "active" || internal === "action_required") return "active";
+  return "open"; // open + ready
+}
+
 export type PoolLifecycleAction =
   | "wait_for_members"
   | "start_pool"
