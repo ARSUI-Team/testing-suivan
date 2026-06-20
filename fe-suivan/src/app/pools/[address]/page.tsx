@@ -123,6 +123,7 @@ export default function PoolDetailPage() {
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   const [agentInfo, setAgentInfo] = useState<{ agentAddress: string; managedPools: string[] } | null>(null);
   const [delegating, setDelegating] = useState(false);
+  const [triggeringAgent, setTriggeringAgent] = useState(false);
   const isManagedByAgent = agentInfo?.managedPools.includes(poolAddress) ?? false;
 
   useEffect(() => {
@@ -147,6 +148,29 @@ export default function PoolDetailPage() {
         setDelegating(false);
       },
     });
+  };
+
+  const handleTriggerAgent = async (action: string) => {
+    setTriggeringAgent(true);
+    try {
+      const res = await fetch("/api/agent/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ poolId: poolAddress, action }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        successToast("Agent Triggered", `${action} executed. Digest: ${data.digest?.slice(0, 10)}…`);
+        refetchPool();
+        refetchParticipant();
+      } else {
+        errorToast("Agent Failed", data.error || "Transaction failed");
+      }
+    } catch {
+      errorToast("Agent Error", "Could not reach agent. Try again later.");
+    } finally {
+      setTriggeringAgent(false);
+    }
   };
 
   const client = useSuiClient();
@@ -502,6 +526,16 @@ export default function PoolDetailPage() {
                                 <button onClick={handleDelegateToAgent} disabled={delegating} className={`border-[3px] border-[#0284c7] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>{delegating ? "Delegating..." : "Delegate"}</button>
                               )}
                             </div>
+                            {isManagedByAgent && isFull && !isStarted && (
+                              <button onClick={() => handleTriggerAgent("start_pool")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
+                                {triggeringAgent ? "Starting..." : "▶ Trigger Agent: Start Pool"}
+                              </button>
+                            )}
+                            {isManagedByAgent && isStarted && isActive && currentCycle > 0 && (
+                              <button onClick={() => handleTriggerAgent("select_winner")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#f8672d] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
+                                {triggeringAgent ? "Selecting..." : "▶ Trigger Agent: Select Winner"}
+                              </button>
+                            )}
                           </div>
                         )}
 
