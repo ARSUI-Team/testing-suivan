@@ -42,6 +42,44 @@ async function executeTx(tx: Transaction, keypair: Ed25519Keypair) {
   });
 }
 
+function isVersionConflict(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("is unavailable for consumption") || msg.includes("InvalidTxVersion");
+}
+
+async function sleep(ms: number) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function executeWithRetry(
+  buildTx: () => Transaction,
+  keypair: Ed25519Keypair,
+  actionName: string,
+  maxRetries = 3,
+): Promise<{ success: boolean; digest?: string }> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const tx = buildTx();
+      const r = await executeTx(tx, keypair);
+      if (r.effects?.status?.status === "success") {
+        return { success: true, digest: r.digest };
+      }
+      log(`${actionName} attempt ${attempt + 1}: tx failed — ${r.effects?.status?.error || "unknown error"}`);
+      return { success: false };
+    } catch (err) {
+      if (isVersionConflict(err) && attempt < maxRetries) {
+        const delay = 2000 + Math.random() * 2000 * (attempt + 1);
+        log(`${actionName} attempt ${attempt + 1}: version conflict, retrying in ${Math.round(delay)}ms`);
+        await sleep(delay);
+        continue;
+      }
+      log(`${actionName} attempt ${attempt + 1}: fatal — ${err instanceof Error ? err.message.slice(0, 120) : String(err)}`);
+      return { success: false };
+    }
+  }
+  return { success: false };
+}
+
 async function findPoolAdminCap(agentAddr: string, poolId: string) {
   const caps = await getClient().getOwnedObjects({
     owner: agentAddr,
@@ -79,15 +117,21 @@ async function handlePool(poolId: string, keypair: Ed25519Keypair, agentAddr: st
 
   // If not started and full → start
   if (!started && full && capId) {
-    const tx = new Transaction(); tx.setSender(agentAddr);
-    tx.moveCall({
-      target: `${PACKAGE_ID}::arisan_pool::start_pool`,
-      arguments: [tx.object(capId), tx.object(poolId), tx.object("0x6")],
-      typeArguments: [USDC_TYPE],
-    });
-    tx.setGasBudget(30_000_000);
-    const r = await executeTx(tx, keypair);
-    if (r.effects?.status?.status === "success") actions.push("start_pool");
+    const r = await executeWithRetry(
+      () => {
+        const tx = new Transaction(); tx.setSender(agentAddr);
+        tx.moveCall({
+          target: `${PACKAGE_ID}::arisan_pool::start_pool`,
+          arguments: [tx.object(capId), tx.object(poolId), tx.object("0x6")],
+          typeArguments: [USDC_TYPE],
+        });
+        tx.setGasBudget(30_000_000);
+        return tx;
+      },
+      keypair,
+      `start_pool:${poolId.slice(0,6)}`,
+    );
+    if (r.success) actions.push("start_pool");
     return actions;
   }
 
@@ -118,35 +162,47 @@ async function handlePool(poolId: string, keypair: Ed25519Keypair, agentAddr: st
       const missing = participants.filter(p => p.active && !p.deposited);
 
       for (const p of missing) {
-        const tx = new Transaction(); tx.setSender(agentAddr);
-        tx.moveCall({
-          target: `${PACKAGE_ID}::arisan_pool::slash_collateral`,
-          arguments: [tx.object(capId), tx.object(poolId), tx.pure.address(p.address), tx.object("0x6")],
-          typeArguments: [USDC_TYPE],
-        });
-        tx.setGasBudget(20_000_000);
-        const r = await executeTx(tx, keypair);
-        if (r.effects?.status?.status === "success") actions.push(`slash:${p.address.slice(0, 6)}`);
+        const r = await executeWithRetry(
+          () => {
+            const tx = new Transaction(); tx.setSender(agentAddr);
+            tx.moveCall({
+              target: `${PACKAGE_ID}::arisan_pool::slash_collateral`,
+              arguments: [tx.object(capId), tx.object(poolId), tx.pure.address(p.address), tx.object("0x6")],
+              typeArguments: [USDC_TYPE],
+            });
+            tx.setGasBudget(20_000_000);
+            return tx;
+          },
+          keypair,
+          `slash:${poolId.slice(0,6)}:${p.address.slice(0,6)}`,
+        );
+        if (r.success) actions.push(`slash:${p.address.slice(0, 6)}`);
       }
     }
 
     // Select winner
     if (capId) {
-      const tx = new Transaction(); tx.setSender(agentAddr);
-      const seed = Array.from(randomBytes(16));
-      tx.moveCall({
-        target: `${PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,
-        arguments: [tx.object(capId), tx.object(poolId), tx.pure.vector("u8", seed)],
-        typeArguments: [USDC_TYPE],
-      });
-      tx.moveCall({
-        target: `${PACKAGE_ID}::arisan_pool::select_winner`,
-        arguments: [tx.object(capId), tx.object(poolId), tx.object("0x6"), tx.object("0x8")],
-        typeArguments: [USDC_TYPE],
-      });
-      tx.setGasBudget(50_000_000);
-      const r = await executeTx(tx, keypair);
-      if (r.effects?.status?.status === "success") actions.push("select_winner");
+      const r = await executeWithRetry(
+        () => {
+          const tx = new Transaction(); tx.setSender(agentAddr);
+          const seed = Array.from(randomBytes(16));
+          tx.moveCall({
+            target: `${PACKAGE_ID}::arisan_pool::set_pool_seal_seed`,
+            arguments: [tx.object(capId), tx.object(poolId), tx.pure.vector("u8", seed)],
+            typeArguments: [USDC_TYPE],
+          });
+          tx.moveCall({
+            target: `${PACKAGE_ID}::arisan_pool::select_winner`,
+            arguments: [tx.object(capId), tx.object(poolId), tx.object("0x6"), tx.object("0x8")],
+            typeArguments: [USDC_TYPE],
+          });
+          tx.setGasBudget(50_000_000);
+          return tx;
+        },
+        keypair,
+        `select_winner:${poolId.slice(0,6)}`,
+      );
+      if (r.success) actions.push("select_winner");
     }
   }
 
