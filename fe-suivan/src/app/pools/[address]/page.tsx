@@ -29,6 +29,7 @@ import {
   useLinkPoolMetadata,
   useClaimFinal,
   useClaimWinnerPayout,
+  useCycleWinners,
 } from "@/hooks/useSuiContracts";
 import { SUI_PACKAGE_ID, SUI_AGENT_ADDRESS } from "@/config/sui";
 import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
@@ -95,6 +96,7 @@ export default function PoolDetailPage() {
   const { participantInfo, refetch: refetchParticipant } = useParticipantInfo(poolAddress, address);
   const { currentYield } = useCurrentYield(poolAddress);
   const { cumulative: cumYield, collateral: collYield, total: totalYield } = currentYield;
+  const { cycleWinners } = useCycleWinners(poolAddress, poolInfo?.cycle || 0);
   const { balance: usdcBalance } = useUSDCBalance(address);
   const { coins: usdcCoins } = useUserUSDCcoins(address);
   const defaultCoinId = usdcCoins.length > 0 ? usdcCoins[0].coinObjectId : "";
@@ -377,6 +379,34 @@ export default function PoolDetailPage() {
                 currentValue={liveApy}
               />
 
+              {/* Cycle Winners */}
+              {cycleWinners && cycleWinners.length > 0 && (
+                <div className={CARD_CLASS}>
+                  <GrainOverlay />
+                  <div className="relative z-20 p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <BarcodeStrip className="w-12 h-4" />
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#333333]" style={LABEL_MONO}>winners</span>
+                    </div>
+                    <h2 className="mb-5 text-2xl font-black tracking-[-0.04em]" style={HEADING_FONT}>Cycle Winners</h2>
+                    <div className="space-y-2">
+                      {cycleWinners.map((w) => (
+                        <div key={w.cycle} className="flex items-center justify-between border-[3px] border-[#0a0a0a] bg-[#fef9c3] p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center border-[3px] border-[#0a0a0a] bg-[#f8672d] text-[#0a0a0a] font-black text-sm" style={HEADING_FONT}>{w.cycle}</div>
+                            <div>
+                              <p className="text-sm font-bold" style={LABEL_MONO}>Cycle {w.cycle}</p>
+                              <p className="text-xs font-semibold text-[#333333]">{w.address.slice(0, 6)}...{w.address.slice(-4)}</p>
+                            </div>
+                          </div>
+                          <Trophy className="size-4 text-[#f8672d]" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Participants List */}
               <div className={CARD_CLASS}>
                 <GrainOverlay />
@@ -397,14 +427,17 @@ export default function PoolDetailPage() {
                       {participantAddresses.map((addr, index) => {
                         const isGachaWinner = poolInfo?.gachaWinner?.toLowerCase() === addr.toLowerCase();
                         const isYou = addr.toLowerCase() === address?.toLowerCase();
+                        const wonCycles = cycleWinners?.filter(w => w.address.toLowerCase() === addr.toLowerCase()).map(w => w.cycle) || [];
+                        const isCycleWinner = wonCycles.length > 0;
                         return (
-                          <div key={addr} className={`flex items-center justify-between border-[3px] p-3 ${isGachaWinner ? "border-[#f5e642] bg-[#fef9c3]" : isYou ? "border-[#0a0a0a] bg-[#ccfbf1]" : "border-[#0a0a0a] bg-[#fbf7ed]"}`}>
+                          <div key={addr} className={`flex items-center justify-between border-[3px] p-3 ${isGachaWinner ? "border-[#f5e642] bg-[#fef9c3]" : isCycleWinner ? "border-[#f8672d] bg-[#fff5f0]" : isYou ? "border-[#0a0a0a] bg-[#ccfbf1]" : "border-[#0a0a0a] bg-[#fbf7ed]"}`}>
                             <div className="flex items-center gap-3">
-                              <div className={`flex h-10 w-10 items-center justify-center border-[3px] border-[#0a0a0a] font-black text-sm ${isGachaWinner ? "bg-[#f5e642] text-[#0a0a0a]" : "bg-[#38bdf8] text-[#0a0a0a]"}`} style={HEADING_FONT}>{index + 1}</div>
+                              <div className={`flex h-10 w-10 items-center justify-center border-[3px] border-[#0a0a0a] font-black text-sm ${isGachaWinner ? "bg-[#f5e642] text-[#0a0a0a]" : isCycleWinner ? "bg-[#f8672d] text-white" : "bg-[#38bdf8] text-[#0a0a0a]"}`} style={HEADING_FONT}>{index + 1}</div>
                               <div>
                                 <p className="text-sm font-bold" style={LABEL_MONO}>{addr.slice(0, 6)}...{addr.slice(-4)}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   {isGachaWinner && <span className="text-xs font-black" style={LABEL_MONO}>🏆 Gacha Winner</span>}
+                                  {isCycleWinner && <span className="text-xs font-black text-[#f8672d]" style={LABEL_MONO}>🎯 Won Cycle {wonCycles.join(', ')}</span>}
                                   {isYou && <span className="text-xs font-black text-[#0d9488]" style={LABEL_MONO}>You</span>}
                                 </div>
                               </div>
