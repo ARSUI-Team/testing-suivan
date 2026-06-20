@@ -44,7 +44,7 @@ async function executeTx(tx: Transaction, keypair: Ed25519Keypair) {
 
 function isVersionConflict(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
-  return msg.includes("is unavailable for consumption") || msg.includes("InvalidTxVersion");
+  return msg.includes("needs to be rebuilt") || msg.includes("is unavailable for consumption") || msg.includes("InvalidTxVersion");
 }
 
 async function sleep(ms: number) {
