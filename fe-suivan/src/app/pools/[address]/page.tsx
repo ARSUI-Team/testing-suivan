@@ -125,6 +125,8 @@ export default function PoolDetailPage() {
   const [agentInfo, setAgentInfo] = useState<{ agentAddress: string; managedPools: string[] } | null>(null);
   const [delegating, setDelegating] = useState(false);
   const [triggeringAgent, setTriggeringAgent] = useState(false);
+  const [agentStep, setAgentStep] = useState<"idle" | "prepare" | "running">("idle");
+  const [agentElapsed, setAgentElapsed] = useState(0);
   const isManagedByAgent = agentInfo?.managedPools.includes(poolAddress) ?? false;
 
   useEffect(() => {
@@ -153,24 +155,36 @@ export default function PoolDetailPage() {
 
   const handleTriggerAgent = async (action: string) => {
     setTriggeringAgent(true);
+    setAgentStep("prepare");
+    setAgentElapsed(0);
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      setAgentElapsed(Math.round((Date.now() - startTime) / 1000));
+    }, 1000);
     try {
+      setAgentStep("running");
       const res = await fetch("/api/agent/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ poolId: poolAddress, action }),
       });
       const data = await res.json();
+      clearInterval(timer);
       if (data.ok) {
-        successToast("Agent Triggered", `${action} executed. Digest: ${data.digest?.slice(0, 10)}…`);
+        const slashed = data.slashesLength || 0;
+        const extra = slashed > 0 ? ` (${slashed} late payer${slashed > 1 ? "s" : ""} slashed)` : "";
+        successToast("Agent Complete", `${action} executed${extra}. Digest: ${data.digest?.slice(0, 10)}…`);
         refetchPool();
         refetchParticipant();
       } else {
         errorToast("Agent Failed", data.error || "Transaction failed");
       }
     } catch {
+      clearInterval(timer);
       errorToast("Agent Error", "Could not reach agent. Try again later.");
     } finally {
       setTriggeringAgent(false);
+      setAgentStep("idle");
     }
   };
 
@@ -557,14 +571,42 @@ export default function PoolDetailPage() {
                           )}
                         </div>
                         {isManagedByAgent && isFull && !isStarted && (
-                          <button onClick={() => handleTriggerAgent("start_pool")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
-                            {triggeringAgent ? "Starting..." : "▶ Trigger Agent: Start Pool"}
-                          </button>
+                          <div>
+                            <button onClick={() => handleTriggerAgent("start_pool")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
+                              {triggeringAgent ? "Starting..." : "▶ Trigger Agent: Start Pool"}
+                            </button>
+                            {triggeringAgent && (
+                              <div className="mt-2 border-[2px] border-[#0a0a0a] bg-[#fef9c3] px-3 py-2 text-[11px] font-semibold text-[#0a0a0a]">
+                                <LoadingSpinner size="inline" />
+                                <span className="ml-1">{agentStep === "prepare" ? "Preparing transaction..." : "Executing start_pool on Sui..."}</span>
+                                <span className="ml-2 opacity-40">{agentElapsed}s</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {isManagedByAgent && !isFull && !isStarted && (
+                          <p className="mt-3 text-[10px] font-medium text-[#a8a49a] italic text-center">
+                            Pool needs {maxParticipants - currentParticipants} more member{maxParticipants - currentParticipants > 1 ? "s" : ""} to start.
+                          </p>
                         )}
                         {isManagedByAgent && isStarted && isActive && currentCycle > 0 && (
-                          <button onClick={() => handleTriggerAgent("select_winner")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#f8672d] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
-                            {triggeringAgent ? "Selecting..." : "▶ Trigger Agent: Select Winner"}
-                          </button>
+                          <div>
+                            <button onClick={() => handleTriggerAgent("select_winner")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#f8672d] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
+                              {triggeringAgent ? "Selecting..." : "▶ Trigger Agent: Select Winner"}
+                            </button>
+                            {triggeringAgent && (
+                              <div className="mt-2 border-[2px] border-[#0a0a0a] bg-[#fef9c3] px-3 py-2 text-[11px] font-semibold text-[#0a0a0a]">
+                                <LoadingSpinner size="inline" />
+                                <span className="ml-1">{agentStep === "prepare" ? "Checking deposits & slashing late payers..." : "Selecting winner via Seal RNG..."}</span>
+                                <span className="ml-2 opacity-40">{agentElapsed}s</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {isManagedByAgent && isStarted && isActive && currentCycle === 0 && (
+                          <p className="mt-3 text-[10px] font-medium text-[#a8a49a] italic text-center">
+                            Waiting for cycle deadline before winner can be selected.
+                          </p>
                         )}
                       </div>
                     )}
