@@ -253,7 +253,10 @@ export default function PoolDetailPage() {
     const collateralAmt = getRequiredCollateralAmount(depositAmount, maxParticipants, DEFAULT_COLLATERAL_MULTIPLIER);
     joinAndDeposit(poolAddress, collateralAmt, depositAmount, joinCoinId);
   };
-  const handleMakeDeposit = () => { makeDeposit(poolAddress, depositAmount, depositCoinId); };
+  const handleMakeDeposit = () => {
+    if (!depositCoinId) { errorToast("Validation", "No USDC coin available. Get USDC from Faucet first."); return; }
+    makeDeposit(poolAddress, depositAmount, depositCoinId);
+  };
 
   const getStatusColor = (s: string) => {
     switch (s) { case "open": return "bg-[#ccfbf1] text-[#0d9488]"; case "active": return "bg-[#e0f4ff] text-[#0284c7]"; case "completed": return "bg-[#e8e1d9] text-[#a8a49a]"; default: return "bg-[#e8e1d9] text-[#a8a49a]"; }
@@ -513,30 +516,6 @@ export default function PoolDetailPage() {
                           <button onClick={() => setShowDepositModal(true)} className={`w-full ${BTN_PRIMARY}`}>{t("detail.makeDeposit")}</button>
                         )}
 
-                        {agentInfo && (
-                          <div className={`border-[3px] p-4 ${isManagedByAgent ? "border-[#0d9488] bg-[#ccfbf1]" : "border-[#0a0a0a] bg-[#e0f4ff]"}`}>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#333333]" style={LABEL_MONO}>{isManagedByAgent ? "🤖 Auto Manager" : "Auto Manager"}</p>
-                                <p className={`mt-1 text-sm font-black ${isManagedByAgent ? "text-[#0d9488]" : "text-[#0a0a0a]"}`}>{isManagedByAgent ? "Managing automatically" : adminCapId ? "Delegate to automate" : "Available for automation"}</p>
-                              </div>
-                              {!isManagedByAgent && adminCapId && (
-                                <button onClick={handleDelegateToAgent} disabled={delegating} className={`border-[3px] border-[#0284c7] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>{delegating ? "Delegating..." : "Delegate"}</button>
-                              )}
-                            </div>
-                            {isManagedByAgent && isFull && !isStarted && (
-                              <button onClick={() => handleTriggerAgent("start_pool")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
-                                {triggeringAgent ? "Starting..." : "▶ Trigger Agent: Start Pool"}
-                              </button>
-                            )}
-                            {isManagedByAgent && isStarted && isActive && currentCycle > 0 && (
-                              <button onClick={() => handleTriggerAgent("select_winner")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#f8672d] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
-                                {triggeringAgent ? "Selecting..." : "▶ Trigger Agent: Select Winner"}
-                              </button>
-                            )}
-                          </div>
-                        )}
-
                         {isStarted && isActive && adminCapId && currentCycle > 0 && (
                           <button onClick={() => selectWinner(poolAddress, adminCapId)} disabled={selecting} className={`w-full ${BTN_ORANGE} ${selecting ? "opacity-50 cursor-not-allowed" : ""}`}>
                             {selecting ? "Selecting..." : "Select Winner"}
@@ -562,6 +541,30 @@ export default function PoolDetailPage() {
                         </div>
                         {status === "open" && !isFull && (
                           <button onClick={() => setShowJoinModal(true)} className={`w-full ${BTN_PRIMARY}`}>{t("detail.joinThisPool")}</button>
+                        )}
+                      </div>
+                    )}
+
+                    {agentInfo && (
+                      <div className={`mt-4 border-[3px] p-4 ${isManagedByAgent ? "border-[#0d9488] bg-[#ccfbf1]" : "border-[#0a0a0a] bg-[#e0f4ff]"}`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#333333]" style={LABEL_MONO}>{isManagedByAgent ? "🤖 Auto Manager" : "Auto Manager"}</p>
+                            <p className={`mt-1 text-sm font-black ${isManagedByAgent ? "text-[#0d9488]" : "text-[#0a0a0a]"}`}>{isManagedByAgent ? "Managing automatically" : adminCapId ? "Delegate to automate" : "Available for automation"}</p>
+                          </div>
+                          {!isManagedByAgent && adminCapId && (
+                            <button onClick={handleDelegateToAgent} disabled={delegating} className={`border-[3px] border-[#0284c7] bg-[#38bdf8] px-4 py-2 text-xs font-black shadow-[3px_3px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>{delegating ? "Delegating..." : "Delegate"}</button>
+                          )}
+                        </div>
+                        {isManagedByAgent && isFull && !isStarted && (
+                          <button onClick={() => handleTriggerAgent("start_pool")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#38bdf8] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
+                            {triggeringAgent ? "Starting..." : "▶ Trigger Agent: Start Pool"}
+                          </button>
+                        )}
+                        {isManagedByAgent && isStarted && isActive && currentCycle > 0 && (
+                          <button onClick={() => handleTriggerAgent("select_winner")} disabled={triggeringAgent} className={`mt-3 w-full border-[3px] border-[#0a0a0a] bg-[#f8672d] py-2 text-xs font-black shadow-[4px_4px_0_#0a0a0a] transition hover:-translate-y-0.5 disabled:opacity-50 touch-manipulation`}>
+                            {triggeringAgent ? "Selecting..." : "▶ Trigger Agent: Select Winner"}
+                          </button>
                         )}
                       </div>
                     )}

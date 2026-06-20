@@ -189,7 +189,7 @@ Click a pool → detail page. Pool stats, participants, yield section, dual yiel
 
 **VISUAL:** Animated diagram overlay showing dual yield streams.
 
-Show Yield Explorer `/ai` → DeFiLlama data + DeepBook V3 orderbook. Then overlay a simplified animation:
+Show the Yield Explorer → DeFiLlama data + DeepBook V3 orderbook. Then overlay a simplified animation:
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -411,7 +411,7 @@ Q4 2026+ ───────────────────────�
 6. Join pool → confirm sponsored tx (gas = $0)
 7. Make deposit → confirm sponsored tx
 8. Open SuiScan → show transaction with gas = $0.00
-9. Navigate to `/ai` → show DeFiLlama + DeepBook data
+9. Navigate to Yield Explorer → show DeFiLlama + DeepBook data
 10. Navigate to `/leaderboard` → show tiers, scores, gacha info
 11. Navigate to `/simulator` → show cost comparison Sui vs EVM
 12. Show pool lifecycle: slash_collateral + claim_final + GachaDistributed event
