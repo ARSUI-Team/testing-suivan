@@ -19,7 +19,7 @@ const RoscaMap = () => {
       {roscaNames.map((place) => (
         <div
           key={place.name}
-          className="border-[2px] border-[#0a0a0a] bg-[#fdfdfa] px-2.5 py-2 transition hover:bg-[#38bdf8] hover:-translate-y-0.5 shadow-[2px_2px_0_#0a0a0a]"
+          className="border-[2px] border-[#0a0a0a] bg-[#fdfdfa] px-3 py-2 transition hover:bg-[#38bdf8] hover:-translate-y-0.5 shadow-[2px_2px_0_#0a0a0a]"
         >
           <p className="flex items-center gap-1.5 text-[11px] font-black text-[#0a0a0a] leading-tight">
             <span className="text-sm">{place.flag}</span>

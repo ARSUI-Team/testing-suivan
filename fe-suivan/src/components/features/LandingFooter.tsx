@@ -98,7 +98,7 @@ const Footer = () => {
           </div>
 
           {/* Column 4: ROSCA Around the World */}
-          <div className="lg:justify-self-end lg:w-[260px] w-full">
+          <div className="lg:w-[280px] w-full">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#f8672d] mb-2">ROSCA Around the World</p>
             <RoscaMap />
           </div>
