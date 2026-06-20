@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <a href="https://suivan.vercel.app"><img src="https://img.shields.io/badge/Live-suivan.vercel.app-000?style=for-the-badge&logo=vercel" alt="Testnet"></a>
+  <a href="https://suivan.vercel.app"><img src="https://img.shields.io/badge/Testnet-suivan.vercel.app-000?style=for-the-badge&logo=vercel" alt="Testnet"></a>
   <a href="https://suivan.fun"><img src="https://img.shields.io/badge/Mainnet-suivan.fun-38bdf8?style=for-the-badge" alt="Mainnet"></a>
   <a href=""><img src="https://img.shields.io/badge/Tests-120_Passed-00D4AA?style=for-the-badge" alt="Tests"></a>
-  <a href=""><img src="https://img.shields.io/badge/Sui_Overflow_2026-DF_Track-f8672d?style=for-the-badge&logo=sui" alt="Sui Overflow"></a>
+  <a href=""><img src="https://img.shields.io/badge/Sui_Overflow_2026-DeFi_Track-f8672d?style=for-the-badge&logo=sui" alt="Sui Overflow"></a>
 </p>
 
 ---
@@ -25,7 +25,7 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
 | Problem | Why | Suivan Fixes It |
 |---|---|---|
 | Members run away after their turn | No enforcement mechanism | **125% collateral** locked in smart contract |
-| Pooled money sits idle for weeks | No yield infrastructure | **AI optimizer** → DeepBook V3, Scallop, Navi, Cetus |
+| Pooled money sits idle for weeks | No yield infrastructure | **Composable DeFi yield** → DeepBook V3, Cetus, Scallop |
 | Records on paper, easy to fake | No transparency | **100% on-chain**, Sui object model, Seal RNG |
 
 **No treasurer. No bank. No trust needed. Just Suivan.**
@@ -36,8 +36,8 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
 
 1. Visit **[suivan.vercel.app](https://suivan.vercel.app)**
 2. Explore the **Simulator** — tweak deposits, see costs, no wallet needed
-3. Connect **any Sui wallet** (or **Google** via zkLogin)
-4. Claim **500 USDC** from faucet → join a pool → wait for winner selection
+3. Connect **any Sui wallet** — gas is always free (sponsored transactions)
+4. Claim **500 USDC** from faucet → join a pool → let automation handle the rest
 
 ---
 
@@ -53,8 +53,15 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
         └──────────────┴──────────────┴────────────────────┘
                     All members contribute $25/month
     
-    At pool end: collateral returned + yield bonuses distributed
+    At pool end: collateral returned + dual yield distributed
 ```
+
+### Dual Yield System
+
+Two reward streams from one pool:
+- **Collateral Yield** — proportional, every honest member gets their share
+- **Cumulative Jackpot (Gacha)** — one participant wins everything, weighted by payment consistency
+- Defaulters get **zero tickets, zero jackpot** — yield belongs to the committed
 
 ---
 
@@ -65,8 +72,8 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
 │                      SUIVAN PROTOCOL                        │
 │                                                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
-│  │  zkLogin │  │   Seal   │  │  Walrus  │  │DeepBook │  │
-│  │  Google  │  │    Tx    │  │   RNG    │  │  Storage  │  │
+│  │Sponsored │  │   Seal   │  │  Walrus  │  │ DeepBook  │  │
+│  │   Tx     │  │    RNG   │  │  Storage │  │    V3     │  │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └─────┬─────┘  │
 │       │             │             │               │        │
 │  ┌────┴─────────────┴─────────────┴───────────────┴─────┐  │
@@ -76,12 +83,12 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
 │                         │                                  │
 │  ┌──────────────────────┼──────────────────────────────┐  │
 │  │                  Yield Engine                        │  │
-│  │   DeepBook V3 Flash Arbitrage + AI Strategy Agent   │  │
+│  │   DeepBook V3 Flash Arbitrage · Dual Yield Streams  │  │
 │  └─────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌─────────────┐  ┌────────────┐  ┌──────────────────┐    │
-│  │ LI.FI Bridge│  │ Agent Cron  │  │  Leaderboard +   │    │
-│  │ Cross-chain │  │ Auto start  │  │  NFT Badges      │    │
+│  │ LI.FI Bridge│  │ Automation │  │  Leaderboard +   │    │
+│  │ Cross-chain │  │ Engine 24/7│  │  Profile         │    │
 │  └─────────────┘  └────────────┘  └──────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -94,10 +101,9 @@ ROSCA (Rotating Savings & Credit Association) powers **$1T+** in informal financ
 
 ```
 contracts/sources/
-├── arisan_pool.move          🏦 1,761 lines — Full ROSCA lifecycle
-├── arisan_factory.move       🏭 320 lines — Templates + on-chain pool registry
+├── arisan_pool.move          🏦 1,863 lines — Full ROSCA lifecycle
+├── arisan_factory.move       🏭 329 lines — Templates + on-chain pool registry
 ├── deepbook_yield.move       ⚡ 246 lines — Flash loan arbitrage via DeepBook V3
-├── yield_strategy.move       📈 261 lines — Share-based vault with u128 precision
 ├── seal_randomness.move      🎲 212 lines — Seal commit-reveal threshold encryption
 ├── walrus_store.move          💾 139 lines — Permanent blob metadata on Walrus
 ├── faucet.move                🚰 104 lines — On-chain faucet, 24h cooldown
@@ -115,36 +121,37 @@ Test result: OK. Total tests: 120; passed: 120; failed: 0 ✓
 | Pattern | Enforces | Module |
 |---|---|---|
 | **Hot Potato Receipts** | Atomicity — tx aborts if not consumed | `arisan_pool`, `deepbook_yield` |
-| **Capability-Based Auth** | No address checks — `PoolAdminCap` | All modules |
-| **Seal Threshold Encryption** | Verifiable fair randomness | `seal_randomness` |
+| **Capability-Based Auth** | No address checks — `PoolAdminCap` per pool | All modules |
+| **Seal Threshold Encryption** | Verifiable fair randomness | `arisan_pool` |
 | **5-Balance Segregation** | Funds isolation — no commingling | `arisan_pool` |
-| **Generic `<CoinType>`** | Works with SUI, USDC, any token | `arisan_pool`, `yield_strategy` |
+| **Generic `<CoinType>`** | Works with SUI, USDC, any token | `arisan_pool` |
 
 ### Audit Status
 
-Internal audit completed. **7 HIGH/MEDIUM issues documented** with inline fix annotations:
+2 security audits completed. **All HIGH/MEDIUM findings documented and fixed:**
 - `SEC-AC-1`: Per-pool capability → no global admin
 - `SEC-AR-1`: Rejection sampling → unbiased winner selection
-- `H-03/S1-2`: Hot potato atomicity → fund safety
-- Full [audit report](https://github.com/ARSUI-Team/testing-suivan) available in commit history
+- `H-03`: Hot potato atomicity → fund safety
+- `C1`: Active depositor count → correct payout calculation
+- `D3`: 5-balance segregation → no fund commingling
 
 ---
 
 ## 🎨 Frontend
 
-**Neo-brutalist editorial design system.** 20 routes, 18 components, bilingual EN/ID.
+**Neo-brutalist editorial design system.** 11 routes, bilingual EN/ID.
 
 | Route | Purpose |
 |---|---|
-| `/` | Landing page — Animation-driven Hero + ROSCA Map + How To Play + Advantages |
-| `/pools` | Pool Explorer — Create, join, deposit, view details |
-| `/pools/[address]` | Pool detail — Lifecycle management, metadata, AI agent, brutalist design |
-| `/simulator` | Interactive simulator — No wallet needed |
-| `/ai` | SUI Yield Explorer — Live protocol APY + DeepBook V3 orderbook |
-| `/faucet` | Testnet faucet — 500 USDC per claim, 24h cooldown |
-| `/leaderboard` | Gamified ranking — Diamond/Platinum/Gold tiers, real on-chain data |
-| `/profile` | Dashboard — Stats, Achievements, activity feed, wallet info |
-| `/faq` | 16 comprehensive Q&As |
+| `/` | Landing — Hero + ROSCA Map + Advantages |
+| `/pools` | Pool Explorer — Create, join, deposit, filter by status |
+| `/pools/[address]` | Pool Detail — Cycle winners, participants, agent controls |
+| `/simulator` | Cost Simulator — Compare Sui vs EVM, no wallet needed |
+| `/ai` | Yield Explorer — Live DeFiLlama APY + DeepBook V3 orderbook |
+| `/faucet` | Testnet Faucet — 500 USDC, sponsored tx, 24h cooldown |
+| `/leaderboard` | Rankings — Diamond/Platinum/Gold tiers, gacha eligibility |
+| `/profile` | Dashboard — Stats, badges, activity feed |
+| `/faq` | 16 comprehensive Q&As, EN + ID |
 
 ### Design Language
 
@@ -159,15 +166,27 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 
 ## 🧩 Sui Ecosystem Integration
 
-**5/5 Sui primitives — deep native integration.**
+**6 Sui primitives — deep native integration.**
 
-| Primitive | Implementation | Impact |
+| Primitive | Implementation | Status |
 |---|---|---|
-| **zkLogin** | Google OAuth → [zklogin.sui.io](https://zklogin.sui.io) | No seed phrase onboarding |
-| **Seal RNG** | Commit-reveal threshold encryption | Verifiable fair draws |
-| **DeepBook V3** | Flash loan arbitrage + BalanceManager | Real DeFi yield |
-| **Walrus** | Blob storage for pool metadata | Permanent on-chain identity |
-| **LI.FI Bridge** | Cross-chain modal widget | USDC from 20+ chains |
+| **Sponsored Transactions** | 8 action types, zero gas for users | ✅ Live |
+| **Seal RNG** | Threshold encryption + rejection sampling | ✅ Live |
+| **DeepBook V3** | Flash loan arbitrage + BalanceManager | ✅ Live |
+| **Walrus** | Blob storage for pool metadata | ✅ Live |
+| **LI.FI Bridge** | Cross-chain modal widget | ✅ Live |
+| **zkLogin** | Google OAuth — no seed phrase | 🔜 Q3 2026 |
+
+---
+
+## 📊 Protocol Fee Model
+
+**0.5% fee on each cycle deposit** — 10-20× cheaper than traditional ROSCA (5-10%).
+
+- Self-sustaining at ~200 active pools
+- Fee routed to protocol treasury, funding gas sponsorship
+- All on-chain, verifiable, non-negotiable
+- `PROTOCOL_FEE_BPS = 50` constant prepared in smart contract
 
 ---
 
@@ -176,13 +195,11 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 | | Testnet | Mainnet |
 |---|---|---|
 | **Live At** | [suivan.vercel.app](https://suivan.vercel.app) | [suivan.fun](https://suivan.fun) |
-| **Package** | `0x63ad9b5fb0fa7f286ac05892182e4eb5896cc9165f9bd2b7d0ba1de87b81b515` | Deploying (branch `mainnet`) |
+| **Package** | `0x63ad9b5fb0fa7f286ac05892182e4eb5896cc9165f9bd2b7d0ba1de87b81b515` | Q3 2026 |
 | **Factory** | `0x4484b70fdea8a4aefcfef9c6a33e13d975b2cde0ce6a2085cb8eb18cf5e6af32` | — |
-| **Faucet** | `0xb0d0ce15b6c58af48216877c9df20d0ed91409b093f214fe79b29e71c103e311` | N/A (mainnet uses real tokens) |
-| **Agent** | `0x501f2840d1d6fb2a98299f52f671150d38e118c33e8342861dd4ad5d58b788f1` | TBD |
-| **Modules** | 8 production | 6 (no faucet/test tokens) |
-| **Token** | `TEST_USDC` | Wormhole-bridged USDC |
+| **Faucet** | `0xb0d0ce15b6c58af48216877c9df20d0ed91409b093f214fe79b29e71c103e311` | N/A |
 | **Network** | Sui Testnet | Sui Mainnet |
+| **Token** | `TEST_USDC` | Wormhole-bridged USDC |
 
 ---
 
@@ -197,7 +214,7 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 | **Animation** | Motion (Framer Motion) · GSAP · Lenis |
 | **UI Kit** | shadcn/ui · Lucide · Radix UI · CVA |
 | **Bridge** | LI.FI SDK + Widget |
-| **Infra** | Vercel · Sui RPC · DeepBook Indexer |
+| **Infra** | Vercel · Sui RPC · Vercel Cron (agent every 1 min) |
 
 ---
 
