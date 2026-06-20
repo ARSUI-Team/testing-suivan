@@ -15,17 +15,17 @@ const roscaNames = [
 
 const RoscaMap = () => {
   return (
-    <div className="grid grid-cols-3 gap-1.5">
+    <div className="grid grid-cols-2 gap-1.5">
       {roscaNames.map((place) => (
         <div
           key={place.name}
-          className="border-[2px] border-[#0a0a0a] bg-[#fbf7ed] px-2 py-1.5 transition hover:bg-[#e0f4ff] hover:-translate-y-0.5"
+          className="border-[2px] border-[#0a0a0a] bg-[#fdfdfa] px-2.5 py-2 transition hover:bg-[#38bdf8] hover:-translate-y-0.5 shadow-[2px_2px_0_#0a0a0a]"
         >
-          <p className="text-[10px] font-black text-[#0a0a0a] leading-tight">
-            <span className="mr-1">{place.flag}</span>
+          <p className="flex items-center gap-1.5 text-[11px] font-black text-[#0a0a0a] leading-tight">
+            <span className="text-sm">{place.flag}</span>
             {place.name}
           </p>
-          <p className="text-[8px] font-semibold text-[#a8a49a] mt-0.5 leading-tight">
+          <p className="text-[9px] font-bold text-[#555555] mt-0.5 leading-tight uppercase tracking-[0.08em]">
             {place.country}
           </p>
         </div>
