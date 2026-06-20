@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
 
     const keypair = Ed25519Keypair.fromSecretKey(parseSecretKey(AGENT_SECRET_KEY));
     const agentAddr = keypair.toSuiAddress();
+    const slashes: string[] = [];
 
     const tx = new Transaction();
     tx.setSender(agentAddr);
@@ -87,6 +88,35 @@ export async function POST(req: NextRequest) {
           return String(f?.pool_id || "") === poolId;
         });
         const capId = capObj?.data?.objectId || "";
+
+        const poolObj = await getClient().getObject({ id: poolId, options: { showContent: true } });
+        const fields = (poolObj.data?.content as { fields?: Record<string, unknown> })?.fields;
+        const rawList = fields?.participant_list;
+        const addresses: string[] = Array.isArray(rawList) ? rawList.map(String)
+          : ((rawList as { fields?: { value?: string[] } })?.fields?.value ?? []);
+        const tableId = (fields?.participants as { fields?: { id?: { id?: string } } })?.fields?.id?.id;
+
+        if (tableId) {
+          for (const addr of addresses) {
+            try {
+              const e = await getClient().getDynamicFieldObject({
+                parentId: tableId, name: { type: "address", value: addr },
+              });
+              const pv = (e.data?.content as { fields?: { value?: Record<string, unknown> } })?.fields?.value;
+              if (pv && Boolean(pv.is_active) && !Boolean(pv.deposits_this_cycle)) {
+                const slashTx = new Transaction(); slashTx.setSender(agentAddr);
+                slashTx.moveCall({
+                  target: `${PACKAGE_ID}::arisan_pool::slash_collateral`,
+                  arguments: [slashTx.object(capId), slashTx.object(poolId), slashTx.pure.address(addr), slashTx.object("0x6")],
+                  typeArguments: [USDC_TYPE],
+                });
+                slashTx.setGasBudget(20_000_000);
+                const sr = await executeTx(slashTx, keypair);
+                if (sr.effects?.status?.status === "success") slashes.push(`slash:${addr.slice(0, 6)}`);
+              }
+            } catch { /* skip */ }
+          }
+        }
 
         const seed = Array.from(randomBytes(16));
         tx.moveCall({
@@ -158,7 +188,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, action, digest: result.digest });
+    return NextResponse.json({ ok: true, action, digest: result.digest, slashesLength: slashes.length });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });

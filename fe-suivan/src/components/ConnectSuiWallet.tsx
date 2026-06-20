@@ -37,7 +37,7 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className={`inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[white] ${buttonPadding} text-xs font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] ${
+          className={`inline-flex items-center gap-1.5 sm:gap-2 border-[2px] sm:border-[3px] border-[#0a0a0a] bg-[white] ${buttonPadding} text-[10px] sm:text-xs font-black text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] sm:shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] ${
             scrolled ? "opacity-90" : ""
           }`}
         >
@@ -68,18 +68,19 @@ export default function ConnectSuiWallet({ variant = "default", scrolled, initia
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsModalOpen(!isModalOpen)}
-        className={`inline-flex items-center gap-2 border-[3px] border-[#0a0a0a] bg-[#38bdf8] ${buttonPadding} text-xs font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-[#38bdf8]`}
+        className={`inline-flex items-center gap-1.5 sm:gap-2 border-[2px] sm:border-[3px] border-[#0a0a0a] bg-[#38bdf8] ${buttonPadding} text-[10px] sm:text-xs font-black text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] sm:shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#0a0a0a] hover:text-[#38bdf8]`}
       >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           <path d="M9 12l2 2 4-4" />
         </svg>
-        Connect Wallet
+        <span className="hidden sm:inline">Connect Wallet</span>
+        <span className="sm:hidden">Connect</span>
       </button>
 
       {isModalOpen && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 w-96 border-[4px] border-[#0a0a0a] bg-[white] p-6 shadow-[6px_6px_0_#0a0a0a]"
+          className="absolute right-0 top-full z-50 mt-2 w-[95vw] max-w-[380px] sm:w-96 border-[4px] border-[#0a0a0a] bg-[white] p-4 sm:p-6 shadow-[6px_6px_0_#0a0a0a]"
           onClick={(e) => e.stopPropagation()}
         >
             <div className="mb-6 flex items-center justify-between">

@@ -41,19 +41,19 @@ export default function Header() {
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-[999] flex items-center justify-between px-4 py-4 backdrop-blur-sm"
+      className="fixed inset-x-0 top-0 z-[999] flex items-center justify-between px-2 py-3 sm:px-4 sm:py-4 backdrop-blur-sm"
       data-lenis-prevent
     >
-      <Link href="/" className="flex items-center gap-2.5 shrink-0">
-        <SuivanLogo className="size-10" priority size={40} />
+      <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <SuivanLogo className="size-8 sm:size-10" priority size={40} />
         <span className="flex flex-col items-start leading-none">
           <span
-            className="text-2xl font-black text-[#0a0a0a]"
+            className="text-lg sm:text-2xl font-black text-[#0a0a0a]"
             style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif", letterSpacing: "0.02em" }}
           >
             SUIVAN
           </span>
-          <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-[#38bdf8]">
+          <span className="text-[6px] sm:text-[8px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[#38bdf8] hidden xs:block">
             COMMUNITY WEALTH PROTOCOL
           </span>
         </span>
@@ -76,10 +76,10 @@ export default function Header() {
         ))}
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 sm:gap-1.5">
         <button
           aria-label="Switch language"
-          className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-white text-[11px] font-black text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] touch-manipulation"
+          className="grid size-9 sm:size-11 place-items-center border-[2px] sm:border-[3px] border-[#0a0a0a] bg-white text-[10px] sm:text-[11px] font-black text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] sm:shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] touch-manipulation"
           onClick={() => setLanguage(language === "en" ? "id" : "en")}
           type="button"
           style={{ fontFamily: "'Bebas Neue', system-ui, sans-serif" }}
@@ -93,7 +93,7 @@ export default function Header() {
         )}
         <button
           aria-label="Toggle navigation menu"
-          className="grid size-11 place-items-center border-[3px] border-[#0a0a0a] bg-white text-[#0a0a0a] shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] lg:hidden touch-manipulation"
+          className="grid size-9 sm:size-11 place-items-center border-[2px] sm:border-[3px] border-[#0a0a0a] bg-white text-[#0a0a0a] shadow-[3px_3px_0_#0a0a0a] sm:shadow-[4px_4px_0_#0a0a0a] transition hover:bg-[#38bdf8] lg:hidden touch-manipulation"
           onClick={() => setMenuOpen((value) => !value)}
           type="button"
         >
