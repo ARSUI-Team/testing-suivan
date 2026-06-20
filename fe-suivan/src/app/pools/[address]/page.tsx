@@ -36,6 +36,7 @@ import { usePoolWalrusMetadata, publishPoolMetadata } from "@/hooks/usePoolWalru
 import { triggerPoolStart } from "@/lib/agentTrigger";
 import { derivePoolLifecycle } from "@/lib/poolLifecycle";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { Layers, Users, Clock, DollarSign, ArrowLeft, Sparkles, Shield, Trophy, Gift } from "lucide-react";
 
 const CARD_CLASS = "relative border-[3px] border-[#0a0a0a] bg-[#fdfdfa] shadow-[12px_12px_0_#0a0a0a] overflow-hidden";
@@ -262,10 +263,7 @@ export default function PoolDetailPage() {
     return (
       <main className="min-h-screen bg-grid-brutal">
         <Header />
-        <div className="flex items-center justify-center pb-16 pt-32">
-          <div className="h-12 w-12 animate-spin border-2 border-[#0a0a0a] border-b-sky-400"></div>
-          <span className="ml-4 text-sm font-black text-[#333333]" style={HEADING_FONT}>Loading pool data...</span>
-        </div>
+        <LoadingSpinner size="page" message="Loading pool data..." />
       </main>
     );
   }
@@ -444,7 +442,7 @@ export default function PoolDetailPage() {
                   </h2>
                   {participantsLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="h-8 w-8 animate-spin border-[3px] border-[#0a0a0a] border-b-[#38bdf8]" />
+                      <LoadingSpinner size="inline" message="Loading participants..." />
                     </div>
                   ) : participantAddresses.length > 0 ? (
                     <div className="space-y-2">
@@ -699,7 +697,7 @@ export default function PoolDetailPage() {
                   </span>
                 </button>
                 <button onClick={handleJoinPool} disabled={joinDepositing} className={`w-full ${BTN_SUCCESS} ${joinDepositing ? "opacity-50 cursor-not-allowed" : ""}`}>
-                  {joinDepositing ? <span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin border-2 border-[#0a0a0a] border-b-transparent" />Joining...</span> : t("pools.join")}
+                  {joinDepositing ? <LoadingSpinner size="inline" message="Joining..." /> : t("pools.join")}
                 </button>
               </div>
             </div>
@@ -744,7 +742,7 @@ export default function PoolDetailPage() {
                 )}
               </div>
               <button onClick={handleMakeDeposit} disabled={depositing} className={`w-full ${BTN_SUCCESS} ${depositing ? "opacity-50 cursor-not-allowed" : ""}`}>
-                {depositing ? <span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin border-2 border-[#0a0a0a] border-b-transparent" />Depositing...</span> : "Make Deposit"}
+                {depositing ? <LoadingSpinner size="inline" message="Depositing..." /> : "Make Deposit"}
               </button>
             </div>
           </div>

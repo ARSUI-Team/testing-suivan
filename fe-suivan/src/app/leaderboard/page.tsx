@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useLeaderboardData } from "@/hooks/useLeaderboardData";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Trophy,
   Medal,
@@ -112,14 +113,7 @@ export default function LeaderboardPage() {
     return (
       <main className="min-h-screen bg-grid-brutal text-[#0a0a0a]">
         <Header />
-        <section className="px-5 pt-36 pb-20 md:px-10 lg:px-12">
-          <div className="mx-auto max-w-6xl">
-            <div className="flex items-center justify-center py-20">
-              <div className="h-12 w-12 animate-spin border-2 border-[#0a0a0a] border-b-[#555555]" />
-              <span className="protocol-font ml-4 text-sm font-black text-[#333333]">Loading Leaderboard</span>
-            </div>
-          </div>
-        </section>
+        <LoadingSpinner size="page" message="Loading Leaderboard" />
       </main>
     );
   }

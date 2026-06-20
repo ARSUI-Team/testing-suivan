@@ -3,5 +3,5 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function AILoading() {
-  return <LoadingSpinner fullScreen={true} message="Loading Yield Engine" />;
+  return <LoadingSpinner size="fullScreen" message="Loading Yield Engine" />;
 }

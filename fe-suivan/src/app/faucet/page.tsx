@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSuccessToast, useErrorToast } from "@/components/Toast";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useUSDCBalance, useClaimUSDC } from "@/hooks/useSuiContracts";
 import { useFaucetId } from "@/config/sui";
 import {
@@ -335,7 +336,7 @@ export default function FaucetPage() {
                   >
                     {claimStatus === "loading" ? (
                       <span className="inline-flex items-center gap-2">
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
+                        <LoadingSpinner size="inline" />
                         Confirming in wallet...
                       </span>
                     ) : claimStatus === "success" ? (

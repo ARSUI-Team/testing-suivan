@@ -7,6 +7,7 @@ import { Radio, TrendingUp, ArrowRight, Database } from "lucide-react";
 import Link from "next/link";
 import { useGsapEntrance } from "@/hooks/useGsapEntrance";
 import { useDeepBookPools, usePoolOrderbook, getPoolInfo, ALL_POOL_KEYS } from "@/hooks/useDeepBook";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface ProtocolYield {
   name: string;
@@ -206,9 +207,8 @@ export default function YieldExplorerPage() {
           </p>
 
           {loading && (
-            <div className="mt-10 flex items-center justify-center py-16">
-              <div className="h-12 w-12 animate-spin border-2 border-[#0a0a0a] border-b-[#555555]" />
-              <span className="protocol-font ml-4 text-sm font-black text-[#333333]">{t("ai.loading")}</span>
+            <div className="mt-10">
+              <LoadingSpinner size="page" message={t("ai.loading") || "Fetching live yields..."} />
             </div>
           )}
 

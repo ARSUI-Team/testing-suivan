@@ -25,6 +25,7 @@ import { PoolName } from "@/components/PoolName";
 import { useBridgeToDeposit } from "@/hooks/useBridgeToDeposit";
 import { publishPoolMetadata } from "@/hooks/usePoolWalrusMetadata";
 import PoolCardSkeleton from "@/components/PoolCardSkeleton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { DEFAULT_COLLATERAL_MULTIPLIER, getRequiredCollateralAmount } from "@/lib/poolMath";
 import { FaucetCooldownButton } from "@/components/FaucetCooldownButton";
 import { type PoolDisplayStatus } from "@/lib/poolLifecycle";
@@ -690,10 +691,7 @@ export default function PoolsPage() {
               }`}
             >
               {joining ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-                  Joining...
-                </span>
+                <LoadingSpinner size="inline" message="Joining..." />
               ) : t("pools.join")}
             </button>
 
@@ -800,9 +798,9 @@ export default function PoolsPage() {
               disabled={creating || linkingMeta || publishingMetadata || createForm.poolName.trim().length === 0}
               className={`w-full border-[3px] border-[#0a0a0a] py-3 text-sm font-black tracking-[0.1em] transition-all shadow-[4px_4px_0_#0a0a0a] ${creating || linkingMeta || publishingMetadata || createForm.poolName.trim().length === 0 ? "cursor-not-allowed bg-[#e8e1d9] text-[#333333] opacity-50" : "bg-[#f8672d] text-[#0a0a0a] hover:-translate-x-0.5 hover:-translate-y-0.5"}`}
             >
-              {publishingMetadata ? (<span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />Publishing metadata...</span>)
-               : creating ? (<span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />Creating pool...</span>)
-               : linkingMeta ? (<span className="flex items-center justify-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />Linking metadata...</span>)
+              {publishingMetadata ? (<LoadingSpinner size="inline" message="Publishing metadata..." />)
+               : creating ? (<LoadingSpinner size="inline" message="Creating pool..." />)
+               : linkingMeta ? (<LoadingSpinner size="inline" message="Linking metadata..." />)
                : "Create Pool"}
             </button>
           </div>
@@ -881,8 +879,7 @@ function FaucetButton({ refetchPools }: { userAddress?: string; refetchPools: ()
     >
       {isPending ? (
         <>
-          <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#0a0a0a] border-b-transparent" />
-          Minting...
+          <LoadingSpinner size="inline" /> Minting...
         </>
       ) : success ? (
         "500 USDC Minted!"

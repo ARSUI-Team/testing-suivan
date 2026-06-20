@@ -3,5 +3,5 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function PoolsLoading() {
-  return <LoadingSpinner fullScreen={true} message="Loading Pools" />;
+  return <LoadingSpinner size="fullScreen" message="Loading Pools" />;
 }

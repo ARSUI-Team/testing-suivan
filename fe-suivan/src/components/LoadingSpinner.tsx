@@ -3,18 +3,21 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
+type SpinnerSize = "fullScreen" | "page" | "inline";
+
 interface LoadingSpinnerProps {
-  fullScreen?: boolean;
+  size?: SpinnerSize;
   message?: string;
 }
 
-export default function LoadingSpinner({ 
-  fullScreen = false, 
-  message = "Loading" 
+export default function LoadingSpinner({
+  size = "fullScreen",
+  message = "Loading",
 }: LoadingSpinnerProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (size !== "fullScreen") return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) return 100;
@@ -23,17 +26,60 @@ export default function LoadingSpinner({
       });
     }, 50);
     return () => clearInterval(interval);
-  }, []);
+  }, [size]);
 
+  if (size === "inline") {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <span className="relative flex h-5 w-5 items-center justify-center rounded-full overflow-hidden animate-spin">
+          <Image
+            src="/suivan-logo.jpeg"
+            alt=""
+            fill
+            className="object-cover"
+            sizes="20px"
+          />
+        </span>
+        {message && (
+          <span className="protocol-font text-xs font-medium uppercase text-[var(--muted)]">
+            {message}
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (size === "page") {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[var(--background)]">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <span className="relative flex h-16 w-16 items-center justify-center rounded-full overflow-hidden animate-spin shadow-[3px_3px_0_var(--border)]">
+            <Image
+              src="/suivan-logo.jpeg"
+              alt="Suivan"
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          </span>
+          <p className="protocol-font text-sm font-medium uppercase text-[var(--muted)]">
+            {message}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // fullScreen — original with progress ring
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className={`${fullScreen ? "fixed inset-0 z-[300]" : ""} min-h-screen w-full flex items-center justify-center bg-[var(--background)]`}>
+    <div className="fixed inset-0 z-[300] min-h-screen w-full flex items-center justify-center bg-[var(--background)]">
       <div className="flex flex-col items-center justify-center gap-6">
         <div className="relative w-32 h-32 flex items-center justify-center">
-          <svg 
+          <svg
             className="absolute w-full h-full -rotate-90"
             viewBox="0 0 120 120"
           >

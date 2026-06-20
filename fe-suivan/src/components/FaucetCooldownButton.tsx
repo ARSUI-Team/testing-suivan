@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Clock, Droplets } from "lucide-react";
 import { useClaimUSDC } from "@/hooks/useSuiContracts";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   useFaucetCooldown,
   FAUCET_COOLDOWN_S,
@@ -134,8 +135,7 @@ export function FaucetCooldownButton({
       >
         {status === "loading" || isWalletClaiming ? (
           <>
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
-            Minting...
+            <LoadingSpinner size="inline" /> Minting...
           </>
         ) : status === "success" ? (
           <>
@@ -175,7 +175,7 @@ export function FaucetCooldownButton({
         >
           {status === "loading" || isWalletClaiming ? (
             <span className="inline-flex items-center gap-2">
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--brutal-ink)] border-b-transparent" />
+              <LoadingSpinner size="inline" />
               Confirming in wallet...
             </span>
           ) : status === "success" ? (
