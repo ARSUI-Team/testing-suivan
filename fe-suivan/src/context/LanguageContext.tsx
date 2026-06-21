@@ -99,7 +99,7 @@ const en: Record<string, string> = {
   "faq.a13": "Walrus is Sui's decentralized blob storage. Suivan uses it to store pool names and descriptions permanently on-chain. No centralized database. Immutable and verifiable.",
 
   "faq.q14": "Where can I follow the project?",
-  "faq.a14": "Join us on Telegram (t.me/sui_van) and Discord (discord.gg/XxxM958bm). Follow @suivan_id on X. Code is open-source on GitHub. We're a Sui Overflow 2026 project and welcome feedback and contributors.",
+  "faq.a14": "Join us on Telegram (t.me/sui_van) and Discord (discord.gg/XxxM958bm). Follow @suivanprotocol on X. Code is open-source on GitHub. We're a Sui Overflow 2026 project and welcome feedback and contributors.",
   "faq.q15": "How does the gacha jackpot work?",
   "faq.a15": "Every month, deposits earn yield via DeepBook V3 flash loan arbitrage. The yield accumulates through the pool's lifetime. At the end, one winner takes everything via weighted gacha draw. Your chance depends on how consistently you paid. Members who miss 2+ payments get zero tickets.",
   "faq.q16": "How is my leaderboard tier calculated?",
@@ -480,7 +480,7 @@ const id: Record<string, string> = {
   "faq.a13": "Walrus adalah penyimpanan blob terdesentralisasi Sui. Suivan pakai ini untuk simpan nama dan deskripsi pool. Permanen, tidak bisa diubah, bisa diverifikasi.",
 
   "faq.q14": "Di mana saya bisa mengikuti proyek ini?",
-  "faq.a14": "Gabung di Telegram (t.me/sui_van) dan Discord (discord.gg/XxxM958bm). Ikuti @suivan_id di X. Kode open-source di GitHub. Kami project Sui Overflow 2026, menyambut feedback dan kontributor.",
+  "faq.a14": "Gabung di Telegram (t.me/sui_van) dan Discord (discord.gg/XxxM958bm). Ikuti @suivanprotocol di X. Kode open-source di GitHub. Kami project Sui Overflow 2026, menyambut feedback dan kontributor.",
   "faq.q15": "Bagaimana cara kerja jackpot gacha?",
   "faq.a15": "Setiap bulan, deposit menghasilkan yield via arbitrase flash loan DeepBook V3. Yield terkumpul sepanjang umur pool. Di akhir, satu orang menang semua via undian gacha berbobot. Peluangmu tergantung seberapa konsisten kamu bayar. Yang lewat 2+ pembayaran dapat nol tiket.",
   "faq.q16": "Bagaimana tingkat (tier) leaderboard saya dihitung?",

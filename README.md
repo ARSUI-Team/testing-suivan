@@ -237,7 +237,7 @@ Shadows     10–14px brutal offset · #0a0a0a shadow color
 - **GitHub**: [ARSUI-Team/testing-suivan](https://github.com/ARSUI-Team/testing-suivan)
 - **Telegram**: [t.me/sui_van](https://t.me/sui_van)
 - **Discord**: [discord.gg/XxxM958bm](https://discord.gg/XxxM958bm)
-- **X/Twitter**: [@suivan_id](https://x.com/suivan_id)
+- **X/Twitter**: [@suivanprotocol](https://x.com/suivanprotocol)
 
 ---
 
